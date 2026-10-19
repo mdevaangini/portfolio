@@ -1,0 +1,100 @@
+<section class="projects" id="work" aria-labelledby="work-title">
+  <div class="container projects__inner">
+    <app-section-heading
+      class="reveal"
+      index="02"
+      eyebrow="Selected work"
+      title="Products I've helped build"
+      headingId="work-title"
+    />
+
+    <!-- Filter chips. Hidden until the category list has loaded -->
+    @if (categories.value(); as categoryList) {
+      @if (categoryList.length) {
+        <div class="chips" role="group" aria-label="Filter projects by category">
+          <button
+            type="button"
+            class="chip"
+            [class.chip--active]="selectedCategory() === null"
+            [attr.aria-pressed]="selectedCategory() === null"
+            (click)="selectCategory(null)"
+          >
+            All
+          </button>
+          @for (category of categoryList; track category) {
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="selectedCategory() === category"
+              [attr.aria-pressed]="selectedCategory() === category"
+              (click)="selectCategory(category)"
+            >
+              {{ category }}
+            </button>
+          }
+        </div>
+      }
+    }
+
+    @if (firstLoad()) {
+      <!-- Loading: grey shapes in the layout's shape, so nothing jumps when data arrives -->
+      <div class="skeleton skeleton--featured" aria-hidden="true"></div>
+      <div class="grid" aria-hidden="true">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+      <p class="visually-hidden" role="status">Loading projects…</p>
+    } @else if (resource.error()) {
+      <div class="state" role="alert">
+        <p class="state__title">Projects couldn't be loaded.</p>
+        <p class="state__text">Please check your connection and try again.</p>
+        <button class="state__button" type="button" (click)="resource.reload()">Try again</button>
+      </div>
+    } @else if (featured(); as project) {
+      <div class="results" [class.results--loading]="resource.isLoading()" [attr.aria-busy]="resource.isLoading()">
+      <!-- Featured project -->
+      <article class="card card--featured reveal">
+        <div class="card__media">
+          @if (project.imageUrl) {
+            <img [src]="project.imageUrl" [alt]="project.title + ' screenshot'" loading="lazy" />
+          } @else {
+            <span>Product screenshot</span>
+          }
+        </div>
+        <div class="card__body">
+          <ng-container *ngTemplateOutlet="details; context: { $implicit: project, featured: true }" />
+        </div>
+      </article>
+
+      <!-- Remaining projects -->
+      @if (others().length) {
+        <div class="grid">
+          @for (project of others(); track project.id) {
+            <article class="card reveal">
+              <ng-container *ngTemplateOutlet="details; context: { $implicit: project, featured: false }" />
+            </article>
+          }
+        </div>
+      }
+      </div>
+    } @else {
+      <div class="state">
+        <p class="state__title">No projects to show yet.</p>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Shared card content, used by the featured card and the grid cards -->
+<ng-template #details let-project let-featured="featured">
+  @if (project.category) {
+    <span class="card__category">{{ project.category }}</span>
+  }
+  <h3 class="card__title" [class.card__title--large]="featured">{{ project.title }}</h3>
+  <p class="card__summary">{{ project.summary }}</p>
+  @if (project.liveUrl) {
+    <a class="card__link" [href]="project.liveUrl" target="_blank" rel="noopener">
+      View live <span aria-hidden="true">→</span>
+    </a>
+  }
+</ng-template>

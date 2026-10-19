@@ -1,0 +1,373 @@
+==============================================================================
+ SESSION_CONTEXT.txt  —  Portfolio project (Angular + Node/Express + PostgreSQL)
+ Last updated: 2026-10-19, ~16:10 IST (Asia/Calcutta)
+ Location: C:\Users\HP\OneDrive\Desktop\portfolio\SESSION_CONTEXT.txt
+==============================================================================
+
+##############################################################################
+#  READ THIS FIRST — INSTRUCTIONS FOR THE NEXT SESSION
+##############################################################################
+
+1. Read this ENTIRE file before taking any action.
+2. Understand the objective, current implementation, decisions, constraints
+   and open tasks (sections A–H below).
+3. Resume from the exact point in section C "Exact stopping point".
+4. Treat facts marked [VERIFIED] as the starting context, but ALWAYS re-read
+   the relevant files on disk before changing them (the user edits files and
+   adds personal notes inside them; never overwrite those notes).
+5. Do not repeat completed work, rejected approaches, or settled questions
+   (see sections D and F).
+6. Follow every requirement and preference in section E. The most important:
+   the user is a FRONTEND developer who has never done backend. Explain in
+   plain words with Angular analogies, one small step at a time, flow over
+   line-by-line code, and WAIT for the user's go-ahead between steps.
+7. Ask for clarification only when genuinely necessary.
+8. Keep updating THIS same file as the project progresses (replace it with a
+   complete updated version; do not append competing versions).
+9. When the user says "update session context", "prepare for a new session"
+   or "we are approaching the limit", refresh this file. Claude cannot reliably
+   detect the limit itself, so rely on the user's request.
+
+Legend:  [VERIFIED] = checked on disk or confirmed by the user
+         [UNCONFIRMED] = built, but the user has not confirmed it works
+         [PLANNED] = agreed but not built      [UNKNOWN] = not verifiable
+
+==============================================================================
+A. PROJECT OVERVIEW
+==============================================================================
+
+What: Devaangini Mehta's personal portfolio website, built as an end-to-end
+full-stack LEARNING project:  Angular frontend → Node/Express API →
+PostgreSQL database → (later) deployment.
+
+Who: Devaangini Mehta, Frontend Engineer (4.5+ yrs Angular, fintech),
+Noida, India. Strong in Angular; beginner in Node.js, backend, databases.
+
+Main goal: understand the complete flow well enough to build a feature/POC
+frontend → backend → database with AI help. Understand WHY, not memorise code.
+The site should also be professional and recruiter-friendly (the user wants
+to use it professionally; the word "Freelance" was removed on request).
+
+Versioned approach (from the original brief):
+  V1 basic end-to-end; V2 more realistic features (validation, auth, admin);
+  V3 production-like (optimisation, deployment). Do not over-engineer V1.
+
+Rules from the brief:
+  - No hardcoded data where dynamic data is expected; data via API → DB.
+  - Latest stable Angular with modern features (Signals, Resource API,
+    @defer, new control flow).
+  - Discuss approach and trade-offs before implementing; act as a peer.
+
+Agreed V1 sections: Hero/About, Projects, Skills, Experience, Contact form.
+Agreed method: "vertical slice" (one feature through all layers first).
+Agreed design: "D · Navy Professional" (see H for the design canvas link).
+
+==============================================================================
+B. WORK COMPLETED SO FAR (chronological, condensed)
+==============================================================================
+
+B1. Environment  [VERIFIED]
+  - Windows; VS Code terminal = Git Bash (MINGW64).
+  - Project root: C:\Users\HP\OneDrive\Desktop\portfolio  (Desktop is in OneDrive)
+      portfolio/api  = Node/Express backend (NOT a git repo)
+      portfolio/web  = Angular app (git repo; only commit "54e0efe initial
+                       commit"; all later work is uncommitted)
+  - PostgreSQL 18 on localhost:5432, database "portfolio", user "postgres".
+    pgAdmin 4 installed. (Stack Builder was cancelled; not needed.)
+  - Node: nvm-windows installed; Node 24.21.0 active. The old standalone
+    Node 20.19.6 (installed at D:\) was uninstalled because it shadowed nvm.
+    [UNKNOWN] whether the user re-installed 20.19.6 under nvm for work.
+  - Angular 22.2 (requires Node ^22.22.3 || ^24.15.0 || ^26).
+
+B2. Database, first by hand (pgAdmin)  [VERIFIED]
+  - Created table "projects" with CREATE TABLE; learned INSERT / SELECT /
+    UPDATE / DELETE. Rows now have ids 1, 3, 4 (id 2 was deleted; an UPDATE
+    on id 2 once silently matched 0 rows — lesson recorded in F).
+  - Rows: 1 Flexipay (display_order 1), 3 Arttha (2), 4 Loan Origination
+    System (3). repo_url set to NULL for all.
+  - [UNKNOWN] whether summaries currently hold the original wording or the
+    CV wording (a project-details.sql may have been run earlier).
+
+B3. API, first version (plain SQL)  [VERIFIED, later restructured]
+  - npm init; express, pg, typescript, tsx, @types/*; "type":"module";
+    dev script with --env-file=.env; .env with DATABASE_URL; .gitignore;
+    /api/health test endpoint (later removed); /api/projects via pg Pool;
+    CORS for http://localhost:4200.
+
+B4. First Prisma attempt, then a FULL REVERT at the user's request  [VERIFIED]
+  - Prisma was added too fast (pagination, metrics table, role column) and
+    the user got confused. User asked to go back to the pre-ORM state.
+  - Prisma files were moved (not deleted) into api/_prisma-backup/.
+  - DB cleanup the user ran: DROP TABLE project_metrics; DROP COLUMN
+    category, role; DROP TABLE _prisma_migrations.
+
+B5. API restructure (still plain SQL) — "Step 1"  [VERIFIED]
+  - index.ts split into a scalable, feature-based structure (see H).
+B6. Shared pieces — "Step 2"  [VERIFIED]
+  - config/env.ts, middleware/not-found.ts, middleware/error-handler.ts,
+    express.json(), .env.example.
+B7. Prisma, done slowly — "Step 3"  [VERIFIED]
+  3.1 npm i -D prisma@7 ; npm i @prisma/client@7 @prisma/adapter-pg@7 dotenv
+      (Prisma 7.10.1. Prisma 8 is a release candidate; deliberately NOT used.)
+  3.2 prisma7.config.ts + prisma/schema.prisma written by hand (prisma init
+      was avoided because it scatters .agents/.claude/.windsurf folders and
+      may edit .env).
+  3.3 npx prisma db pull  (introspection → model projects)
+  3.4 Renamed model to Project, camelCase fields with @map, @@map("projects")
+  3.5 Baseline: prisma/migrations/0_init/migration.sql via migrate diff
+      --from-empty, then migrate resolve --applied 0_init  ("Migration 0_init
+      marked as applied" seen in user's terminal)
+  3.6 npx prisma generate  → api/generated/prisma (gitignored)
+  3.7 db/prisma.ts (PrismaClient + PrismaPg adapter); service uses
+      prisma.project.findMany. db/pool.ts deleted by the user.
+B8. Projects API features — "Step 4"
+  4.1 GET /api/projects?limit&offset&title → { data, total, limit, offset }
+      with 400 validation  [VERIFIED in code; user said "yes" to tests]
+  4.2 GET /api/projects/:id → 200 / 400 / 404  [VERIFIED in code]
+B9. Category filter chips — "Option B"
+  B.1 schema: category String? ; npx prisma migrate dev --name
+      add_project_category → migration 20261017133430_add_project_category
+      [VERIFIED]. Then npx prisma generate (Prisma 7 does NOT auto-generate
+      after migrate dev) [VERIFIED: generated code contains category].
+  B.2 Categories filled with Prisma Studio: Flexipay=Payments,
+      Arttha=Banking, Loan Origination=Lending  [VERIFIED by user: JSON shows them]
+  B.3 API: ?category= filter (case-insensitive) + GET /api/projects/categories
+      [VERIFIED: user confirmed working on 2026-10-19]
+  B.4 Angular chips (All · Banking · Lending · Payments)
+      [VERIFIED: user confirmed the chips work in the browser on 2026-10-19]
+
+B10. Frontend (web) built so far  [VERIFIED in code]
+  - Design tokens + base styles (styles.scss), fonts in index.html
+    (Plus Jakarta Sans, IBM Plex Mono), title/description set.
+  - Components: layout/header, sections/hero (Download CV), sections/
+    impact-strip, shared/section-heading (signal inputs), sections/expertise,
+    sections/projects (+ core/projects.service.ts, core/api.config.ts).
+  - app.html: skip link, header, hero, impact strip, expertise, projects
+    inside @defer (on viewport; prefetch on idle).
+  - CV: web/public/Devaangini-Mehta-CV.pdf, linked with download attribute.
+  - NOT built yet: Experience, Skills, Contact, Footer sections.
+
+B11. Design work  [VERIFIED]
+  - Claude Design canvas "Portfolio Design Concepts" with 5 boards; chosen:
+    "D · Navy Professional", refined with CV-accurate content, subtle
+    animations (respecting prefers-reduced-motion), Download CV linked to
+    the uploaded CV. "Open to new opportunities" badge REMOVED on request.
+
+==============================================================================
+C. CURRENT STATE
+==============================================================================
+
+Implemented & working (VERIFIED):
+  - DB: projects table (+ category column), _prisma_migrations with 0_init
+    and add_project_category.
+  - API structure, env config, 404/500 middleware, Prisma client.
+  - Endpoints: GET /api/projects (paging, title, category),
+    GET /api/projects/categories, GET /api/projects/:id.
+  - Web: header, hero, impact strip, expertise, projects section with
+    loading/error/empty states.
+
+Built but UNCONFIRMED by the user at runtime:
+  - Nothing at the moment (B.3 and B.4 confirmed 2026-10-19).
+
+Removed / parked:
+  - "My role" line and metrics on project cards: removed from web/project.ts
+    and projects.html because the API does not provide them yet. Earlier
+    designs for them live in api/_prisma-backup/ (schema with role +
+    ProjectMetric model, project-details.sql with CV content).
+
+Known issues / loose ends:
+  - api/_prisma-backup/ still exists (safe to keep or delete later).
+  - web has no commits since the initial one; api is not under git at all.
+  - Earlier intermittent CORS error was seen once (cause not confirmed;
+    suspected API restarting or a second API process). Not seen since.
+
+Documentation  [VERIFIED]
+  - portfolio/docs/ created: README + 01..11 + diagrams/ (4 files).
+    All internal links checked; all 12 Mermaid diagrams validated with
+    mermaid-cli. No application code was changed while writing them.
+  - Issues found while documenting (NOT fixed; code unchanged):
+      * web/src/app/app.spec.ts still expects an <h1> "Hello, web"
+        → `npm test` in web is expected to FAIL.
+      * Header nav links #experience, #skills and the Contact button
+        (#contact) point to sections that don't exist yet.
+      * api has no production build/start script (dev only; noEmit).
+      * 0_init migration creates id as SERIAL; the live table uses
+        GENERATED ALWAYS AS IDENTITY (both auto-number; matters only for
+        a fresh DB built from migrations).
+      * No seed script: a fresh database starts empty.
+
+Exact stopping point:
+  B.4 chips delivered; SESSION_CONTEXT.txt and docs/ created.
+  Chips confirmed working. Waiting for the user's next instruction (see G;
+  suggested next: G2b small fixes, or G3 commit, or G4 role + metrics).
+
+==============================================================================
+D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
+==============================================================================
+  - Stack: Angular 22 (frontend), Node + Express 5 + TypeScript (API),
+    PostgreSQL 18 (DB). Express chosen over NestJS: NestJS hides the
+    request→response flow the user wants to learn.
+  - One folder "portfolio" with api/ and web/ (no monorepo tooling).
+  - Vertical slice first; deployment postponed by the user (decided later).
+  - ORM: Prisma 7 (not Drizzle; not Prisma 8 RC). Raw SQL was learned first.
+  - API architecture: feature modules; server.ts (start only) / app.ts
+    (middleware + routes, testable) / routes.ts (one line per feature) /
+    modules/<feature>/{routes,controller,service}. Services live INSIDE their
+    feature folder (no central services folder). No repository layer
+    (over-engineering for a portfolio). Only services touch the DB; only
+    controllers touch req/res.
+  - Validation in the controller; 400 for bad input, 404 for missing items.
+  - Settings via config/env.ts (required DATABASE_URL checked at startup;
+    PORT default 3000; CORS_ORIGIN default http://localhost:4200).
+  - DB naming: snake_case in DB, camelCase in code/JSON via @map/@@map.
+  - Prisma schema/migrations: structure changes = edit schema → migrate dev
+    → generate. Data changes = pgAdmin / Prisma Studio / Prisma in code.
+    Never change structure by hand in pgAdmin any more.
+  - Projects filter UX: category CHIPS (Option B) instead of a search box
+    (only 3 projects; chips look better to recruiters). Chips come from
+    GET /api/projects/categories so they don't disappear when filtered.
+  - Frontend: one component per section; signal inputs; OnPush; @for/@if/
+    @switch; httpResource for GET; linkedSignal keeps the previous list
+    visible (dimmed) while a new filter loads; CSS scroll-driven .reveal
+    animation; all motion behind prefers-reduced-motion.
+  - Plan "A": build all sections statically first, then move Skills /
+    Experience into the DB later (JOIN lesson).
+  - Design: Navy Professional; title on site = "Frontend Engineer" (matches
+    CV); phone number NOT shown publicly; no availability badge.
+
+==============================================================================
+E. USER REQUIREMENTS AND PREFERENCES (follow strictly)
+==============================================================================
+  Communication
+  - Treat the user as a frontend dev reading backend for the first time.
+    Plain words, minimal jargon, Angular analogies (HttpClient, services,
+    interfaces, ng CLI, Git commits for migrations, spreadsheets for tables).
+  - Explain every new technical term briefly when first used.
+  - Flow and purpose of each file over line-by-line code. Don't go deep.
+  - One small step at a time; wait for "next"/"go" before continuing.
+  - End each step with a short "brief flow" (Angular → ... → DB → Angular).
+  - Use consistent names: "Prisma commands" (terminal) vs "Prisma in your
+    code" (runtime). The user found "the tool" confusing.
+  - Short, single answers to quick questions.
+  Engineering
+  - Real-world best practices and scalable folder structure; index.ts must
+    not hold features.
+  - Keep the user's own notes in files (projects.service.ts bottom,
+    prisma7.config.ts header, api/readme.txt, schema.prisma "My notes").
+  - Don't touch web/ when asked to work only on api/ (and vice versa).
+  - Don't invent CV facts; keep content accurate to the CV.
+  - Never put passwords or secrets in files or docs.
+  Rejected / explicitly not wanted
+  - The word "Freelance" anywhere; the "Open to new opportunities" badge.
+  - Warm & friendly designs (A/B/C); a search box (for now).
+  - Moving too fast or doing many backend steps at once.
+
+==============================================================================
+F. PROBLEMS, FAILED ATTEMPTS, LESSONS
+==============================================================================
+  - Node 20 shadowed nvm (D:\node.exe first in PATH) → uninstall standalone
+    Node via Settings > Apps; restart VS Code so its terminal sees new PATH.
+  - Old global Angular CLI on Node 20 → use npx / npm start inside web.
+  - "relation projects already exists" → query ran twice (F5 runs whole
+    editor; select text first).
+  - UPDATE WHERE id = 2 changed nothing → row 2 had been deleted (UPDATE 0).
+  - CORS error initially → expected; fixed by cors middleware BEFORE routes.
+    A later version had app.use(cors) AFTER app.listen (bug) → fixed.
+  - "Cannot find name 'process'" in prisma7.config.ts → add "types":["node"]
+    and include the config file in tsconfig.
+  - prisma.project not found → client generated before rename; re-run
+    npx prisma generate (+ "TypeScript: Restart TS Server").
+  - /** */ comments are NOT valid in schema.prisma → use // or ///.
+  - Prisma 7: migrate dev does NOT run generate → always run generate after.
+  - PowerShell ">" redirection writes UTF-16 → use Git Bash for migrate diff.
+  - First Prisma attempt went too fast → user lost the mental model → full
+    revert and step-by-step redo. Lesson: small steps, explain first.
+  - Claude-side tooling: api's TypeScript 7 ships a Windows-only binary;
+    type-check the API from Claude's Linux shell with
+    `node ../web/node_modules/typescript/bin/tsc -p tsconfig.json`, and the
+    web with `node node_modules/@angular/compiler-cli/bundles/src/bin/ngc.js
+    -p tsconfig.app.json --noEmit`. `ng build` can't run there (Windows
+    esbuild binaries). File deletion needs a permission prompt each session.
+
+==============================================================================
+G. IMMEDIATE NEXT STEPS (prioritised)
+==============================================================================
+  G1. [DONE] Documentation in portfolio/docs/. Keep it updated after
+      every feature (same as this file).
+  G2. [DONE] B.3 and B.4 confirmed by the user (2026-10-19); docs updated.
+  G2b. Small fixes the user may want (ask first): update the outdated
+      app.spec.ts assertion; hide/disable nav links to missing sections
+      until those sections exist.
+  G3. Recommend committing: git commit in web; git init in api (or one repo
+      at portfolio/ root). Needs the user's decision.
+  G4. Bring back "My role" + metrics properly (slowly):
+      add role String? to Project (migrate dev + generate); add a
+      ProjectMetric model (one-to-many, foreign key, onDelete Cascade);
+      include metrics in the service; fill data; re-add to web/project.ts and
+      projects.html. Reference: api/_prisma-backup/prisma/schema.prisma and
+      project-details.sql (CV figures).
+  G5. Remaining web sections (static first, plan A): Experience, Skills,
+      Contact (form + POST endpoint later, with Postman), Footer.
+  G6. Move Skills/Experience into the DB (relationships / JOIN lesson).
+  G7. Deployment (postponed by user) — pick hosts; make API_BASE_URL and
+      CORS_ORIGIN environment-based.
+
+==============================================================================
+H. IMPORTANT CONTEXT AND REFERENCES
+==============================================================================
+API (portfolio/api)
+  package.json scripts: "dev": "tsx watch --env-file=.env src/server.ts"
+  src/server.ts        starts the server (env.port)
+  src/app.ts           cors(env.corsOrigin) → express.json() → /api → notFound → errorHandler
+  src/routes.ts        apiRouter.use("/projects", projectsRouter)
+  src/config/env.ts    databaseUrl (required), port, corsOrigin
+  src/db/prisma.ts     PrismaClient({ adapter: new PrismaPg({ connectionString }) })
+  src/middleware/      not-found.ts (404), error-handler.ts (500, logs)
+  src/modules/projects/
+    projects.routes.ts      GET "/" listProjects · GET "/categories" listCategories ·
+                            GET "/:id" getProject   (/categories BEFORE /:id)
+    projects.controller.ts  validation + status codes
+    projects.service.ts     findProjects, findProjectById, findCategories
+  prisma/schema.prisma      model Project @@map("projects")
+  prisma/migrations/        0_init, 20261017133430_add_project_category
+  prisma7.config.ts         CLI config (dotenv)
+  generated/prisma          generated client (gitignored)
+  .env (secret), .env.example (placeholders), readme.txt (user's notes)
+
+Endpoints
+  GET /api/projects?limit=1..50(default 10)&offset>=0(default 0)&title=&category=
+      200 { data: Project[], total, limit, offset } · 400 { error }
+  GET /api/projects/categories  → 200 ["Banking","Lending","Payments"]
+  GET /api/projects/:id         → 200 Project · 400 · 404 { error }
+  Unknown route → 404 { error: "Route not found: ..." }; crash → 500
+
+Project (JSON / Prisma model) → DB column
+  id→id, title, summary, description, category, imageUrl→image_url,
+  liveUrl→live_url, repoUrl→repo_url, displayOrder→display_order
+
+Web (portfolio/web/src/app)
+  core/api.config.ts        API_BASE_URL = http://localhost:3000/api
+  core/projects.service.ts  loadProjects(categorySignal), loadCategories()
+  project.ts                Project, ProjectsResponse (no role/metrics now)
+  sections/projects/        chips + featured card + grid, linkedSignal
+  styles.scss               tokens (--color-*, --font-*), .container,
+                            .skip-link, .reveal, .visually-hidden
+
+Run locally
+  api: npm run dev (port 3000)   web: npm start (port 4200)
+  Prisma: npx prisma validate | migrate dev --name X | generate | studio
+
+Design canvas (private): https://claude.ai/artifact/3LDTzbuYXcMSRRUgtih4GY
+  board "D · Navy Professional" = reference for the Angular build.
+CV: web/public/Devaangini-Mehta-CV.pdf (also uploaded to the canvas).
+Key CV facts used: Frontend Engineer; 4.5+ yrs; Happiest Minds (formerly
+PureSoftware) Software Engineer May 2024–present; PureSoftware Frontend
+Engineer Jul 2022–May 2024; Engineer Trainee Jan–Jun 2022; Arttha 150M+
+users, 3B+ txns/yr, 20+ markets; 60% faster page loads; Flexipay 69M+ txns,
+124K+ merchants, 10+ components; LOS 5M+ customers, USD 120M+ disbursed;
+B.Tech ECE Thapar University 2018–2022; Employee of the Month ×4.
+Docs consulted: angular.dev/reference/versions;
+prisma.io/docs (Prisma 7 add-to-existing-project, PostgreSQL).
+
+Secrets: NOT stored here. DATABASE_URL lives only in api/.env.
+==============================================================================

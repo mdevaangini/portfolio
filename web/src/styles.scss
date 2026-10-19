@@ -1,0 +1,146 @@
+/*
+ * Global styles: design tokens and base rules shared by every component.
+ * Component-specific styles live next to each component (e.g. header.scss).
+ */
+
+:root {
+  /* Colours */
+  --color-navy-950: #0a1a33;
+  --color-navy-900: #13294b;
+  --color-navy-800: #1c3660;
+  --color-navy-line: #2a4673;
+  --color-on-navy: #c9d6ea;
+  --color-on-navy-accent: #8fb0f2;
+
+  --color-ink: #0f172a;
+  --color-text: #334155;
+  --color-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-border-soft: #eef2f7;
+  --color-surface: #f6f8fb;
+  --color-white: #ffffff;
+
+  --color-accent: #1d4ed8;
+  --color-accent-strong: #1e3a8a;
+  --color-accent-soft: #eef3fd;
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Layout */
+  --container-width: 1180px;
+  --gutter: 24px;
+  --header-height: 65px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Anchor links stop below the sticky header instead of behind it */
+  scroll-padding-top: var(--header-height);
+}
+
+body {
+  margin: 0;
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+a:hover {
+  color: var(--color-accent-strong);
+}
+
+::selection {
+  background: #dbe6fd;
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Shared page-width wrapper used by every section */
+.container {
+  max-width: var(--container-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Hidden until a keyboard user tabs to it */
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 12px;
+  color: var(--color-white);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/*
+ * Scroll reveal: add class="reveal" to any element and it fades up as it
+ * scrolls into view. Uses CSS scroll-driven animations (no JavaScript).
+ * Browsers without support simply show the element as normal.
+ */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+/* Hidden visually but still read by screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

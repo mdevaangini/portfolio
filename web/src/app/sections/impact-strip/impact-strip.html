@@ -1,0 +1,10 @@
+<section class="container" aria-label="Impact at a glance">
+  <ul class="strip">
+    @for (stat of stats; track stat.value) {
+      <li class="stat">
+        <span class="stat__value">{{ stat.value }}</span>
+        <span class="stat__label">{{ stat.label }}</span>
+      </li>
+    }
+  </ul>
+</section>

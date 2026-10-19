@@ -1,0 +1,41 @@
+<section class="container expertise" id="expertise" aria-labelledby="expertise-title">
+  <app-section-heading
+    class="reveal"
+    index="01"
+    eyebrow="What I do"
+    title="Frontend engineering for complex financial products"
+    headingId="expertise-title"
+  />
+
+  <ul class="cards">
+    @for (area of areas; track area.title) {
+      <li class="card reveal">
+        <span class="card__icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            @switch (area.icon) {
+              @case ('bolt') {
+                <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
+              }
+              @case ('grid') {
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              }
+              @case ('pulse') {
+                <path d="M3 12h4l3-8 4 16 3-8h4" />
+              }
+              @case ('form') {
+                <rect x="4" y="3" width="16" height="18" rx="2" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+              }
+            }
+          </svg>
+        </span>
+        <h3 class="card__title">{{ area.title }}</h3>
+        <p class="card__text">{{ area.description }}</p>
+      </li>
+    }
+  </ul>
+</section>

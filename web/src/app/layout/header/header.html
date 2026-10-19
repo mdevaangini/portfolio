@@ -1,0 +1,20 @@
+<header class="header" [class.header--scrolled]="scrolled()">
+  <div class="container header__inner">
+    <a class="brand" href="#top" aria-label="Devaangini Mehta, back to top">
+      <span class="brand__mark" aria-hidden="true">DM</span>
+      <span class="brand__text">
+        <span class="brand__name">Devaangini Mehta</span>
+        <span class="brand__role">Frontend Engineer</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      @for (item of navItems; track item.target) {
+        <a class="nav__link" [href]="'#' + item.target">{{ item.label }}</a>
+      }
+      @if (contactReady) {
+        <a class="nav__cta" href="#contact">Contact</a>
+      }
+    </nav>
+  </div>
+</header>

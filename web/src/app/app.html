@@ -1,0 +1,20 @@
+<a class="skip-link" href="#main">Skip to content</a>
+
+<app-header />
+
+<main id="main">
+  <app-hero />
+  <app-impact-strip />
+  <app-expertise />
+
+  <!--
+    Below-the-fold content is loaded lazily: the Projects code (and its API call)
+    only loads when this spot nears the screen. "prefetch on idle" downloads the
+    code in the background as soon as the browser is free, so it's ready in time.
+  -->
+  @defer (on viewport; prefetch on idle) {
+    <app-projects />
+  } @placeholder {
+    <div class="deferred-placeholder" id="work"></div>
+  }
+</main>

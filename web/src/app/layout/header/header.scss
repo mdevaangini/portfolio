@@ -1,0 +1,131 @@
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border);
+  transition: box-shadow 0.3s ease;
+
+  &--scrolled {
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  }
+}
+
+.header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-block: 14px;
+}
+
+/* Brand: monogram + name */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-ink);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-ink);
+  }
+}
+
+.brand__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand__name {
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.brand__role {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.nav__link {
+  padding: 10px 12px;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 8px;
+  transition: text-decoration-color 0.25s ease;
+
+  &:hover {
+    color: var(--color-ink);
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+.nav__cta {
+  margin-left: 10px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    color: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(10, 26, 51, 0.22);
+  }
+
+  &:active {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Phones: keep only the brand and the Contact button on one row */
+@media (max-width: 640px) {
+  .nav__link {
+    display: none;
+  }
+
+  .nav__cta {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__cta:hover {
+    transform: none;
+  }
+}

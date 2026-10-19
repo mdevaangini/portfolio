@@ -1,0 +1,40 @@
+// The description of our database tables, for Prisma.
+// Prisma reads this file to generate the TypeScript client code.
+
+// What to generate: a TypeScript client, written into api/generated/prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+// Which kind of database we use. The address itself comes from prisma7.config.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+// One model = one table.
+// Left: the name used in TypeScript code. @map / @@map: the real name in the database.
+model Project {
+  id           Int     @id @default(autoincrement())
+  title        String
+  summary      String
+  description  String
+  /// Shown as a filter chip on the site, e.g. "Payments". Optional for now.
+  category     String?
+  imageUrl     String? @map("image_url")
+  liveUrl      String? @map("live_url")
+  repoUrl      String? @map("repo_url")
+  displayOrder Int     @default(0) @map("display_order")
+
+  @@map("projects")
+}
+
+// ── My notes ────────────────────────────────────────────────────────────
+// schema.prisma: the map of my database. Before `db pull` it had only the
+// two setup blocks (generator and datasource); db pull added the model.
+//
+// How to read it:
+// - model projects: one model = one table.
+// - Each line = one column: name, then type.
+// - String?: the ? means optional (columns created without NOT NULL).
+// - @id: the primary key. @default(...): a value the database fills in itself.

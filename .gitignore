@@ -1,0 +1,22 @@
+# What Git must never save, for the whole project.
+# (api/ and web/ also have their own .gitignore files; these rules add to them.)
+
+# Installed packages: rebuilt with `npm install`
+node_modules/
+
+# Secrets: real passwords live only in .env files on this machine
+.env
+.env.*
+!.env.example
+
+# Generated or built output: always recreated by a command
+api/generated/
+web/dist/
+web/.angular/
+
+# Old, parked Prisma attempt (kept locally for reference only)
+api/_prisma-backup/
+
+# Editor and operating-system clutter
+.DS_Store
+Thumbs.db

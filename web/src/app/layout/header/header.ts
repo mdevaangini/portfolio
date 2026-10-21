@@ -21,8 +21,8 @@ export class Header {
   private readonly allNavItems: NavItem[] = [
     { label: 'Expertise', target: 'expertise', ready: true },
     { label: 'Work', target: 'work', ready: true },
-    { label: 'Experience', target: 'experience', ready: false },
-    { label: 'Skills', target: 'skills', ready: false },
+    { label: 'Experience', target: 'experience', ready: true },
+    { label: 'Skills', target: 'skills', ready: true },
   ];
 
   /** Only links whose section exists */

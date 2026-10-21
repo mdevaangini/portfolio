@@ -1,0 +1,43 @@
+<section class="skills" id="skills" aria-labelledby="skills-title">
+  <div class="container skills__inner">
+    <app-section-heading
+      class="reveal"
+      index="04"
+      eyebrow="Skills"
+      title="Technical toolkit"
+      headingId="skills-title"
+    />
+
+    @if (groups.isLoading() && !groups.hasValue()) {
+      <div class="groups" aria-hidden="true">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+      <p class="visually-hidden" role="status">Loading skills…</p>
+    } @else if (groups.error()) {
+      <div class="state" role="alert">
+        <p class="state__title">Skills couldn't be loaded.</p>
+        <button class="state__button" type="button" (click)="groups.reload()">Try again</button>
+      </div>
+    } @else {
+      <dl class="groups">
+        @for (group of groups.value(); track group.id) {
+          <div class="group">
+            <dt class="group__name">{{ group.name }}</dt>
+            <dd class="group__skills">
+              @for (skill of group.skills; track skill.id) {
+                <span class="skill" [class.skill--core]="group.isCore">{{ skill.name }}</span>
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+    }
+
+    <p class="skills__note reveal">
+      <strong>Backend exposure:</strong> Java (Spring Boot basics), Node.js. Currently learning Express,
+      PostgreSQL and Prisma by building this site end to end.
+    </p>
+  </div>
+</section>

@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.skills {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.skills__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding-block: 104px;
+}
+
+/* 3 columns on desktop, fewer as the screen narrows */
+.groups {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+.group {
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group__name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.group__skills {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.skill--core {
+  background: var(--color-accent-soft);
+  color: var(--color-navy-900);
+}
+
+.skills__note {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-muted);
+
+  strong {
+    color: var(--color-ink);
+  }
+}
+
+/* Loading and error states */
+.skeleton {
+  min-height: 96px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eef2f7 0%, #f6f8fb 50%, #eef2f7 100%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+.state {
+  padding: 40px 32px;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+  background: var(--color-white);
+  text-align: center;
+}
+
+.state__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.state__button {
+  margin-top: 16px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .skills__inner {
+    padding-block: 80px;
+  }
+}

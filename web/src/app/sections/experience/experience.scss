@@ -1,0 +1,158 @@
+:host {
+  display: block;
+}
+
+.experience {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px 72px;
+  padding-block: 104px;
+}
+
+.experience__main {
+  flex: 999 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.experience__aside {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Timeline: a line on the left of each role; the current role's line is blue */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.role {
+  padding-left: 24px;
+  border-left: 2px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role--current {
+  border-left-color: var(--color-accent);
+}
+
+.role__meta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.role__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.role__note {
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.role__summary {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-muted);
+}
+
+/* Recognition and education cards */
+.highlight {
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.highlight__label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.highlight__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.highlight__text {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-muted);
+}
+
+/* Loading and error states */
+.skeleton {
+  min-height: 96px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eef2f7 0%, #f6f8fb 50%, #eef2f7 100%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+.state {
+  padding: 40px 32px;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+  background: var(--color-white);
+  text-align: center;
+}
+
+.state__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.state__button {
+  margin-top: 16px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .experience {
+    padding-block: 80px;
+    gap: 40px;
+  }
+}

@@ -33,6 +33,6 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     const links = Array.from(compiled.querySelectorAll('.nav__link')).map((a) => a.textContent?.trim());
-    expect(links).toEqual(['Expertise', 'Work']);
+    expect(links).toEqual(['Expertise', 'Work', 'Experience', 'Skills']);
   });
 });

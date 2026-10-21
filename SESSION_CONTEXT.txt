@@ -1,6 +1,6 @@
 ==============================================================================
  SESSION_CONTEXT.txt  —  Portfolio project (Angular + Node/Express + PostgreSQL)
- Last updated: 2026-10-19, ~16:10 IST (Asia/Calcutta)
+ Last updated: 2026-10-19, ~18:20 IST (Asia/Calcutta)
  Location: C:\Users\HP\OneDrive\Desktop\portfolio\SESSION_CONTEXT.txt
 ==============================================================================
 
@@ -69,9 +69,13 @@ B. WORK COMPLETED SO FAR (chronological, condensed)
 B1. Environment  [VERIFIED]
   - Windows; VS Code terminal = Git Bash (MINGW64).
   - Project root: C:\Users\HP\OneDrive\Desktop\portfolio  (Desktop is in OneDrive)
-      portfolio/api  = Node/Express backend (NOT a git repo)
-      portfolio/web  = Angular app (git repo; only commit "54e0efe initial
-                       commit"; all later work is uncommitted)
+      ONE git repo at portfolio/ (branch main), pushed to GitHub:
+      https://github.com/mdevaangini/portfolio (PRIVATE; the CV PDF contains
+      a phone number). web's old separate .git was removed. Root .gitignore
+      excludes node_modules, .env*, api/generated, web/dist, web/.angular,
+      api/_prisma-backup. First commit: 185c1bf.
+      portfolio/api  = Node/Express backend
+      portfolio/web  = Angular app
   - PostgreSQL 18 on localhost:5432, database "portfolio", user "postgres".
     pgAdmin 4 installed. (Stack Builder was cancelled; not needed.)
   - Node: nvm-windows installed; Node 24.21.0 active. The old standalone
@@ -198,8 +202,8 @@ Documentation  [VERIFIED]
 
 Exact stopping point:
   B.4 chips delivered; SESSION_CONTEXT.txt and docs/ created.
-  Chips confirmed working. Waiting for the user's next instruction (see G;
-  suggested next: G2b small fixes, or G3 commit, or G4 role + metrics).
+  Parts 1 (small fixes) and 2 (git + GitHub) done. NEXT: part 3 = G4
+  ("My role" + metrics), slowly, one step at a time.
 
 ==============================================================================
 D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
@@ -295,11 +299,14 @@ G. IMMEDIATE NEXT STEPS (prioritised)
   G1. [DONE] Documentation in portfolio/docs/. Keep it updated after
       every feature (same as this file).
   G2. [DONE] B.3 and B.4 confirmed by the user (2026-10-19); docs updated.
-  G2b. Small fixes the user may want (ask first): update the outdated
-      app.spec.ts assertion; hide/disable nav links to missing sections
-      until those sections exist.
-  G3. Recommend committing: git commit in web; git init in api (or one repo
-      at portfolio/ root). Needs the user's decision.
+  G2b. [DONE 2026-10-19] app.spec.ts rewritten (3 tests pass via npm test:
+      creates app, hero headline, only ready nav links). Header nav items
+      have a `ready` flag + `contactReady`; Experience/Skills/Contact are
+      hidden until built — flip to true in part 4.
+  G3. [DONE 2026-10-19] Single git repo + pushed to GitHub (private).
+      Routine after each step: git add . → git commit -m "…" → git push.
+  USER CHOSE TO DO, IN ORDER: (1) small fixes ✓ (2) git ✓ (3) My role +
+      metrics (G4) ← NEXT (4) remaining sections (G5).
   G4. Bring back "My role" + metrics properly (slowly):
       add role String? to Project (migrate dev + generate); add a
       ProjectMetric model (one-to-many, foreign key, onDelete Cascade);

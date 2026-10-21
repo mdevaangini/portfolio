@@ -29,6 +29,44 @@ model Project {
   @@map("projects")
 }
 
+// One job in the Experience section. endDate empty = current job.
+model Experience {
+  id          Int       @id @default(autoincrement())
+  title       String
+  company     String
+  /// Small note after the company, e.g. "formerly PureSoftware". Optional.
+  companyNote String?   @map("company_note")
+  location    String
+  summary     String
+  startDate   DateTime  @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+
+  @@map("experiences")
+}
+
+// A heading in the Skills section, e.g. "Frontend". One group has many skills.
+model SkillGroup {
+  id           Int     @id @default(autoincrement())
+  name         String
+  /// Core groups get the stronger blue chip on the site.
+  isCore       Boolean @default(false) @map("is_core")
+  displayOrder Int     @default(0) @map("display_order")
+  skills       Skill[]
+
+  @@map("skill_groups")
+}
+
+// One skill chip, e.g. "RxJS". Each skill belongs to one group.
+model Skill {
+  id           Int        @id @default(autoincrement())
+  name         String
+  displayOrder Int        @default(0) @map("display_order")
+  groupId      Int        @map("group_id")
+  group        SkillGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("skills")
+}
+
 // ── My notes ────────────────────────────────────────────────────────────
 // schema.prisma: the map of my database. Before `db pull` it had only the
 // two setup blocks (generator and datasource); db pull added the model.

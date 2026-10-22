@@ -67,7 +67,7 @@
 
       <!-- Remaining projects -->
       @if (others().length) {
-        <div class="grid">
+        <div class="grid stagger">
           @for (project of others(); track project.id) {
             <article class="card lift reveal">
               <ng-container *ngTemplateOutlet="details; context: { $implicit: project, featured: false }" />

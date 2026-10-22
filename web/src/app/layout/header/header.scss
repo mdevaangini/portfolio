@@ -101,7 +101,23 @@
   }
 }
 
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  /* The whole bar slides down once when the page opens */
+  .header {
+    animation: slide-down 0.6s var(--ease-out) both;
+  }
+
   @supports (animation-timeline: scroll()) {
     .progress {
       animation: grow linear both;

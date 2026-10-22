@@ -2,27 +2,29 @@
 
 [← 05 Database](05-database-documentation.md) · [Docs home](README.md) · Next: [07 — Local setup](07-local-setup-and-development.md)
 
-This page follows real features from the visitor's screen to the database and back. Not every feature uses all three layers; static sections are covered first, because "no request at all" is also a flow.
+This page follows real features from the visitor's screen to the database and back. Not every feature uses all three layers; static sections are covered first, because "no request at all" is also a flow. Flows 2–5 **read** from the database; Flow 6 **writes** to it.
+
+> Mental model: the database is an Excel file. Flows 2–5 *read* sheets on every page load. Filling the sheets happens separately (by hand, by `npm run seed`, or — in Flow 6 — by a visitor).
 
 ---
 
-## Flow 1 — Static sections (hero, numbers, "What I do")
+## Flow 1 — Static sections (hero, numbers, "What I do", footer)
 
 **In plain English:** these are written into the website itself. When the page opens, they appear straight away; nothing is fetched.
 
 1. Browser loads `index.html` → `main.ts` bootstraps `App`.
-2. `app.html` renders `<app-hero />`, `<app-impact-strip />` and `<app-expertise />`.
+2. `app.html` renders `<app-hero />`, `<app-impact-strip />`, `<app-expertise />` and `<app-footer />`.
 3. Their text and numbers come from arrays/objects in their own `.ts` files.
 
 No API, no database. Failure points: none at runtime (mistakes surface at build time).
 
-**CV download:** the **Download CV** link points to `Devaangini-Mehta-CV.pdf`, which Angular serves from `web/public/`. The browser downloads it directly; the API isn't involved.
+**CV download and photo:** the **Download CV** link points to `Devaangini-Mehta-CV.pdf` and the photo is `headshot.jpg`, both served by Angular from `web/public/`. The API isn't involved.
 
 ---
 
 ## Flow 2 — Loading the projects (first view)
 
-**In plain English:** when you scroll to "Selected work", the site asks the server for the projects, the server asks the database, and the answer comes back and becomes cards.
+**In plain English:** when you scroll to the projects section, the site asks the server for the projects, the server asks the database, and the answer comes back and becomes cards.
 
 ### Step by step
 
@@ -54,7 +56,7 @@ sequenceDiagram
     participant P as Prisma Client
     participant DB as PostgreSQL
 
-    V->>C: scrolls to "Selected work" (@defer on viewport)
+    V->>C: scrolls to the projects section (@defer on viewport)
     C->>S: loadProjects(selectedCategory = null)
     S->>E: GET /api/projects
     E->>E: cors → express.json → /api → /projects
@@ -124,7 +126,101 @@ If the categories request fails, no chips are shown; the project list still work
 
 ---
 
-## Flow 4 — One project by id (API only)
+## Flow 4 — Experience (reading dates)
+
+**In plain English:** as soon as the page opens, the Experience section asks for the jobs. They come back newest first, and Angular turns the dates into "May 2024 – Present".
+
+1. `Experience` is created → `inject(ExperienceService).loadExperiences()` → `GET /api/experience`.
+2. API: `experience.routes.ts` → `listExperiences` (nothing to validate) → `findExperiences` → `prisma.experience.findMany({ orderBy: { startDate: "desc" } })`.
+3. PostgreSQL returns the 3 rows from `experiences`, newest `start_date` first.
+4. JSON arrives with dates as text (`"2024-05-01T00:00:00.000Z"`) and `endDate: null` for the current job.
+5. The template formats them with `date: 'MMM y' : 'UTC'` and shows "Present" for `null`. The first job gets the pulsing apricot dot.
+
+Failure points: same as Flow 2; the section shows "Experience couldn't be loaded." + **Try again**.
+
+---
+
+## Flow 5 — Skills (reading two linked tables)
+
+**In plain English:** the Skills section asks for "every group, with its skills inside". The database keeps groups and skills in two sheets linked by `group_id`; Prisma joins them and sends one nested answer.
+
+1. `Skills` is created → `loadSkillGroups()` → `GET /api/skills`.
+2. API: `listSkillGroups` → `findSkillGroups` → `skillGroup.findMany({ select: { id, name, isCore, skills: { … } } })`.
+3. Prisma asks PostgreSQL for the groups, then for the skills whose `group_id` is one of those groups, and **nests** each group's skills inside it.
+4. JSON: `[{ "name": "Frontend", "isCore": true, "skills": [{ "name": "Angular (15+)" }, …] }, …]`.
+5. Angular loops twice (`@for` groups → `@for` skills), adds folder labels like `frontend/`, and the chips pop in as you scroll.
+
+```mermaid
+sequenceDiagram
+    participant C as Skills component
+    participant API as API /api/skills
+    participant P as Prisma Client
+    participant DB as PostgreSQL
+
+    C->>API: GET /api/skills
+    API->>P: skillGroup.findMany({ select: { …, skills } })
+    P->>DB: SELECT … FROM skill_groups ORDER BY display_order
+    DB-->>P: 6 groups
+    P->>DB: SELECT … FROM skills WHERE group_id IN (…) ORDER BY display_order
+    DB-->>P: 26 skills
+    P-->>API: groups with skills nested inside
+    API-->>C: 200 JSON
+    C-->>C: @for groups → @for skills
+```
+
+---
+
+## Flow 6 — Sending a contact message (writing)
+
+**In plain English:** this is the opposite direction. The visitor types a message; the site sends it to the server; the server checks it and saves a new row; the page says thanks.
+
+1. The visitor fills in **Name**, **Email**, **Message** and clicks **Send message**.
+2. `Contact.submit()` (`web/src/app/sections/contact/contact.ts`): if the form is invalid, every field shows its error and **nothing is sent**.
+3. Otherwise `status` becomes `'sending'` (button disabled, "Sending…") and `ContactService.send(...)` calls `HttpClient.post('/api/contact', body)`.
+4. API: `cors` → `express.json()` turns the JSON text into `req.body` → `/api/contact` → `contactRouter.post("/")` → `sendMessage`.
+5. Controller: trims each field; if the hidden `website` field is filled (a bot), answers 201 without saving; otherwise checks every rule and collects all problems.
+6. Problems → **400** `{ error, fields }` → Angular shows each message under its field (`status` back to `'idle'`).
+7. All good → `createMessage()` → `prisma.message.create(...)` → `INSERT INTO messages …`; PostgreSQL fills in `id` and `created_at`.
+8. API answers **201** `{ ok: true, id, createdAt }` → `status` = `'sent'` → "Thanks, your message was sent." The form is reset.
+
+```mermaid
+sequenceDiagram
+    actor V as Visitor
+    participant F as Contact form (Angular)
+    participant S as ContactService
+    participant Ctl as contact.controller
+    participant Svc as contact.service
+    participant DB as PostgreSQL
+
+    V->>F: fills in the form, clicks Send
+    F->>F: browser checks (required, email, lengths)
+    F->>S: send(name, email, message, website)
+    S->>Ctl: POST /api/contact (JSON body)
+    Ctl->>Ctl: trim, spam trap, check every field
+    alt something is wrong
+        Ctl-->>F: 400 with error and fields
+        F-->>V: messages under the fields
+    else all good
+        Ctl->>Svc: createMessage(data)
+        Svc->>DB: INSERT INTO messages … RETURNING id, created_at
+        DB-->>Svc: new row
+        Svc-->>Ctl: id, createdAt
+        Ctl-->>F: 201 Created
+        F-->>V: "Thanks, your message was sent."
+    end
+```
+
+| Where it can fail | What happens | What the visitor sees |
+|---|---|---|
+| Browser checks fail | Nothing is sent | Red messages under the fields |
+| API checks fail | 400 | The API's messages under the fields |
+| API not running / DB down / 500 | Request fails | Red box: "Something went wrong… email me directly." |
+
+Check the result in pgAdmin: `SELECT * FROM messages ORDER BY created_at DESC;`
+
+---
+
+## Flow 7 — One project by id (API only)
 
 `GET /api/projects/:id` exists in the API ✅ but **the website does not use it yet** (there's no project detail page). Test it directly: `http://localhost:3000/api/projects/1` → 200, `/2` → 404 (deleted row), `/abc` → 400.
 
@@ -134,8 +230,11 @@ If the categories request fails, no chips are shown; the project list still work
 
 | Feature | Web | API | Database |
 |---|---|---|---|
-| Hero, numbers, expertise | static | — | — |
-| CV download | static file | — | — |
+| Hero, numbers, expertise, footer | static | — | — |
+| CV download, photo | static files | — | — |
 | Projects list | `Projects` + `ProjectsService.loadProjects` | `GET /api/projects` | `projects` (read) |
 | Category chips | `ProjectsService.loadCategories` + signal | `GET /api/projects/categories`, `?category=` | `projects.category` (read) |
+| Experience | `Experience` + `ExperienceService` | `GET /api/experience` | `experiences` (read) |
+| Skills | `Skills` + `SkillsService` | `GET /api/skills` | `skill_groups` + `skills` (read, linked) |
+| Contact form | `Contact` + `ContactService` (POST) | `POST /api/contact` | `messages` (**write**) |
 | Project by id | not used | `GET /api/projects/:id` | `projects` (read) |

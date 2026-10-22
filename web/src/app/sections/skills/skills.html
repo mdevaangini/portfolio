@@ -20,9 +20,9 @@
         <button class="btn btn--navy state__button" type="button" (click)="groups.reload()">Try again</button>
       </div>
     } @else {
-      <dl class="groups">
+      <dl class="groups stagger">
         @for (group of folders(); track group.id) {
-          <div class="group">
+          <div class="group reveal">
             <dt class="group__name">
               <span aria-hidden="true">{{ group.folder }}</span>
               <span class="visually-hidden">{{ group.name }}</span>

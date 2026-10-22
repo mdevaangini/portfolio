@@ -5,9 +5,38 @@
 
 :host {
   display: block;
+  position: relative;
+  overflow: hidden; /* keeps the blobs from spilling past the hero */
+}
+
+/* Soft background shapes */
+.blob {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.blob--one {
+  width: 420px;
+  height: 420px;
+  top: -120px;
+  right: -60px;
+  background: rgba(244, 162, 97, 0.32);
+}
+
+.blob--two {
+  width: 340px;
+  height: 340px;
+  bottom: -140px;
+  left: 30%;
+  background: rgba(252, 230, 210, 0.9);
 }
 
 .hero {
+  position: relative;
+  isolation: isolate; /* so the blobs (z-index: -1) stay behind the text but above the page */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -92,6 +121,7 @@
 }
 
 .photo__img {
+  transition: transform 0.5s var(--ease-out);
   position: absolute;
   inset: 0;
   width: 100%;
@@ -105,6 +135,11 @@
   place-items: center;
   color: var(--color-accent-deep);
   font-weight: 700;
+}
+
+/* Hovering the photo tilts it slightly */
+.photo:hover .photo__img {
+  transform: rotate(-3deg) scale(1.03);
 }
 
 /* ── Animations ── */
@@ -157,7 +192,27 @@
   }
 }
 
+@keyframes drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-40px, 30px) scale(1.08);
+  }
+  100% {
+    transform: translate(20px, -20px) scale(0.96);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .blob--one {
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+
+  .blob--two {
+    animation: drift 22s ease-in-out -6s infinite alternate-reverse;
+  }
+
   .rise {
     animation: rise 0.7s var(--ease-out) both;
     animation-delay: var(--delay, 0s);
@@ -182,6 +237,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .photo:hover .photo__img,
   .download:hover svg {
     transform: none;
   }

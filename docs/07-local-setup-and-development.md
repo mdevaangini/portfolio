@@ -11,7 +11,7 @@ How to run the whole project on a new machine. All commands come from the projec
 | Node.js | **24.x** (24.21.0 in use) | Angular 22 requires `^22.22.3 \|\| ^24.15.0 \|\| ^26`. On Windows, `nvm-windows` lets you switch versions per project |
 | npm | bundled with Node | `web` declares `packageManager: npm@11.19.0` |
 | PostgreSQL | **18** | Default port 5432. pgAdmin 4 is optional but handy |
-| Git | any | `web/` is a git repo; `api/` is not yet |
+| Git | any | One repository at `portfolio/` (private on GitHub). Always commit from the `portfolio/` root |
 | Editor | VS Code (recommended) | On Windows, use the **Git Bash** terminal for the Prisma commands below |
 
 ## 2. Database
@@ -48,7 +48,13 @@ Optional lines (defaults shown): `PORT=3000`, `CORS_ORIGIN=http://localhost:4200
 
 ### Add some data
 
-📝 There is **no seed script yet**, so a new database starts with no projects. Add rows with `npx prisma studio` (opens a spreadsheet-like editor in the browser) or with SQL in pgAdmin, for example:
+```bash
+npm run seed    # fills experiences, skill_groups and skills with the CV data
+```
+
+Expected: `Seeded: 3 jobs, 6 skill groups, 26 skills`. Safe to run again.
+
+📝 Projects are **not** in the seed yet, so a new database starts with no projects. Add rows with `npx prisma studio` (opens a spreadsheet-like editor in the browser) or with SQL in pgAdmin, for example:
 
 ```sql
 INSERT INTO projects (title, summary, description, category, display_order)
@@ -62,6 +68,8 @@ npm run dev     # tsx watch --env-file=.env src/server.ts
 ```
 
 Expected: `API running at http://localhost:3000`. It restarts automatically when you save a file.
+
+To try the production build instead: `npm run build` then `npm run start:local` (see [09](09-deployment-and-configuration.md)).
 
 ## 4. Web (`web/`)
 
@@ -81,8 +89,11 @@ The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/
 | Prisma | `npx prisma validate` (in `api/`) | "schema … is valid" |
 | API | Open `http://localhost:3000/api/projects` | JSON `{ data, total, limit, offset }` |
 | API | `http://localhost:3000/api/projects/categories` | e.g. `["Banking","Lending","Payments"]` |
+| API | `http://localhost:3000/api/experience` | 3 jobs, newest first |
+| API | `http://localhost:3000/api/skills` | 6 groups, each with `skills: [...]` |
+| API | Postman: **POST** `http://localhost:3000/api/contact`, Body → raw → JSON | 201 `{ ok, id, createdAt }` |
 | API | `http://localhost:3000/api/hello` | 404 JSON |
-| Web | Open `http://localhost:4200`, scroll to *Selected work* | Cards and category chips |
+| Web | Open `http://localhost:4200` and scroll through | Projects with chips, experience timeline, skill groups, contact form |
 
 ## 6. Everyday development commands
 
@@ -91,7 +102,9 @@ The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/
 | Start API | `npm run dev` (api) |
 | Start web | `npm start` (web) |
 | Build web for production | `npm run build` (web) → `web/dist/` |
-| Run web tests | `npm test` (web), currently out of date; see [08](08-testing-and-debugging.md) |
+| Run web tests | `npm test` (web) — 3 tests; see [08](08-testing-and-debugging.md) |
+| Refill experience + skills | `npm run seed` (api) |
+| Build / run the API like production | `npm run build`, `npm run start:local` (api) |
 | Change table structure | edit `prisma/schema.prisma` → `npx prisma migrate dev --name <change>` → `npx prisma generate` (api) |
 | Browse/edit data | `npx prisma studio` (api) |
 
@@ -107,4 +120,8 @@ The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/
 | Error in `schema.prisma` about `/**` | Block comments aren't allowed there | Use `//` or `///` |
 | `migrate diff … > file.sql` produces a broken file | PowerShell writes UTF-16 | Run it in Git Bash |
 | Page says "Projects couldn't be loaded." | API not running, CORS, or DB down | See [08 — debugging walkthrough](08-testing-and-debugging.md#debugging-walkthrough-projects-dont-appear) |
+| Postman: 404 "Route not found: GET /api/contact" | The method is still GET | Switch the method dropdown to **POST** |
+| New table not visible in pgAdmin | pgAdmin shows an old list | Right-click **Tables → Refresh** |
+| `git` commit misses api (or web) files | `git add .` was run inside a sub-folder | Run git commands from the `portfolio/` root |
+| Old favicon still shows | Browsers cache favicons | **Ctrl + Shift + R**, or a private window |
 | Browser Network tab: "CORS error" | API not running or old process, or `CORS_ORIGIN` mismatch | Restart the API; check only one process uses port 3000 (`netstat -ano \| findstr :3000` on Windows) |

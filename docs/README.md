@@ -1,6 +1,6 @@
 # Portfolio Project — Documentation
 
-> Last verified against the code: **2026-10-19** (chips confirmed by the owner the same day).
+> Last verified against the code: **2026-10-22**.
 > Status labels used throughout: ✅ **Implemented** · 🟡 **Built, not yet confirmed at runtime** · 📝 **Planned / proposed** · ❓ **Unknown / needs verification**
 
 ## What this project is
@@ -12,16 +12,22 @@ The personal portfolio website of **Devaangini Mehta, Frontend Engineer**. It is
 ```mermaid
 flowchart LR
     U["Visitor's browser"] -->|"opens the site"| W["Web app<br/>(Angular, port 4200)"]
-    W -->|"HTTP request, e.g. GET /api/projects"| A["API<br/>(Node + Express, port 3000)"]
+    W -->|"HTTP request, e.g. GET /api/skills"| A["API<br/>(Node + Express, port 3000)"]
     A -->|"query via Prisma"| DB[("Database<br/>PostgreSQL, port 5432")]
     DB -->|"rows"| A
     A -->|"JSON"| W
     W -->|"cards on screen"| U
 ```
 
-- **Web app** (`web/`) — the pages and buttons. Most sections are written directly in the page; the **Projects** section fetches its content from the API.
+- **Web app** (`web/`) — the pages and buttons. **Projects, Experience and Skills** fetch their content from the API; the **Contact form** sends messages to it. The hero, numbers and "What I do" are written directly in the page.
 - **API** (`api/`) — receives requests, checks them, asks the database, and sends back JSON.
-- **Database** — PostgreSQL. Holds the `projects` table.
+- **Database** — PostgreSQL. Five tables: `projects`, `experiences`, `skill_groups`, `skills`, `messages`.
+
+### The one mental model to keep
+
+> Think of the database as an Excel file with sheets.
+> 1. **Filling the sheets** happens separately: by hand in pgAdmin (`projects`), with the seed script (`experiences`, `skill_groups`, `skills`), or by visitors through the contact form (`messages`).
+> 2. **Reading the sheets** happens on every page load: Angular → API → Prisma → PostgreSQL → back to Angular.
 
 ## Documentation pages
 
@@ -29,13 +35,13 @@ flowchart LR
 |---|------|----------------|
 | 01 | [Project overview](01-project-overview.md) | What the site is, who it is for, what works today |
 | 02 | [System architecture](02-system-architecture.md) | How the three layers fit together, responsibilities, errors |
-| 03 | [Frontend](03-frontend-documentation.md) | Angular app: start-up, components, styles, the Projects feature |
+| 03 | [Frontend](03-frontend-documentation.md) | Angular app: start-up, components, styles, animations, data features |
 | 04 | [API](04-api-documentation.md) | Express server, request lifecycle, full endpoint reference |
-| 05 | [Database](05-database-documentation.md) | Tables, columns, migrations, Prisma, name mapping |
-| 06 | [End-to-end data flow](06-end-to-end-data-flow.md) | Real features traced from click to database and back |
+| 05 | [Database](05-database-documentation.md) | Tables, the first relationship, migrations, seed, Prisma |
+| 06 | [End-to-end data flow](06-end-to-end-data-flow.md) | Real features traced from click to database and back (reading **and** writing) |
 | 07 | [Local setup](07-local-setup-and-development.md) | Installing and running everything on a new machine |
-| 08 | [Testing and debugging](08-testing-and-debugging.md) | What tests exist, how to debug a broken request |
-| 09 | [Deployment and configuration](09-deployment-and-configuration.md) | Current config, and a **proposed** deployment plan |
+| 08 | [Testing and debugging](08-testing-and-debugging.md) | What tests exist, manual checks, debugging a broken request |
+| 09 | [Deployment and configuration](09-deployment-and-configuration.md) | Current config, production scripts, and the deployment plan |
 | 10 | [Security and maintenance](10-security-and-maintenance.md) | Protections in place, risks, recommendations |
 | 11 | [Glossary for beginners](11-glossary-for-beginners.md) | Every technical term, in plain English |
 
@@ -54,17 +60,21 @@ Diagrams: [system architecture](diagrams/system-architecture.md) · [frontend fl
 cd api
 npm install
 npm run dev                 # http://localhost:3000
+npm run seed                # (re)fill experience + skills from CV data
 
 # Web (terminal 2)
 cd web
 npm install
 npm start                   # http://localhost:4200
+npm test                    # unit tests (Vitest)
 
 # Database tooling (in api/)
-npx prisma validate         # check the schema file
 npx prisma migrate dev --name <change>   # change table structure
-npx prisma generate         # refresh the TypeScript client after a schema change
+npx prisma generate         # ALWAYS run after a structure change (Prisma 7)
 npx prisma studio           # browse/edit rows in the browser
+
+# Production-style run of the API (in api/)
+npm run build && npm run start:local
 ```
 
 Full details: [07 — Local setup](07-local-setup-and-development.md).
@@ -73,12 +83,14 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 
 | Area | Status |
 |------|--------|
-| Projects list, single project, title search, paging | ✅ |
-| Category endpoint + category filter chips (API + web) | ✅ confirmed working in the browser (2026-10-19) |
-| Experience, Skills, Contact, Footer sections | 📝 not built (header links to `#experience` and `#skills` currently go nowhere) |
-| "My role" line and metrics on project cards | 📝 removed for now; to be re-added via a migration |
-| Automated tests | Only Angular's default test exists, and it is **out of date** (see [08](08-testing-and-debugging.md)) |
-| Deployment | 📝 not configured; [09](09-deployment-and-configuration.md) is a proposal |
-| Exact current wording of project summaries in the database | ❓ |
+| Projects list, single project, title search, paging, category chips | ✅ |
+| Experience and Skills from the database (+ seed script) | ✅ confirmed by the owner |
+| Contact form saving to the database (`POST /api/contact`) | ✅ confirmed by the owner (Postman + form) |
+| "Light & Calm" redesign, animations, headshot | ✅ applied; latest animation set + code-style favicon 🟡 not yet confirmed |
+| API production scripts (`build`, `start`) | 🟡 built and checked by Claude; not yet run by the owner on Windows |
+| "My role" line and metrics on project cards | 📝 postponed |
+| Email notification for new messages | 📝 planned at deployment (Resend free tier) |
+| Deployment | 📝 not done; [09](09-deployment-and-configuration.md) has the plan |
+| Projects in the seed script | 📝 projects rows exist only in the local database |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

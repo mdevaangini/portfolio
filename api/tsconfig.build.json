@@ -1,0 +1,16 @@
+/*
+ * ABOUT THIS FILE: tsconfig.build.json
+ * Settings for the production build (`npm run build`): turns the TypeScript in
+ * src/ and generated/ into plain JavaScript in dist/, which `npm start` runs with Node.
+ * Everything else comes from tsconfig.json.
+ */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
+    "sourceMap": true
+  },
+  "include": ["src", "generated"]
+}

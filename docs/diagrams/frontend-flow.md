@@ -5,18 +5,23 @@
 ```mermaid
 flowchart TB
     M["main.ts: bootstrapApplication(App, appConfig)"] --> APP["App (app.html)"]
-    APP --> H["Header (static)"]
-    APP --> HE["Hero (static, Download CV)"]
+    APP --> H["Header (static, scroll progress bar)"]
+    APP --> HE["Hero (static, photo, Download CV)"]
     APP --> IS["ImpactStrip (static)"]
-    APP --> EX["Expertise (static) → SectionHeading"]
+    APP --> EX["Expertise (static)"]
     APP --> DF{"@defer on viewport"}
-    DF --> P["Projects → SectionHeading"]
-    P --> SVC["ProjectsService"]
-    SVC --> RC["loadCategories(): GET /api/projects/categories"]
-    SVC --> RP["loadProjects(selectedCategory): GET /api/projects?category=…"]
-    CH["Chip click → selectedCategory.set()"] --> RP
-    RP --> L["linkedSignal list → featured / others"]
-    L --> UI["Cards (dimmed while refetching)"]
+    DF --> P["Projects"]
+    P --> PS["ProjectsService: GET /projects/categories,<br/>GET /projects?category=…"]
+    CH["Chip click → selectedCategory.set()"] --> PS
+    APP --> XP["Experience → ExperienceService: GET /experience"]
+    APP --> SK["Skills → SkillsService: GET /skills"]
+    APP --> CO["Contact (Reactive Form)"]
+    CO -- "Send" --> CS["ContactService: POST /contact"]
+    CS --> ST{"reply"}
+    ST -- "201" --> OK["'Thanks, your message was sent'"]
+    ST -- "400" --> FE["errors under each field"]
+    ST -- "other" --> ER["'Something went wrong' box"]
+    APP --> F["Footer (static)"]
 ```
 
-Static sections render immediately. The Projects section loads when scrolled near, then fetches categories and projects. A chip click changes a signal, which re-runs the projects request automatically.
+Static sections render immediately. Experience and Skills fetch as soon as the page is created; Projects loads when scrolled near. The contact form sends data only when the visitor clicks **Send message**.

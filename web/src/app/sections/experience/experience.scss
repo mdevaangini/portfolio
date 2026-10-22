@@ -35,13 +35,44 @@
 }
 
 .timeline {
+  position: relative;
   margin: 0;
   padding: 0 0 0 8px;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 28px;
-  border-left: 1.5px solid var(--color-line);
+
+  /* The vertical line. It draws itself from top to bottom as you scroll. */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--color-line);
+    transform-origin: top;
+  }
+}
+
+@keyframes draw-down {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .timeline::before {
+      animation: draw-down linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 50%;
+    }
+  }
 }
 
 .role {

@@ -11,6 +11,7 @@ node_modules/
 
 # Generated or built output: always recreated by a command
 api/generated/
+api/dist/
 web/dist/
 web/.angular/
 

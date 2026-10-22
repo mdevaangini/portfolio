@@ -168,6 +168,34 @@ a:hover {
   }
 }
 
+/* Sheen: a soft light sweeps across filled buttons on hover */
+.btn--primary,
+.btn--navy {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+    transform: translateX(-120%);
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn--primary::before,
+  .btn--navy::before {
+    transition: transform 0.7s ease;
+  }
+
+  .btn--primary:hover::before,
+  .btn--navy:hover::before {
+    transform: translateX(120%);
+  }
+}
+
 /* ── Arrow that slides right on hover: <a class="arrow">Text <span>→</span></a> ── */
 .arrow {
   text-decoration: none;
@@ -276,6 +304,22 @@ a:hover {
       animation: reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 40%;
+    }
+
+    /*
+     * class="stagger" on a list: its .reveal children arrive one after another
+     * (each starts a little later in the scroll), instead of all at once.
+     */
+    .stagger > .reveal:nth-child(4n + 2) {
+      animation-range: entry 8% entry 48%;
+    }
+
+    .stagger > .reveal:nth-child(4n + 3) {
+      animation-range: entry 16% entry 56%;
+    }
+
+    .stagger > .reveal:nth-child(4n + 4) {
+      animation-range: entry 24% entry 64%;
     }
 
     /* class="pop": scales in as it scrolls into view (skill chips) */

@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: api.config.ts
+// Where the API lives (API_BASE_URL). One place to change it, e.g. when deploying.
+// ──────────────────────────────────────────────────────────────────────
+
 import { InjectionToken } from '@angular/core';
 
 /**

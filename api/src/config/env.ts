@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: env.ts
+// Reads the settings from .env (DATABASE_URL, PORT, CORS_ORIGIN) in ONE place.
+// Stops the app at start-up if a required setting is missing.
+// ──────────────────────────────────────────────────────────────────────
+
 /**
  * All settings the app reads from the environment (.env), in one place.
  * Every other file imports `env` from here instead of using process.env directly.

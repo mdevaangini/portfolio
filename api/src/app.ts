@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: app.ts
+// Builds the Express app: the steps EVERY request passes through, in order:
+// CORS → turn JSON body into req.body → /api routes → 404 → error handler.
+// ──────────────────────────────────────────────────────────────────────
+
 import cors from "cors";
 import express from "express";
 import { env } from "./config/env.js";

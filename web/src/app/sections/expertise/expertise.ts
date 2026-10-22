@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: expertise.ts
+// Expertise section (01 · What I do): logic + data for this part of the page.
+// Static data.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SectionHeading } from '../../shared/section-heading/section-heading';
 

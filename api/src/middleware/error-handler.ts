@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: error-handler.ts
+// Catches any error thrown inside a route: logs it in the terminal
+// and answers 500 with a safe, generic message (never the real details).
+// ──────────────────────────────────────────────────────────────────────
+
 import type { NextFunction, Request, Response } from "express";
 
 /**

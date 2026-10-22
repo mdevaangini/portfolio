@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: schema.prisma
+// The description of ALL database tables (one model = one table).
+// Change it → `npx prisma migrate dev` updates the real tables → `npx prisma generate` updates the TypeScript code.
+// ──────────────────────────────────────────────────────────────────────
+
 // The description of our database tables, for Prisma.
 // Prisma reads this file to generate the TypeScript client code.
 
@@ -65,6 +71,18 @@ model Skill {
   group        SkillGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("skills")
+}
+
+// A message a visitor sends through the Contact form on the site.
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @db.VarChar(254)
+  message   String   @db.VarChar(2000)
+  /// Filled in by the database when the row is saved.
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
 }
 
 // ── My notes ────────────────────────────────────────────────────────────

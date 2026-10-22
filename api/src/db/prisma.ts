@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: prisma.ts
+// Creates the ONE shared Prisma Client: the code that talks to Postgres.
+// Every *.service.ts imports `prisma` from here.
+// ──────────────────────────────────────────────────────────────────────
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client.js";
 import { env } from "../config/env.js";

@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: header.ts
+// Header (sticky top bar): logic + data for this part of the page.
+// Holds the nav links; shows a shadow once you scroll.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 interface NavItem {
@@ -29,7 +35,7 @@ export class Header {
   protected readonly navItems = this.allNavItems.filter((item) => item.ready);
 
   /** Set to true once the Contact section exists */
-  protected readonly contactReady = false;
+  protected readonly contactReady = true;
 
   /** True once the page has scrolled, so the header can show a soft shadow */
   protected readonly scrolled = signal(false);

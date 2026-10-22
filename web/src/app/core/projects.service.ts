@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: projects.service.ts
+// Talks to /api/projects: loads projects + categories with httpResource.
+// Components ask THIS service for data instead of calling the API themselves.
+// Flow: component → service (THIS) → API → Postgres → back as JSON
+// ──────────────────────────────────────────────────────────────────────
+
 import { httpResource } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ProjectsResponse } from '../project';

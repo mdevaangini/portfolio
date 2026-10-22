@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: app.config.ts
+// App-wide setup (providers): router, HttpClient, global error listeners.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';

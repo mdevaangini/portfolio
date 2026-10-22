@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: experience.ts
+// Interface: the shape of the JSON that GET /api/experience sends back.
+// ──────────────────────────────────────────────────────────────────────
+
 /** One job, exactly as the API sends it (GET /api/experience) */
 export interface Experience {
   id: number;

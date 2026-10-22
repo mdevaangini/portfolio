@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: project.ts
+// Interfaces: the shape of the JSON that GET /api/projects sends back.
+// ──────────────────────────────────────────────────────────────────────
+
 /** One project, exactly as the API sends it (GET /api/projects) */
 export interface Project {
   id: number;

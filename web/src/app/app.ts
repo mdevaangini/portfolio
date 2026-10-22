@@ -1,5 +1,12 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: app.ts
+// Root component: builds the page from the header and all sections.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Header } from './layout/header/header';
+import { Footer } from './layout/footer/footer';
+import { Contact } from './sections/contact/contact';
 import { Experience } from './sections/experience/experience';
 import { Expertise } from './sections/expertise/expertise';
 import { Hero } from './sections/hero/hero';
@@ -9,7 +16,7 @@ import { Skills } from './sections/skills/skills';
 
 @Component({
   selector: 'app-root',
-  imports: [Header, Hero, ImpactStrip, Expertise, Projects, Experience, Skills],
+  imports: [Header, Hero, ImpactStrip, Expertise, Projects, Experience, Skills, Contact, Footer],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

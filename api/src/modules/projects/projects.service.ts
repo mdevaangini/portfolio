@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: projects.service.ts
+// Database layer for projects: the Prisma calls (list, one by id, categories).
+// The ONLY place in this feature that talks to Postgres.
+// Flow: routes → controller → service (THIS) → Prisma → Postgres
+// ──────────────────────────────────────────────────────────────────────
+
 import type { Prisma, Project } from "../../../generated/prisma/client.js";
 import { prisma } from "../../db/prisma.js";
 

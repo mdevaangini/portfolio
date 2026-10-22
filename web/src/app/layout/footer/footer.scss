@@ -1,0 +1,27 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: footer.scss
+// Footer (bottom bar of the page): styles that apply ONLY to this component.
+// ──────────────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+}
+
+.footer {
+  background: var(--color-navy-950);
+  border-top: 1px solid var(--color-navy-line);
+}
+
+.footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-block: 24px;
+  color: #9fb2d1;
+  font-size: 14px;
+}
+
+.footer__stack {
+  font-family: var(--font-mono);
+}

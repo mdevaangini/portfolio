@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: projects.ts
+// Projects section (02 · Selected work): logic + data for this part of the page.
+// Data comes from the API (GET /api/projects); category chips filter it.
+// ──────────────────────────────────────────────────────────────────────
+
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { ProjectsService } from '../../core/projects.service';

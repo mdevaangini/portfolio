@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: projects.controller.ts
+// HTTP layer for projects: reads the request (URL values like ?limit= and :id), checks it,
+// calls the service, and decides the status code + JSON reply. Never touches the database.
+// Flow: routes → controller (THIS) → service → Prisma → Postgres
+// ──────────────────────────────────────────────────────────────────────
+
 import type { Request, Response } from "express";
 import { findCategories, findProjectById, findProjects } from "./projects.service.js";
 

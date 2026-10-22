@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: skills.service.ts
+// Database layer for skills: the Prisma calls (read groups together with their skills).
+// The ONLY place in this feature that talks to Postgres.
+// Flow: routes → controller → service (THIS) → Prisma → Postgres
+// ──────────────────────────────────────────────────────────────────────
+
 import { prisma } from "../../db/prisma.js";
 
 /**

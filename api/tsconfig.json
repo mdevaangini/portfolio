@@ -1,3 +1,8 @@
+/*
+ * ABOUT THIS FILE: tsconfig.json
+ * TypeScript settings for the API. Used for type-checking and the editor;
+ * tsx runs the code directly (no build step).
+ */
 {
   "compilerOptions": {
     "module": "NodeNext",

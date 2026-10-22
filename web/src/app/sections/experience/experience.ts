@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: experience.ts
+// Experience section (03): logic + data for this part of the page.
+// Jobs come from the API (GET /api/experience); recognition + education are static.
+// ──────────────────────────────────────────────────────────────────────
+
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ExperienceService } from '../../core/experience.service';

@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: section-heading.ts
+// Section heading (shared, reusable): logic + data for this part of the page.
+// Number + small label + title, used by every section.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**

@@ -1,3 +1,6 @@
+# ABOUT THIS FILE: .gitignore
+# Files Git must NOT track for the API (e.g. node_modules, .env with secrets).
+
 node_modules
 .env
 

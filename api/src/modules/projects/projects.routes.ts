@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: projects.routes.ts
+// URL map for the projects feature (mounted at /api/projects).
+// Says which URL + method (GET/POST) calls which controller function.
+// Flow: routes (THIS) → controller → service → Prisma → Postgres
+// ──────────────────────────────────────────────────────────────────────
+
 import { Router } from "express";
 import { getProject, listCategories, listProjects } from "./projects.controller.js";
 

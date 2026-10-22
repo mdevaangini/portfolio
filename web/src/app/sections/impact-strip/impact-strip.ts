@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: impact-strip.ts
+// Impact strip (key numbers under the hero): logic + data for this part of the page.
+// Static data.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 interface Stat {

@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: app.spec.ts
+// Unit tests for the root component. Run: `npm test`.
+// ──────────────────────────────────────────────────────────────────────
+
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DeferBlockBehavior, TestBed } from '@angular/core/testing';

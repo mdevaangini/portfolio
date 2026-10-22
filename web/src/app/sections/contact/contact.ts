@@ -1,0 +1,86 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: contact.ts
+// Contact section (05): logic for the contact form.
+// Checks the form in the browser, sends it to the API, and tracks the state
+// (idle → sending → sent / error). The API checks everything again on its side.
+// ──────────────────────────────────────────────────────────────────────
+
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ContactErrorResponse } from '../../contact';
+import { ContactService } from '../../core/contact.service';
+import { SectionHeading } from '../../shared/section-heading/section-heading';
+
+type Status = 'idle' | 'sending' | 'sent' | 'error';
+type FieldName = 'name' | 'email' | 'message';
+
+@Component({
+  selector: 'app-contact',
+  imports: [SectionHeading, ReactiveFormsModule],
+  templateUrl: './contact.html',
+  styleUrl: './contact.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Contact {
+  private readonly contactService = inject(ContactService);
+
+  /** Same limits as the API and the database columns. */
+  protected readonly max = { name: 100, email: 254, message: 2000 };
+
+  protected readonly form = inject(NonNullableFormBuilder).group({
+    name: ['', [Validators.required, Validators.maxLength(this.max.name)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(this.max.email)]],
+    message: ['', [Validators.required, Validators.maxLength(this.max.message)]],
+    website: [''], // hidden spam trap
+  });
+
+  protected readonly status = signal<Status>('idle');
+  /** Field errors sent back by the API (400), shown under each input. */
+  protected readonly serverErrors = signal<Partial<Record<FieldName, string>>>({});
+
+  /** The message to show under a field, or '' if it's fine. */
+  protected errorFor(field: FieldName): string {
+    const control = this.form.controls[field];
+    if (control.touched && control.errors) {
+      if (control.errors['required']) return `Please enter your ${field}.`;
+      if (control.errors['email']) return 'Please enter a valid email.';
+      if (control.errors['maxlength']) return `Must be ${this.max[field]} characters or fewer.`;
+    }
+    return this.serverErrors()[field] ?? '';
+  }
+
+  protected submit(): void {
+    // 1. Check in the browser first: show all errors, send nothing.
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    // 2. Send. The button is disabled while status is 'sending'.
+    this.status.set('sending');
+    this.serverErrors.set({});
+
+    this.contactService.send(this.form.getRawValue()).subscribe({
+      next: () => {
+        this.status.set('sent');
+        this.form.reset();
+      },
+      error: (err: HttpErrorResponse) => {
+        // 400 = the API found problems: show them under the fields.
+        const body = err.error as ContactErrorResponse | null;
+        if (err.status === 400 && body?.fields) {
+          this.serverErrors.set(body.fields);
+          this.status.set('idle');
+        } else {
+          this.status.set('error'); // network down, server error, etc.
+        }
+      },
+    });
+  }
+
+  /** "Send another message" after a successful send. */
+  protected startOver(): void {
+    this.status.set('idle');
+  }
+}

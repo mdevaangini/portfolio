@@ -1,0 +1,108 @@
+<!--
+  ABOUT THIS FILE: contact.html
+  Contact section (05): contact details on the left, the form on the right.
+  Shows the form, or a "Thanks" message after a successful send.
+-->
+<section class="contact" id="contact" aria-labelledby="contact-title">
+  <div class="container contact__inner">
+    <div class="contact__intro reveal">
+      <app-section-heading
+        index="05"
+        eyebrow="Contact"
+        title="Let's talk about your next frontend challenge."
+        headingId="contact-title"
+        tone="dark"
+      />
+      <p class="contact__lead">
+        Whether it's a role on your team or a question about my work, send a message and I'll get back to you.
+      </p>
+
+      <ul class="details">
+        <li>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+          <a href="mailto:devaangini04@gmail.com">devaangini04&#64;gmail.com</a>
+        </li>
+        <li>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" /></svg>
+          <a href="https://www.linkedin.com/in/devaangini-mehta-4775ab1a3" target="_blank" rel="noopener">
+            linkedin.com/in/devaangini-mehta
+          </a>
+        </li>
+        <li>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+          <span>Noida, India</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel reveal">
+      @if (status() === 'sent') {
+        <div class="done" role="status">
+          <p class="done__title">Thanks, your message was sent.</p>
+          <p class="done__text">I'll get back to you soon.</p>
+          <button type="button" class="btn btn--ghost" (click)="startOver()">Send another message</button>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="row">
+            <label class="field">
+              <span class="field__label">Name</span>
+              <input
+                type="text"
+                formControlName="name"
+                autocomplete="name"
+                placeholder="Your name"
+                [attr.maxlength]="max.name"
+                [attr.aria-invalid]="!!errorFor('name')"
+                aria-describedby="name-error"
+              />
+              <span class="field__error" id="name-error">{{ errorFor('name') }}</span>
+            </label>
+
+            <label class="field">
+              <span class="field__label">Email</span>
+              <input
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                placeholder="you@company.com"
+                [attr.maxlength]="max.email"
+                [attr.aria-invalid]="!!errorFor('email')"
+                aria-describedby="email-error"
+              />
+              <span class="field__error" id="email-error">{{ errorFor('email') }}</span>
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field__label">Message</span>
+            <textarea
+              rows="5"
+              formControlName="message"
+              placeholder="How can I help?"
+              [attr.maxlength]="max.message"
+              [attr.aria-invalid]="!!errorFor('message')"
+              aria-describedby="message-error"
+            ></textarea>
+            <span class="field__error" id="message-error">{{ errorFor('message') }}</span>
+          </label>
+
+          <!-- Spam trap: hidden from people and screen readers; only bots fill it in -->
+          <div class="trap" aria-hidden="true">
+            <label>Website <input type="text" formControlName="website" tabindex="-1" autocomplete="off" /></label>
+          </div>
+
+          @if (status() === 'error') {
+            <p class="form-error" role="alert">
+              Something went wrong and your message wasn't sent. Please try again, or email me directly.
+            </p>
+          }
+
+          <button type="submit" class="btn" [disabled]="status() === 'sending'">
+            {{ status() === 'sending' ? 'Sending…' : 'Send message' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</section>

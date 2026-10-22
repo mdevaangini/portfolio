@@ -1,3 +1,8 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: not-found.ts
+// Runs when no route matched the URL: answers 404 with a JSON message.
+// ──────────────────────────────────────────────────────────────────────
+
 import type { Request, Response } from "express";
 
 /**

@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: hero.ts
+// Hero (first screen): logic + data for this part of the page.
+// Name, headline, Download CV and View my work buttons.
+// ──────────────────────────────────────────────────────────────────────
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({

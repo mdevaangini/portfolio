@@ -1,3 +1,9 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: seed.ts
+// Fills the experience + skills tables with my CV data. Run: `npm run seed`.
+// WRITE flow, run once by me: seed.ts → Prisma → Postgres. Safe to re-run (clears first).
+// ──────────────────────────────────────────────────────────────────────
+
 /**
  * Seed script: fills the Experience and Skills tables with my CV data.
  *

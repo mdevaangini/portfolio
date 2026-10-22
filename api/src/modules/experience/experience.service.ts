@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: experience.service.ts
+// Database layer for experience: the Prisma calls (read all jobs, newest first).
+// The ONLY place in this feature that talks to Postgres.
+// Flow: routes → controller → service (THIS) → Prisma → Postgres
+// ──────────────────────────────────────────────────────────────────────
+
 import { prisma } from "../../db/prisma.js";
 
 /**

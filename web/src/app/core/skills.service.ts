@@ -1,3 +1,10 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: skills.service.ts
+// Talks to /api/skills: loads skill groups with httpResource.
+// Components ask THIS service for data instead of calling the API themselves.
+// Flow: component → service (THIS) → API → Postgres → back as JSON
+// ──────────────────────────────────────────────────────────────────────
+
 import { httpResource } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { SkillGroup } from '../skill';

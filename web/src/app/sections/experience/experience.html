@@ -5,12 +5,7 @@
 -->
 <section class="container experience" id="experience" aria-labelledby="experience-title">
   <div class="experience__main reveal">
-    <app-section-heading
-      index="03"
-      eyebrow="Experience"
-      title="Where I've worked"
-      headingId="experience-title"
-    />
+    <app-section-heading index="03" title="Where I've worked" headingId="experience-title" />
 
     @if (roles.isLoading() && !roles.hasValue()) {
       <!-- Loading: grey blocks where the jobs will appear -->
@@ -23,12 +18,13 @@
     } @else if (roles.error()) {
       <div class="state" role="alert">
         <p class="state__title">Experience couldn't be loaded.</p>
-        <button class="state__button" type="button" (click)="roles.reload()">Try again</button>
+        <button class="btn btn--navy state__button" type="button" (click)="roles.reload()">Try again</button>
       </div>
     } @else {
       <ol class="timeline">
         @for (role of roles.value(); track role.id; let first = $first) {
           <li class="role" [class.role--current]="first">
+            <span class="role__dot" aria-hidden="true"></span>
             <span class="role__meta">
               {{ role.startDate | date: 'MMM y' : 'UTC' }} –
               {{ role.endDate ? (role.endDate | date: 'MMM y' : 'UTC') : 'Present' }}
@@ -50,7 +46,7 @@
   <aside class="experience__aside reveal" aria-label="Recognition and education">
     @for (item of highlights; track item.label) {
       <div class="highlight">
-        <span class="highlight__label">{{ item.label }}</span>
+        <span class="mono-label highlight__label">{{ item.label }}</span>
         <h3 class="highlight__title">{{ item.title }}</h3>
         <p class="highlight__text">{{ item.text }}</p>
       </div>

@@ -7,10 +7,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SectionHeading } from '../../shared/section-heading/section-heading';
 
-type ExpertiseIcon = 'bolt' | 'grid' | 'pulse' | 'form';
-
 interface ExpertiseArea {
-  icon: ExpertiseIcon;
+  /** Small code-style label above the title, e.g. "performance" → "// performance" */
+  tag: string;
   title: string;
   description: string;
 }
@@ -26,28 +25,24 @@ export class Expertise {
   /** Each point is taken from the CV. */
   protected readonly areas: ExpertiseArea[] = [
     {
-      icon: 'bolt',
-      title: 'Performance engineering',
-      description:
-        'Cut page load times by 60% with an OnPush change detection strategy and optimised rendering for data-heavy financial screens.',
+      tag: 'performance',
+      title: 'Fast screens',
+      description: '60% faster page loads with OnPush change detection and optimised rendering for data-heavy screens.',
     },
     {
-      icon: 'grid',
-      title: 'Component libraries & micro-frontends',
-      description:
-        'Reusable Angular Material and PrimeNG libraries that standardise UI patterns across 15+ modules, and key modules within a micro-frontend architecture.',
+      tag: 'architecture',
+      title: 'Component libraries',
+      description: 'Reusable Angular Material and PrimeNG libraries across 15+ modules and micro-frontends.',
     },
     {
-      icon: 'pulse',
-      title: 'Reactive, real-time data',
-      description:
-        'RxJS data flows for high-concurrency banking scenarios, and 30+ complex RESTful APIs powering real-time dashboards and transaction workflows.',
+      tag: 'data',
+      title: 'Real-time data',
+      description: 'RxJS data flows and 30+ REST APIs behind live dashboards and transaction workflows.',
     },
     {
-      icon: 'form',
-      title: 'Complex forms & workflows',
-      description:
-        'Multi-step loan application forms with complex validation, conditional field rendering and real-time field-level error handling.',
+      tag: 'forms',
+      title: 'Complex workflows',
+      description: 'Multi-step loan applications with conditional fields and real-time validation.',
     },
   ];
 }

@@ -4,7 +4,7 @@
 // Data comes from the API (GET /api/projects); category chips filter it.
 // ──────────────────────────────────────────────────────────────────────
 
-import { NgTemplateOutlet } from '@angular/common';
+import { LowerCasePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { ProjectsService } from '../../core/projects.service';
 import { Project } from '../../project';
@@ -12,7 +12,7 @@ import { SectionHeading } from '../../shared/section-heading/section-heading';
 
 @Component({
   selector: 'app-projects',
-  imports: [SectionHeading, NgTemplateOutlet],
+  imports: [SectionHeading, NgTemplateOutlet, LowerCasePipe],
   templateUrl: './projects.html',
   styleUrl: './projects.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,43 +1,37 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: styles.scss
 // Global styles for the whole site: design tokens (colours, fonts, sizes),
-// base rules, and shared helpers (.container, .reveal scroll animation, .visually-hidden).
+// base rules, and shared helpers used by many sections
+// (.container, .btn, .arrow, .lift, .reveal, .visually-hidden).
+// Look: "Light & Calm" (design board J): warm off-white, navy text, apricot accent.
 // ──────────────────────────────────────────────────────────────────────
-
-/*
- * Global styles: design tokens and base rules shared by every component.
- * Component-specific styles live next to each component (e.g. header.scss).
- */
 
 :root {
   /* Colours */
-  --color-navy-950: #0a1a33;
-  --color-navy-900: #13294b;
-  --color-navy-800: #1c3660;
-  --color-navy-line: #2a4673;
-  --color-on-navy: #c9d6ea;
-  --color-on-navy-accent: #8fb0f2;
+  --color-bg: #fffbf7; /* page background: warm off-white */
+  --color-surface: #ffffff; /* white bands and cards */
+  --color-peach: #fce6d2; /* soft apricot panels and chips */
+  --color-line: #f0e2d4; /* borders and dividers */
+  --color-line-strong: #e5d5c5; /* input and outline-button borders */
 
-  --color-ink: #0f172a;
-  --color-text: #334155;
-  --color-muted: #475569;
-  --color-border: #e2e8f0;
-  --color-border-soft: #eef2f7;
-  --color-surface: #f6f8fb;
-  --color-white: #ffffff;
+  --color-ink: #13294b; /* headings and main text (navy) */
+  --color-text: #3b4a63; /* body text */
+  --color-muted: #5b6b86; /* secondary text, dates */
 
-  --color-accent: #1d4ed8;
-  --color-accent-strong: #1e3a8a;
-  --color-accent-soft: #eef3fd;
+  --color-accent: #f4a261; /* apricot: buttons, dots, bars */
+  --color-accent-text: #b4531a; /* darker apricot: readable as text and links */
+  --color-accent-deep: #7a3610; /* text on peach backgrounds */
+  --color-error: #b42318;
 
   /* Typography */
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'Nunito', system-ui, sans-serif; /* headings */
+  --font-sans: 'Nunito Sans', system-ui, sans-serif; /* body text */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace; /* small code-style labels */
 
   /* Layout */
   --container-width: 1180px;
   --gutter: 24px;
-  --header-height: 65px;
+  --header-height: 66px;
 
   /* Motion */
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -56,7 +50,7 @@ html {
 
 body {
   margin: 0;
-  background: var(--color-white);
+  background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 17px;
@@ -64,21 +58,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
 a {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 a:hover {
-  color: var(--color-accent-strong);
+  color: var(--color-accent-deep);
 }
 
 ::selection {
-  background: #dbe6fd;
+  background: var(--color-peach);
   color: var(--color-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-accent-text);
   outline-offset: 3px;
   border-radius: 6px;
 }
@@ -98,32 +98,138 @@ a:hover {
   z-index: 100;
   padding: 10px 16px;
   border-radius: 8px;
-  background: var(--color-navy-900);
-  color: var(--color-white);
-  font-weight: 600;
+  background: var(--color-ink);
+  color: #fff;
+  font-weight: 700;
   text-decoration: none;
 }
 
 .skip-link:focus {
   top: 12px;
-  color: var(--color-white);
+  color: #fff;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
+/* ── Buttons (used in hero, contact, error states) ───────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(180, 83, 26, 0.22);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
   }
 }
 
-/*
- * Scroll reveal: add class="reveal" to any element and it fades up as it
- * scrolls into view. Uses CSS scroll-driven animations (no JavaScript).
- * Browsers without support simply show the element as normal.
- */
+.btn--primary {
+  background: var(--color-accent);
+  color: var(--color-ink);
+
+  &:hover {
+    color: var(--color-ink);
+  }
+}
+
+.btn--navy {
+  background: var(--color-ink);
+  color: #fff;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+.btn--outline {
+  border: 1.5px solid #d9c8b8;
+  background: transparent;
+  color: var(--color-ink);
+  font-weight: 700;
+
+  &:hover {
+    color: var(--color-ink);
+  }
+}
+
+/* ── Arrow that slides right on hover: <a class="arrow">Text <span>→</span></a> ── */
+.arrow {
+  text-decoration: none;
+
+  span[aria-hidden] {
+    display: inline-block;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover span[aria-hidden] {
+    transform: translateX(6px);
+  }
+}
+
+/* ── Card hover: lifts, apricot border, and a bar sweeps along the bottom ── */
+.lift {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.45s var(--ease-out);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-accent);
+    box-shadow: 0 16px 36px rgba(19, 41, 75, 0.08);
+
+    &::after {
+      transform: scaleX(1);
+    }
+
+    .arrow span[aria-hidden] {
+      transform: translateX(6px);
+    }
+  }
+}
+
+/* Small code-style label, e.g. "// performance" */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-accent-text);
+}
+
+/* ── Animations ──────────────────────────────────────────────────────── */
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -131,13 +237,66 @@ a:hover {
   }
 }
 
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 162, 97, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(244, 162, 97, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 162, 97, 0);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /*
+   * Scroll-driven animations (no JavaScript): the animation's progress follows
+   * the element's position on screen. Browsers without support simply show
+   * the element in its final state.
+   */
   @supports (animation-timeline: view()) {
+    /* class="reveal": fades up as it scrolls into view */
     .reveal {
       animation: reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 40%;
     }
+
+    /* class="pop": scales in as it scrolls into view (skill chips) */
+    .pop {
+      animation: pop linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+/* Visitors who asked their device for less motion get a still page */
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover:not(:disabled),
+  .lift:hover {
+    transform: none;
+  }
+
+  .arrow:hover span[aria-hidden],
+  .lift:hover .arrow span[aria-hidden] {
+    transform: none;
   }
 }
 

@@ -10,14 +10,13 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ContactErrorResponse } from '../../contact';
 import { ContactService } from '../../core/contact.service';
-import { SectionHeading } from '../../shared/section-heading/section-heading';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 type FieldName = 'name' | 'email' | 'message';
 
 @Component({
   selector: 'app-contact',
-  imports: [SectionHeading, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './contact.html',
   styleUrl: './contact.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

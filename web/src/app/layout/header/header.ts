@@ -25,14 +25,16 @@ interface NavItem {
 })
 export class Header {
   private readonly allNavItems: NavItem[] = [
-    { label: 'Expertise', target: 'expertise', ready: true },
-    { label: 'Work', target: 'work', ready: true },
-    { label: 'Experience', target: 'experience', ready: true },
-    { label: 'Skills', target: 'skills', ready: true },
+    { label: 'expertise', target: 'expertise', ready: true },
+    { label: 'work', target: 'work', ready: true },
+    { label: 'experience', target: 'experience', ready: true },
+    { label: 'skills', target: 'skills', ready: true },
   ];
 
-  /** Only links whose section exists */
-  protected readonly navItems = this.allNavItems.filter((item) => item.ready);
+  /** Only links whose section exists, numbered "01", "02"… to match the section headings */
+  protected readonly navItems = this.allNavItems
+    .filter((item) => item.ready)
+    .map((item, i) => ({ ...item, number: String(i + 1).padStart(2, '0') }));
 
   /** Set to true once the Contact section exists */
   protected readonly contactReady = true;

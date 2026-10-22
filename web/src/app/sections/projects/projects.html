@@ -5,13 +5,7 @@
 -->
 <section class="projects" id="work" aria-labelledby="work-title">
   <div class="container projects__inner">
-    <app-section-heading
-      class="reveal"
-      index="02"
-      eyebrow="Selected work"
-      title="Products I've helped build"
-      headingId="work-title"
-    />
+    <app-section-heading class="reveal" index="02" title="Things I've helped build" headingId="work-title" />
 
     <!-- Filter chips. Hidden until the category list has loaded -->
     @if (categories.value(); as categoryList) {
@@ -53,12 +47,12 @@
       <div class="state" role="alert">
         <p class="state__title">Projects couldn't be loaded.</p>
         <p class="state__text">Please check your connection and try again.</p>
-        <button class="state__button" type="button" (click)="resource.reload()">Try again</button>
+        <button class="btn btn--navy state__button" type="button" (click)="resource.reload()">Try again</button>
       </div>
     } @else if (featured(); as project) {
       <div class="results" [class.results--loading]="resource.isLoading()" [attr.aria-busy]="resource.isLoading()">
       <!-- Featured project -->
-      <article class="card card--featured reveal">
+      <article class="card card--featured lift reveal">
         <div class="card__media">
           @if (project.imageUrl) {
             <img [src]="project.imageUrl" [alt]="project.title + ' screenshot'" loading="lazy" />
@@ -75,7 +69,7 @@
       @if (others().length) {
         <div class="grid">
           @for (project of others(); track project.id) {
-            <article class="card reveal">
+            <article class="card lift reveal">
               <ng-container *ngTemplateOutlet="details; context: { $implicit: project, featured: false }" />
             </article>
           }
@@ -93,12 +87,14 @@
 <!-- Shared card content, used by the featured card and the grid cards -->
 <ng-template #details let-project let-featured="featured">
   @if (project.category) {
-    <span class="card__category">{{ project.category }}</span>
+    <span class="mono-label">{{ featured ? 'featured · ' : '' }}{{ project.category | lowercase }}</span>
+  } @else if (featured) {
+    <span class="mono-label">featured</span>
   }
   <h3 class="card__title" [class.card__title--large]="featured">{{ project.title }}</h3>
   <p class="card__summary">{{ project.summary }}</p>
   @if (project.liveUrl) {
-    <a class="card__link" [href]="project.liveUrl" target="_blank" rel="noopener">
+    <a class="card__link arrow" [href]="project.liveUrl" target="_blank" rel="noopener">
       View live <span aria-hidden="true">→</span>
     </a>
   }

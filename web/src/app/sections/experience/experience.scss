@@ -3,6 +3,8 @@
 // Experience section (03): styles that apply ONLY to this component.
 // ──────────────────────────────────────────────────────────────────────
 
+// Timeline: one line on the left; each job has a dot on it. The current job's dot is apricot and pulses.
+
 :host {
   display: block;
 }
@@ -10,8 +12,8 @@
 .experience {
   display: flex;
   flex-wrap: wrap;
-  gap: 56px 72px;
-  padding-block: 104px;
+  gap: 40px 64px;
+  padding-block: 96px;
 }
 
 .experience__main {
@@ -19,88 +21,98 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
 .experience__aside {
-  flex: 1 1 320px;
+  flex: 1 1 300px;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Lines the cards up with the timeline, below the heading */
+  padding-top: 76px;
 }
 
-/* Timeline: a line on the left of each role; the current role's line is blue */
 .timeline {
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 8px;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
+  border-left: 1.5px solid var(--color-line);
 }
 
 .role {
-  padding-left: 24px;
-  border-left: 2px solid #cbd5e1;
+  position: relative;
+  padding-left: 28px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
-.role--current {
-  border-left-color: var(--color-accent);
+.role__dot {
+  position: absolute;
+  left: -7px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid #d9c8b8;
+}
+
+.role--current .role__dot {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .role__meta {
   font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 600;
   color: var(--color-muted);
 }
 
 .role__title {
   margin: 0;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.35;
 }
 
 .role__note {
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
   color: var(--color-muted);
 }
 
 .role__summary {
   margin: 0;
-  font-size: 16px;
-  color: var(--color-muted);
+  color: var(--color-text);
 }
 
 /* Recognition and education cards */
 .highlight {
-  padding: 28px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
   background: var(--color-surface);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .highlight__label {
-  font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-accent);
+  text-transform: lowercase;
 }
 
 .highlight__title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   line-height: 1.35;
 }
 
@@ -113,8 +125,8 @@
 /* Loading and error states */
 .skeleton {
   min-height: 96px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #eef2f7 0%, #f6f8fb 50%, #eef2f7 100%);
+  border-radius: 14px;
+  background: linear-gradient(90deg, #f6ece2 0%, #fdf7f1 50%, #f6ece2 100%);
   background-size: 200% 100%;
 }
 
@@ -124,40 +136,42 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .skeleton {
-    animation: shimmer 1.6s linear infinite;
-  }
-}
-
 .state {
   padding: 40px 32px;
-  border: 1px dashed var(--color-border);
-  border-radius: 14px;
-  background: var(--color-white);
+  border: 1px dashed var(--color-line-strong);
+  border-radius: 18px;
+  background: var(--color-surface);
   text-align: center;
 }
 
 .state__title {
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .state__button {
   margin-top: 16px;
   min-height: 44px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--color-navy-900);
-  color: var(--color-white);
-  font-weight: 600;
-  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .role--current .role__dot {
+    animation: pulse-dot 2.4s ease-out infinite; /* keyframes in styles.scss */
+  }
+
+  .skeleton {
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+@media (max-width: 900px) {
+  .experience__aside {
+    padding-top: 0;
+  }
 }
 
 @media (max-width: 640px) {
   .experience {
-    padding-block: 80px;
-    gap: 40px;
+    padding-block: 72px;
   }
 }

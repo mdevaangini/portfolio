@@ -5,81 +5,71 @@
 
 :host {
   display: block;
-  /* Pull the card up so it overlaps the bottom of the hero */
-  position: relative;
-  margin-top: -72px;
+}
+
+.band {
+  background: var(--color-surface);
+  border-block: 1px solid var(--color-line);
 }
 
 .strip {
-  margin: 0;
-  padding: 0;
+  margin-block: 0;
+  padding-block: 36px;
   list-style: none;
-
   display: grid;
-  /* As many columns as fit, each at least 210px: 4 on desktop, 2 on tablet, 1 on phone */
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  /* 1px gaps over a border-coloured background draw the dividers between cells,
-     and they stay correct however the columns wrap */
-  gap: 1px;
-  background: var(--color-border-soft);
-
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 48px rgba(10, 26, 51, 0.1);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 28px 32px;
-  background: var(--color-white);
 }
 
 .stat__value {
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  color: var(--color-navy-900);
-  /* Digits of equal width, so numbers line up neatly */
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-size: 50px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--color-accent-text);
+}
+
+/*
+ * Outlined number: transparent text with a navy outline. A navy background,
+ * clipped to the letter shapes, grows from 0% to 100% as you scroll to it,
+ * so the number "fills in".
+ */
+.stat__value--outlined {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-ink);
+  background: linear-gradient(var(--color-ink), var(--color-ink)) left / 0% 100% no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .stat__label {
-  font-size: 15px;
   color: var(--color-muted);
 }
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
+@keyframes fill-text {
   to {
-    opacity: 1;
-    transform: none;
+    background-size: 100% 100%;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Arrives just after the hero content has finished */
-  .strip {
-    animation: rise 0.8s var(--ease-out) 0.6s both;
+  @supports (animation-timeline: view()) {
+    .stat__value--outlined {
+      animation: fill-text linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 45%;
+    }
   }
 }
 
 @media (max-width: 640px) {
-  :host {
-    margin-top: -56px;
-  }
-
-  .stat {
-    padding: 20px 24px;
-  }
-
   .stat__value {
-    font-size: 28px;
+    font-size: 40px;
   }
 }

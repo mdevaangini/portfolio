@@ -20,6 +20,5 @@ export class Hero {
   protected readonly cv = {
     path: 'Devaangini-Mehta-CV.pdf',
     downloadName: 'Devaangini-Mehta-CV.pdf',
-    size: '168 KB',
   };
 }

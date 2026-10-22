@@ -98,3 +98,54 @@ File	                                                                           
 app.ts, routes.ts, projects.routes.ts	                                                 Yes: they use Express to receive requests and route them
 projects.controller.ts	                                                               Uses Express: it receives Express’s req and res to read the request and send the answer
 projects.service.ts	                                                                      No: plain TypeScript functions. No req, no res. It only talks to Prisma
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===============================================================
+Everything we built answers just two questions.
+
+Question 1: How did the rows get INTO the sheets?
+
+This happens once, before anyone visits the site.
+
+Sheet                                                     	How the rows got in
+projects	                                              You typed them yourself in pgAdmin, way back at the start. Remember writing the INSERT query?
+experiences, skill_groups, skills	                         seed.ts typed them for you when you ran npm run seed
+
+That’s the only difference. seed.ts does the same thing you did by hand in pgAdmin, but with code. After that, it’s done; the rows just sit in the sheets.
+
+Question 2: How do the rows get OUT onto the website?
+
+This happens every time someone opens the page, and it’s exactly the same for all three sections:
+
+ 1. Angular       "I need the skills"          → sends GET /api/skills
+ 2. Express       "someone wants skills"        → routes → controller → service
+ 3. Prisma        "read the skills sheet"       → findMany()
+ 4. Postgres      hands back the rows
+ 5. Express       sends them back as JSON
+ 6. Angular       shows them with @for
+
+Replace “skills” with “projects” or “experience” and nothing else changes:
+
+Section	Angular asks	Prisma reads
+Projects	GET /api/projects	the projects sheet
+Experience	GET /api/experience	the experiences sheet
+Skills	GET /api/skills	the skill_groups + skills sheets
+The whole mental model in two lines
+Fill the sheets once: by hand in pgAdmin (projects) or with seed.ts (experience, skills).
+Read the sheets on every page load: Angular → API → Prisma → Postgres → back to Angular.
+
+Prisma shows up in both only because it’s the hands that touch the sheets: in (1) to write, in (2) to read.

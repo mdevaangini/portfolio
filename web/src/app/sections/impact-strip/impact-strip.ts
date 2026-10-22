@@ -9,6 +9,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 interface Stat {
   value: string;
   label: string;
+  /** true = outlined number that fills in as you scroll; false = solid apricot */
+  outlined: boolean;
 }
 
 @Component({
@@ -20,9 +22,9 @@ interface Stat {
 export class ImpactStrip {
   /** Figures taken from the CV. Keep them in sync when the CV changes. */
   protected readonly stats: Stat[] = [
-    { value: '4.5+ yrs', label: 'building Angular applications' },
-    { value: '150M+', label: 'users on the platforms I build' },
-    { value: '3B+', label: 'transactions processed annually' },
-    { value: '60%', label: 'faster page loads delivered' },
+    { value: '4.5+', label: 'years of Angular', outlined: true },
+    { value: '150M+', label: 'users served', outlined: true },
+    { value: '3B+', label: 'transactions a year', outlined: true },
+    { value: '60%', label: 'faster page loads', outlined: false },
   ];
 }

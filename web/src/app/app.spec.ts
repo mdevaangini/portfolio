@@ -30,7 +30,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Angular frontends');
+    expect(compiled.querySelector('h1')?.textContent).toContain('I build Angular apps');
   });
 
   it('should only show nav links for sections that exist', async () => {
@@ -38,6 +38,6 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     const links = Array.from(compiled.querySelectorAll('.nav__link')).map((a) => a.textContent?.trim());
-    expect(links).toEqual(['Expertise', 'Work', 'Experience', 'Skills']);
+    expect(links).toEqual(['01. expertise', '02. work', '03. experience', '04. skills']);
   });
 });

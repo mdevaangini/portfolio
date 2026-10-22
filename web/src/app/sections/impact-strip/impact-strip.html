@@ -2,11 +2,11 @@
   ABOUT THIS FILE: impact-strip.html
   Impact strip (key numbers under the hero): the markup (what you see).
 -->
-<section class="container" aria-label="Impact at a glance">
-  <ul class="strip">
+<section class="band" aria-label="Impact at a glance">
+  <ul class="container strip reveal">
     @for (stat of stats; track stat.value) {
       <li class="stat">
-        <span class="stat__value">{{ stat.value }}</span>
+        <span class="stat__value" [class.stat__value--outlined]="stat.outlined">{{ stat.value }}</span>
         <span class="stat__label">{{ stat.label }}</span>
       </li>
     }

@@ -8,54 +8,49 @@
 }
 
 .hero {
-  background-color: var(--color-navy-950);
-  /* Faint dot grid: a subtle "engineering" texture */
-  background-image: radial-gradient(rgba(143, 176, 242, 0.16) 1px, transparent 1px);
-  background-size: 26px 26px;
-  color: var(--color-white);
-}
-
-.hero__inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 56px;
-  /* Extra bottom space: the impact strip will overlap this edge */
-  padding-block: 96px 144px;
+  padding-block: 96px 80px;
 }
 
 .hero__content {
-  flex: 999 1 580px;
+  flex: 999 1 560px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-.hero__eyebrow {
+.hero__hello {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-on-navy-accent);
+  font-size: 15px;
+  color: var(--color-accent-text);
 }
 
 .hero__title {
   margin: 0;
-  max-width: 760px;
-  font-size: clamp(36px, 5.4vw, 62px);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.hero__sub {
+  color: var(--color-muted);
+}
+
+.cursor {
+  color: var(--color-accent);
 }
 
 .hero__intro {
   margin: 0;
-  max-width: 640px;
+  max-width: 580px;
   font-size: clamp(17px, 1.6vw, 19px);
-  color: var(--color-on-navy);
+  color: var(--color-text);
 }
 
 .hero__actions {
@@ -65,91 +60,58 @@
   margin-top: 8px;
 }
 
-.hero__location {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  color: #9fb2d1;
+/* The download arrow nudges down on hover */
+.download svg {
+  transition: transform 0.25s ease;
 }
 
+.download:hover svg {
+  transform: translateY(3px);
+}
+
+/* Photo: a circle with an apricot ring that slowly "breathes"; the whole thing floats */
 .hero__media {
   flex: 1 1 280px;
   display: flex;
   justify-content: center;
 }
 
-.hero__photo {
-  width: 280px;
+.photo {
+  position: relative;
+  width: 300px;
   max-width: 100%;
   aspect-ratio: 1;
-  border-radius: 24px;
-  background: var(--color-navy-900);
-  border: 1px solid var(--color-navy-line);
+}
+
+.photo__ring {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  opacity: 0.6;
+}
+
+.photo__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-accent);
+  background: var(--color-peach);
+  object-fit: cover;
   display: grid;
   place-items: center;
-  color: var(--color-on-navy);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 0 24px;
-  border-radius: 10px;
+  color: var(--color-accent-deep);
   font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-  }
-
-  &:active {
-    transform: none;
-    box-shadow: none;
-  }
-
-  &:focus-visible {
-    outline-color: var(--color-on-navy-accent);
-  }
 }
 
-.btn--light {
-  background: var(--color-white);
-  color: var(--color-navy-950);
-
-  &:hover {
-    color: var(--color-navy-950);
-  }
-}
-
-.btn--outline {
-  border: 1.5px solid #2f4e80;
-  color: var(--color-white);
-
-  &:hover {
-    color: var(--color-white);
-  }
-}
-
-.btn__meta {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-muted);
-}
-
-/* Entrance animation: each element rises in, staggered by its --delay */
+/* ── Animations ── */
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -157,32 +119,85 @@
   }
 }
 
+/* Reveals the text from left to right in 22 small jumps, like typing */
+@keyframes type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.9;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .rise {
-    animation: rise 0.8s var(--ease-out) both;
+    animation: rise 0.7s var(--ease-out) both;
     animation-delay: var(--delay, 0s);
+  }
+
+  .typed {
+    display: inline-block;
+    animation: type 1.4s steps(22) 0.6s both;
+  }
+
+  .cursor {
+    animation: blink 1s steps(1) infinite;
+  }
+
+  .photo {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .photo__ring {
+    animation: breathe 4s ease-in-out infinite;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn:hover {
+  .download:hover svg {
     transform: none;
   }
 }
 
-/* Phones: photo above text is too tall, so tighten spacing and shrink it */
 @media (max-width: 640px) {
-  .hero__inner {
-    padding-block: 64px 120px;
-    gap: 40px;
+  .hero {
+    padding-block: 56px 64px;
+    gap: 48px;
   }
 
-  .hero__photo {
-    width: 200px;
+  .photo {
+    width: 220px;
   }
 
   .btn {
     flex: 1 1 100%;
-    justify-content: center;
   }
 }

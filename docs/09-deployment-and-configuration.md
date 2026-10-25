@@ -57,6 +57,7 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 | portfolio (API) | Root Directory | `api` (preset Express) |
 | portfolio (API) | Neon connection | env-var prefix **`DATABASE`** (the default `STORAGE` would have created `STORAGE_URL`, which the code doesn't read) → `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PG*` |
 | portfolio (API) | `RESEND_API_KEY`, `NOTIFY_EMAIL` | the Resend key (Sensitive) and `devaangini04@gmail.com` — see [04](04-api-documentation.md) |
+| portfolio (API) | Firewall custom rule "Contact form rate limit" | Path `/api/contact` + Method `POST` → Rate Limit, fixed window 60 s, 3 requests, key IP → 429/Deny (Hobby: 1 rate-limit rule) |
 | portfolio (API) | `CORS_ORIGIN` | the website's address, e.g. `https://devaangini-portfolio.vercel.app` (https, no trailing `/`) |
 | devaangini (web) | Root Directory | `web` (preset Angular) |
 
@@ -85,7 +86,6 @@ Secrets live only in Vercel's settings (marked *Sensitive*) and in git-ignored `
 
 ## 📝 Still to do
 
-1. **Rate limiting** on `POST /api/contact` (Vercel Firewall rule or a shared store such as Upstash; an in-memory limiter doesn't work across serverless instances).
 3. `GET /api/health`; optionally a custom domain.
 
 Note: Neon's tables were built from the migration history, so `projects.id` there is `SERIAL` (locally `IDENTITY`). Both auto-number; see [05](05-database-documentation.md#d-migrations-the-structures-history).

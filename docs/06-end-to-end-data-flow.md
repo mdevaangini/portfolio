@@ -224,6 +224,52 @@ Check the result: locally in pgAdmin (`SELECT * FROM messages ORDER BY created_a
 
 ---
 
+## Flow 6b — Too many messages (rate limiting, two layers)
+
+**In plain English:** two guards stand between the **Send** button and the database. The first one (Vercel's firewall) watches **how fast** one computer sends. The second one (our code) watches **how many** messages one email address — and everyone together — send in an hour.
+
+```
+Click Send → the request goes to Vercel
+  ① Vercel Firewall (a dashboard setting, not in our code)
+       more than 3 POSTs to /api/contact from this IP in 60 s?
+       yes → 429 (no text) ───────────────────┐   ← our API never runs
+       no  → passes to our API                 │
+  ② Our API code (contact.controller.ts + contact.service.ts)
+       this email sent 3+ in the last hour, or 20+ in total?
+       yes → 429 + "Too many messages right now…" ┤
+       no  → save in Neon → email via Resend → 201
+                                               ▼
+  Angular (contact.ts) sees status 429 → shows "You've sent several messages…"
+```
+
+| | ① Firewall | ② Code |
+|---|---|---|
+| Where it lives | Vercel → portfolio → **Firewall** (rule "Contact form rate limit") | `api/src/modules/contact/contact.controller.ts` (`RATE_LIMIT`) and `contact.service.ts` (`countRecentMessages`) |
+| Runs | **Before** our API — a blocked request never starts our code | **Inside** our API, after the field checks, before saving |
+| Counts by | The visitor's **IP address** (it can't see the email) | The **email address** + **all messages** (from the database) |
+| Limit | **3 per 60 seconds** (`POST` only — the browser's automatic `OPTIONS` check is not counted) | **3 per email per hour**, **20 in total per hour** |
+| Question it answers | "How **fast**?" | "How **many**?" |
+| Works locally? | No (live only) | Yes |
+| What it sends back | 429 with **no** text of ours | 429 with our text + `Retry-After` |
+
+**Remember:**
+- The browser always sends the request; the firewall stops it **at Vercel's door**, so our Express code, the database count, the save and the email are all skipped.
+- The message box on the page comes from **Angular**, which only looks at the status **429** — so both layers show the **same box**. To see which layer blocked it: DevTools → Network → the request → **Response** (our code's 429 has our text; the firewall's doesn't). Vercel → Firewall shows firewall blocks; Vercel → Logs has no line for them.
+- It's **429** "Too Many Requests" (not 409, which means "Conflict").
+
+**Examples (fresh email, one computer):**
+
+| What you do | Result |
+|---|---|
+| Same email, 4 sends within a minute | 1–3 ✅, 4th ❌ (firewall) |
+| Same email, a 4th send after a minute, same hour | ❌ (code: 3 per email per hour) |
+| Different emails, 4 sends within a minute | 1–3 ✅, 4th ❌ (firewall) |
+| Different emails, after the minute passes | ✅ again (until 20 in total that hour) |
+
+Earlier test messages from the last hour count too, so always test with a brand-new email.
+
+---
+
 ## Flow 7 — One project by id (API only)
 
 `GET /api/projects/:id` exists in the API ✅ but **the website does not use it yet** (there's no project detail page). Test it directly: take an `id` from `GET /api/projects`, then `http://localhost:3000/api/projects/<that id>` → 200, `/999` → 404, `/abc` → 400. (Ids change each time the seed runs.)
@@ -241,4 +287,5 @@ Check the result: locally in pgAdmin (`SELECT * FROM messages ORDER BY created_a
 | Experience | `Experience` + `ExperienceService` | `GET /api/experience` | `experiences` (read) |
 | Skills | `Skills` + `SkillsService` | `GET /api/skills` | `skill_groups` + `skills` (read, linked) |
 | Contact form | `Contact` + `ContactService` (POST) | `POST /api/contact` | `messages` (**write**) |
+| Too many messages | `Contact` shows the "several messages" box on 429 | Vercel Firewall (per IP) + `RATE_LIMIT` in the controller | `messages` (counted, not written) |
 | Project by id | not used | `GET /api/projects/:id` | `projects` (read) |

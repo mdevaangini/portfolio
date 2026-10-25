@@ -41,6 +41,8 @@ The web tests use `provideHttpClientTesting()` so no real request leaves the tes
 | 19 | Web: click *Send message* with empty fields | Red messages, nothing sent (Network tab stays empty) |
 | 20 | Web: send a real message | "Thanks, your message was sent." + new row + email in Gmail (check Spam the first time) |
 | 21 | API terminal (or Vercel → Logs) after sending | `[email] sent to … (id …)` |
+| 22 | Send 4 messages with the **same** email within an hour | 4th → **429**, "You've sent several messages…" box, no row, no email |
+| 23 | Live: send 4 messages within 60 s with **different** emails | 4th blocked by the Vercel Firewall (429 or 403) |
 
 Open URLs in the browser or use **Postman**. Check status codes in the browser's **Network** tab (F12).
 

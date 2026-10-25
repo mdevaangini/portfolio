@@ -248,6 +248,7 @@ Handler: `sendMessage` → `createMessage` (`prisma.message.create`) → `notify
 | Status | When | Body |
 |---|---|---|
 | **201** | Saved | `{ "ok": true, "id": 7, "createdAt": "2026-10-22T10:54:50.796Z" }` |
+| 429 | Rate limit: this email already sent 3 messages in the last hour, or 20 arrived in total (code), or the same IP sent more than 3 in 60 s (Vercel Firewall, live only) | `{ "error": "Too many messages right now. Please try again in an hour, or email me directly." }` + `Retry-After` header |
 | 400 | One or more fields invalid (all problems reported at once) | `{ "error": "Please check the form.", "fields": { "email": "Please enter a valid email." } }` |
 | 404 | Wrong method, e.g. `GET /api/contact` | `{ "error": "Route not found: GET /api/contact" }` |
 | 500 | Database or other failure | generic message |
@@ -280,13 +281,14 @@ const where: Prisma.ProjectWhereInput = {
 
 1. **Route**: `contactRouter.post("/", sendMessage)` — `post`, because it *sends* data.
 2. **Controller**: `express.json()` has already turned the body into `req.body`. The controller trims each field, checks the spam trap, then collects every problem into a `fields` object. Any problem → 400 and stop.
-3. **Service**: `prisma.message.create({ data, select: { id: true, createdAt: true } })` → roughly `INSERT INTO messages (name, email, message) VALUES ($1, $2, $3) RETURNING id, created_at`.
-4. **Notify**: `notifyNewMessage()` in `contact.email.ts` asks **Resend** (an email-sending service) to email the owner:
+3. **Rate limit**: `countRecentMessages(email, since)` counts the last hour in the database (from this email, and in total). Over `RATE_LIMIT` (`perEmail: 3`, `total: 20`) → **429**, nothing saved, no email. It counts in the database, not in memory, because on Vercel several copies of the API run side by side and only the database is shared by all of them.
+4. **Service**: `prisma.message.create({ data, select: { id: true, createdAt: true } })` → roughly `INSERT INTO messages (name, email, message) VALUES ($1, $2, $3) RETURNING id, created_at`.
+5. **Notify**: `notifyNewMessage()` in `contact.email.ts` asks **Resend** (an email-sending service) to email the owner:
    - from `Portfolio <onboarding@resend.dev>` (Resend's shared sender, allowed because it only emails the account owner), to `NOTIFY_EMAIL`;
    - subject `New portfolio message from {name}`, **plain text only** (a visitor can't inject links or HTML);
    - `replyTo` = the visitor's email, so clicking **Reply** in Gmail answers them;
    - it **never fails the request**: problems are only logged. Look for one line in the terminal (or Vercel → Logs): `[email] sent to … (id …)`, `[email] failed: …`, or `[email] skipped: …` (settings missing).
-5. **Response**: `res.status(201).json({ ok: true, id, createdAt })`.
+6. **Response**: `res.status(201).json({ ok: true, id, createdAt })`.
 
 Why an email service at all: emails sent straight from a server are usually blocked or marked as spam; Resend is a trusted sender. Free tier: 100 emails/day, 3,000/month.
 

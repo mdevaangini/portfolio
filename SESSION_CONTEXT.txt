@@ -241,6 +241,37 @@ B13. Unit tests fixed  [VERIFIED: npm test → 3 passed]
   - Tests are smoke tests only; data sections are untested (next idea:
     HttpTestingController with fake answers).
 
+B14. Rate limiting for POST /api/contact (two layers)
+  B (code) [user ran the local test; result not reported in detail]:
+  - contact.service.ts: countRecentMessages(email, since) → { fromThisEmail,
+    total } (two counts in one $transaction; email case-insensitive).
+  - contact.controller.ts: RATE_LIMIT = { windowMinutes: 60, perEmail: 3,
+    total: 20 }; checked AFTER field validation, BEFORE save/email; over the
+    limit → 429 { error } + Retry-After: 3600; nothing saved, no email.
+  - Counting in the DATABASE because on Vercel several API copies run side
+    by side, each with its own memory (shared-register analogy).
+  - web contact: new status 'limited' (on 429) with its own message box.
+  A (Vercel Firewall) [rule added by the user; live test pending]:
+  - API project "portfolio" → Firewall → custom rule "Contact form rate
+    limit": Request Path equals /api/contact AND Method equals POST →
+    Rate Limit, Fixed Window 60 s, limit 3, key IP, action 429 (or Deny if
+    Hobby required it) → Published. Hobby allows 1 rate-limit rule.
+  - Why both: firewall counts per IP BEFORE the API runs (bots that change
+    email); code counts per email + total (safety net).
+  - LIVE TEST ✓: 3 different emails within a minute pass, the 4th → 429.
+    (An earlier "2nd click blocked" was explained by the browser's OPTIONS
+    preflight being counted / earlier test messages; the rule now has
+    Path = /api/contact AND Method = POST.)
+  - The user's own summary (keep it, it's how she remembers it):
+      Click Send → request goes to Vercel.
+      ① Firewall (dashboard): >3 POSTs in 60 s from this IP → 429, NO text,
+        our API never runs.  = "how FAST" (per computer)
+      ② Code (controller + service): this email ≥3 in an hour or ≥20 total
+        → 429 + our text.     = "how MANY" (per email / total)
+      Angular shows the SAME box for any 429 (it only looks at the status).
+      To tell them apart: DevTools → Network → Response. 429, not 409.
+    Written up for her in docs/06 "Flow 6b".
+
 ==============================================================================
 C. CURRENT STATE
 ==============================================================================
@@ -270,9 +301,7 @@ Web: all V1 sections; Projects inside @defer; tests: 3 (headline contains
 "I build Angular apps"; nav links "01. expertise" … "04. skills").
 
 Known issues / loose ends:
-  - No rate limiting on POST /api/contact (now public!). On Vercel an
-    in-memory limiter doesn't work across function instances → use Vercel
-    Firewall rate-limit rules or a shared store (e.g. Upstash) — discuss.
+  - Rate limiting: done in two layers (B14); confirm the live firewall test.
   - Contact messages: emailed to devaangini04@gmail.com (option C ✓) and
     stored in Neon (Vercel → Storage → portfolio-db → Data Editor → messages).
     Every message now also sends an email → rate limiting matters more.
@@ -290,8 +319,9 @@ Exact stopping point (2026-10-25):
   Plan (1) V1 content ✓ (2) housekeeping ✓ (3) deployment ✓ — site LIVE and
   confirmed working by the user. Option C (email via Resend) live and
   verified; unit tests fixed (3 pass). Docs + this file updated.
-  NEXT: G2 rate limiting on POST /api/contact (agreed order: tests ✓ →
-  docs ✓ → rate limiting).
+  Rate limiting added (B14: code + Vercel Firewall).
+  NEXT: confirm the firewall test (which action: 429 or Deny), then G4
+  (health check, custom domain) or testing data sections (HttpTestingController).
 
 ==============================================================================
 D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
@@ -396,7 +426,7 @@ G. IMMEDIATE NEXT STEPS (prioritised)
 ==============================================================================
   G1. Confirm the final website domain (devaangini-portfolio vs -nine) and
       that CORS_ORIGIN matches it exactly (https, no trailing slash).
-  G2. Rate limiting for POST /api/contact (Vercel Firewall rule or Upstash).
+  G2. [DONE 2026-10-25] Rate limiting (B14). Confirm the live firewall test.
   G3. [DONE 2026-10-25] Option C email notification (B12). Make sure the
       Resend key in use was rotated after the screenshots.
   G4. GET /api/health; optional custom domain (e.g. devaangini.dev).

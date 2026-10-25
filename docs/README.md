@@ -91,7 +91,7 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Deployment: Vercel (website + API) + Neon Postgres | ✅ live and confirmed by the owner (2026-10-25) |
 | "My role" line and metrics on project cards | 📝 postponed |
 | Email notification for new messages (Resend) | ✅ live and confirmed (2026-10-25) |
-| Rate limiting on the contact form | 📝 next (important: the form is public and every message sends an email) |
+| Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP) — live firewall test pending |
 | Projects in the seed script | ✅ (2026-10-25) |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

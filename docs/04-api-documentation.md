@@ -17,7 +17,7 @@ api/
 ├── package.json         dependencies + scripts (dev, build, start, seed …)
 ├── tsconfig.json        TypeScript settings for type-checking (no output)
 ├── tsconfig.build.json  TypeScript settings for the production build (output in dist/)
-├── prisma7.config.ts    settings for the Prisma commands (not used at runtime)
+├── prisma.config.ts     settings for the Prisma commands (not used at runtime)
 ├── prisma/
 │   ├── schema.prisma    description of the tables
 │   ├── seed.ts          fills experience + skills with CV data

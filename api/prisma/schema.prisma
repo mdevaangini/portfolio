@@ -13,7 +13,7 @@ generator client {
   output   = "../generated/prisma"
 }
 
-// Which kind of database we use. The address itself comes from prisma7.config.ts.
+// Which kind of database we use. The address itself comes from prisma.config.ts.
 datasource db {
   provider = "postgresql"
 }

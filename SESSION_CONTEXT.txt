@@ -132,7 +132,7 @@ B6. Contact form (option B: save to Postgres)  [VERIFIED by user]
 B7. Footer + every file has an "ABOUT THIS FILE" header  [VERIFIED]
   - Header comments added to every .ts/.html/.scss/schema/seed/tsconfig/
     .gitignore. NOT added to migrations (checksums), package.json /
-    angular.json (no comments in JSON), prisma7.config.ts / .env.example /
+    angular.json (no comments in JSON), prisma.config.ts / .env.example /
     .editorconfig (already explained), readme.txt (user's notes).
 
 B8. Redesign: "J · Light & Calm"  [VERIFIED applied; user liked colours]
@@ -248,7 +248,7 @@ E. USER REQUIREMENTS AND PREFERENCES (follow strictly)
   Engineering
   - Real-world best practices, scalable folder structure.
   - Keep the user's own notes in files (projects.service.ts bottom,
-    prisma7.config.ts header, api/readme.txt, schema.prisma "My notes").
+    prisma.config.ts header, api/readme.txt, schema.prisma "My notes").
   - Every file starts with an "ABOUT THIS FILE" header; keep adding them to
     new files.
   - Don't touch web/ when asked to work only on api/ (and vice versa).
@@ -315,7 +315,7 @@ API (portfolio/api)
   src/config/env.ts · src/db/prisma.ts · src/middleware/{not-found,error-handler}.ts
   src/modules/projects | experience | skills | contact  (routes/controller/service)
   prisma/schema.prisma  models Project, Experience, SkillGroup, Skill, Message
-  prisma/seed.ts · prisma/migrations/ (4) · prisma7.config.ts (CLI config)
+  prisma/seed.ts · prisma/migrations/ (4) · prisma.config.ts (CLI config)
   tsconfig.json (type-check, noEmit) · tsconfig.build.json (emit to dist/)
   generated/prisma + dist/ are gitignored. .env secret; .env.example placeholders.
 

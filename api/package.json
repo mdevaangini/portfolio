@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.build.json",
+    "vercel-build": "prisma generate && prisma migrate deploy",
     "start": "node dist/src/server.js",
     "start:local": "node --env-file=.env dist/src/server.js",
     "db:migrate": "prisma migrate deploy",

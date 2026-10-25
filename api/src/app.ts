@@ -28,3 +28,7 @@ app.use("/api", apiRouter);
 // 3. After routes: only reached when nothing above sent a response
 app.use(notFound); // no route matched → 404
 app.use(errorHandler); // something threw → 500
+
+// Vercel looks for a file like src/app.ts with a *default* export and turns this
+// app into one serverless function. Locally, server.ts imports the named `app` above.
+export default app;

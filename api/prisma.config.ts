@@ -6,7 +6,7 @@
  * itself through dotenv (the server uses --env-file instead).
  * 
  * 
- * prisma7.config.ts: instructions for the CLI. It answers three questions for the npx prisma commands:
+ * prisma.config.ts: instructions for the CLI. It answers three questions for the npx prisma commands:
 
         where is the schema? → prisma/schema.prisma
         where should migration files go? → prisma/migrations
@@ -24,8 +24,11 @@ export default defineConfig({
     path: "prisma/migrations",
   },
 
-  // Which database the CLI should read from and write to
+  // Which database the CLI should read from and write to.
+  // On Vercel, Neon gives two addresses: DATABASE_URL goes through a "pooler"
+  // (good for the running API, many short visits) and DATABASE_URL_UNPOOLED is a
+  // direct line (needed for migrations). Locally only DATABASE_URL exists, so it's used.
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL_UNPOOLED"] ?? process.env["DATABASE_URL"],
   },
 });

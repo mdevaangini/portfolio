@@ -6,6 +6,6 @@
 // ──────────────────────────────────────────────────────────────────────
 
 export const environment = {
-  /** Address of the live API. Filled in once the API is deployed on Vercel. */
-  apiBaseUrl: 'https://REPLACE-WITH-YOUR-API.vercel.app/api',
+  /** Address of the live API (the "portfolio" project on Vercel, production domain). */
+  apiBaseUrl: 'https://portfolio-neon-six-56.vercel.app/api',
 };

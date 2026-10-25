@@ -6,6 +6,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import type { Request, Response } from "express";
+import { notifyNewMessage } from "./contact.email.js";
 import { createMessage } from "./contact.service.js";
 
 // Same limits as the columns in schema.prisma, so the database never has to refuse anything.
@@ -58,5 +59,10 @@ export async function sendMessage(req: Request, res: Response) {
   // 4. All good: save it, and answer 201 "Created" (not 200), the standard reply
   //    when something new was stored.
   const saved = await createMessage({ name, email, message });
+
+  // 5. Tell me by email. This never fails the request: the message is already
+  //    saved, so even if the email can't be sent, the visitor still gets 201.
+  await notifyNewMessage({ name, email, message });
+
   res.status(201).json({ ok: true, id: saved.id, createdAt: saved.createdAt });
 }

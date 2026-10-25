@@ -33,4 +33,12 @@ export const env = {
 
   /** The frontend address allowed to call this API (CORS) */
   corsOrigin: optional("CORS_ORIGIN", "http://localhost:4200"),
+
+  /**
+   * Email notifications for new contact messages (optional).
+   * If either value is empty, messages are still saved, just no email is sent.
+   */
+  resendApiKey: optional("RESEND_API_KEY", ""),
+  /** Where the notification goes: the address you signed up to Resend with */
+  notifyEmail: optional("NOTIFY_EMAIL", ""),
 };

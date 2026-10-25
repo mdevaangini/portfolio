@@ -56,6 +56,7 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 |---|---|---|
 | portfolio (API) | Root Directory | `api` (preset Express) |
 | portfolio (API) | Neon connection | env-var prefix **`DATABASE`** (the default `STORAGE` would have created `STORAGE_URL`, which the code doesn't read) → `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PG*` |
+| portfolio (API) | `RESEND_API_KEY`, `NOTIFY_EMAIL` | the Resend key (Sensitive) and `devaangini04@gmail.com` — see [04](04-api-documentation.md) |
 | portfolio (API) | `CORS_ORIGIN` | the website's address, e.g. `https://devaangini-portfolio.vercel.app` (https, no trailing `/`) |
 | devaangini (web) | Root Directory | `web` (preset Angular) |
 
@@ -68,7 +69,7 @@ Secrets live only in Vercel's settings (marked *Sensitive*) and in git-ignored `
 | Publish a code change | Commit + push from the `portfolio/` root → both projects rebuild |
 | Change table structure | Locally: `schema.prisma` → `npx prisma migrate dev --name …` → `npx prisma generate` → commit + push. The API build applies the migration to Neon |
 | Change live content (projects, experience, skills) | Edit `prisma/seed.ts` → in `api/`: `npx tsx --env-file=.env.production.local prisma/seed.ts` (also run `npm run seed` for local) |
-| Read contact messages | Vercel → Storage → portfolio-db → **Data Editor** → `messages` |
+| Read contact messages | Gmail (notification email), or Vercel → Storage → portfolio-db → **Data Editor** → `messages` |
 | Change a setting (e.g. `CORS_ORIGIN`) | Vercel → project → Environment Variables → edit → **Redeploy** (settings apply only to new builds) |
 | Undo a bad deploy | Vercel → project → **Instant Rollback** |
 
@@ -85,7 +86,6 @@ Secrets live only in Vercel's settings (marked *Sensitive*) and in git-ignored `
 ## 📝 Still to do
 
 1. **Rate limiting** on `POST /api/contact` (Vercel Firewall rule or a shared store such as Upstash; an in-memory limiter doesn't work across serverless instances).
-2. **Email notification** for new messages (Resend free tier); the API key goes in Vercel's settings.
 3. `GET /api/health`; optionally a custom domain.
 
 Note: Neon's tables were built from the migration history, so `projects.id` there is `SERIAL` (locally `IDENTITY`). Both auto-number; see [05](05-database-documentation.md#d-migrations-the-structures-history).

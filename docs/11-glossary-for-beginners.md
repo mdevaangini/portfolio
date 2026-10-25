@@ -54,6 +54,8 @@ Each term has a plain definition, an everyday comparison where it helps, and whe
 | **Deployment** | Putting the app on servers so others can use it | Opening the shop to the public | ✅ Vercel + Neon (2026-10-25) |
 | **Vercel** | A hosting service that builds and serves websites and small backends from a Git repo | A landlord who also builds the shop from your plans | Two projects: `devaangini` (web), `portfolio` (API) |
 | **Serverless function** | Backend code that the host starts on demand when a request arrives, instead of a server running all day | A taxi called when needed instead of a car parked outside | The whole Express app on Vercel |
+| **Resend** | An email-sending service our API calls to deliver notification emails (just a company name — it doesn't "re-send" anything) | A post office: you hand it the letter, it delivers it | Emails the owner on every new contact message |
+| **Smoke test** | A quick test that only checks the app starts and its main pieces are there | Checking the shop opens and the sign is up | The 3 tests in `app.spec.ts` |
 | **Neon** | A company that runs PostgreSQL in the cloud | The records room moved to a secure warehouse | `portfolio-db` |
 | **Pooled / unpooled connection** | Pooled: many visitors share a few database connections (for the app). Unpooled: one direct line (for migrations) | A shared taxi rank vs a private car | `DATABASE_URL` / `DATABASE_URL_UNPOOLED` |
 | **Environment file (Angular)** | A file of settings swapped depending on how the app is built | Different address labels for test and real parcels | `environment.ts` / `environment.development.ts` |

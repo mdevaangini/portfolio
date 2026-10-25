@@ -18,6 +18,8 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Contact form validation on the server (required, email format, max lengths) | Junk or oversized messages; never trusting the browser | `contact.controller.ts` | ✅ |
 | Column length limits (`varchar(100/254/2000)`) | Oversized data even if a check is missed | `messages` table | ✅ |
 | Spam trap field (`website`) | Simple bots filling every field | contact form + controller | ✅ |
+| Notification email is plain text; visitor input never becomes HTML | Links/scripts injected into the owner's inbox | `contact.email.ts` | ✅ |
+| Resend key only in `.env` and Vercel settings | Others sending email in the owner's name | `.gitignore`, Vercel | ✅ — **never show `.env` in screenshots**; if a key is exposed, delete it in Resend and create a new one |
 | Contact reply returns only `id` + `createdAt` | Echoing data back unnecessarily | `contact.service.ts` | ✅ |
 | `limit` capped at 50 | Requests for millions of rows | `projects.controller.ts` | ✅ |
 | Parameterised queries via Prisma | **SQL injection** (values are never pasted into SQL text) | `projects.service.ts` | ✅ |
@@ -31,7 +33,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Item | Note | Status |
 |---|---|---|
 | Database connects as the `postgres` superuser (local) / Neon's owner role (live) | Too powerful in principle; acceptable for a portfolio | ⚠️ |
-| No rate limiting | Someone could send thousands of contact messages to the **live** form | ⚠️ — next task (Vercel Firewall rule or a shared store; in-memory limits don't work on serverless) |
+| No rate limiting | Someone could send thousands of contact messages to the **live** form — and each one now also sends an email (Resend free tier: 100/day) | ⚠️ — next task (Vercel Firewall rule or a shared store; in-memory limits don't work on serverless) |
 | Messages are stored with the sender's email | Personal data the owner is responsible for | ⚠️ — keep the DB private; delete old messages |
 | No security headers (e.g. via Helmet) | Missing hardening headers | ⚠️ |
 | No authentication | Fine today; required before any admin page (e.g. reading messages on the site) | — |

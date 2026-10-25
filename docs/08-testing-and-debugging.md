@@ -9,7 +9,7 @@
 | `web/` | Angular unit-test builder (`@angular/build:unit-test`) with **Vitest** + jsdom | `src/app/app.spec.ts`: 3 tests — the app is created; the `<h1>` contains "I build Angular apps"; the nav shows exactly `01. expertise`, `02. work`, `03. experience`, `04. skills` | ✅ passing (`npm test`) |
 | `api/` | none | none | No test framework or `test` script; checked manually (Postman / browser) |
 
-The web tests use `provideHttpClientTesting()` so no real request leaves the test, and `DeferBlockBehavior.Manual` so the deferred Projects section stays on its placeholder. When nav items or the headline change, update the expectations in `app.spec.ts`.
+The web tests use `provideHttpClientTesting()` so no real request leaves the test, and `DeferBlockBehavior.Manual` so the deferred Projects section stays on its placeholder. Because Experience and Skills start requests that are **never answered** in tests, the tests call `fixture.detectChanges()` (draw once) instead of `await fixture.whenStable()` (which would wait forever and time out after 5 s). These are smoke tests: they don't check any data yet. When nav items or the headline change, update the expectations in `app.spec.ts`.
 
 ### 📝 Recommended next tests (not implemented)
 
@@ -39,7 +39,8 @@ The web tests use `provideHttpClientTesting()` so no real request leaves the tes
 | 17 | **POST** `/api/contact` with `{ "name": "", "email": "abc" }` | **400** with three `fields` messages |
 | 18 | **POST** `/api/contact` with a valid body + `"website": "spam.com"` | 201 but **no** new row |
 | 19 | Web: click *Send message* with empty fields | Red messages, nothing sent (Network tab stays empty) |
-| 20 | Web: send a real message | "Thanks, your message was sent." + new row |
+| 20 | Web: send a real message | "Thanks, your message was sent." + new row + email in Gmail (check Spam the first time) |
+| 21 | API terminal (or Vercel → Logs) after sending | `[email] sent to … (id …)` |
 
 Open URLs in the browser or use **Postman**. Check status codes in the browser's **Network** tab (F12).
 
@@ -63,6 +64,14 @@ Work from the screen backwards, one layer at a time:
 2. **Is the API running?** Open `http://localhost:3000/api/projects` directly. If it doesn't load, start it with `npm run dev`. If it loads here but the site shows a CORS error, check `CORS_ORIGIN` and that only one process is on port 3000.
 3. **API terminal.** `error-handler.ts` prints `[error] GET /api/projects` followed by the real error. Common causes: wrong password in `DATABASE_URL`, PostgreSQL not running, or a stale Prisma client after a schema change (`npx prisma generate`).
 4. **Database.** In pgAdmin, `SELECT * FROM projects;`. If there are no rows, add data. If you filtered by category, check the spelling of the `category` values.
+
+### "CORS error" on every request
+
+If **all** requests (projects, skills, experience, contact) show "CORS error" and the response headers are empty, the API is simply **not running** (or crashed / port 3000 is busy). Open `http://localhost:3000/api/skills` directly; if it doesn't load, restart `npm run dev`. A real CORS-setting problem shows a response with missing `Access-Control-Allow-Origin`.
+
+### No notification email
+
+Look for the `[email]` line: `skipped` → `RESEND_API_KEY`/`NOTIFY_EMAIL` not set (live: add them in Vercel and redeploy); `failed: …` → the reason is in the text; `sent` → check Gmail's Spam/Promotions. Resend → **Emails** shows every email it sent.
 
 ### Useful HTTP status codes here
 

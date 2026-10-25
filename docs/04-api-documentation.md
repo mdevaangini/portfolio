@@ -37,7 +37,7 @@ api/
         ├── projects/    projects.routes.ts · projects.controller.ts · projects.service.ts
         ├── experience/  experience.routes.ts · experience.controller.ts · experience.service.ts
         ├── skills/      skills.routes.ts · skills.controller.ts · skills.service.ts
-        └── contact/     contact.routes.ts · contact.controller.ts · contact.service.ts
+        └── contact/     contact.routes.ts · contact.controller.ts · contact.service.ts · contact.email.ts
 ```
 
 Also present: `readme.txt` (the owner's learning notes) and `_prisma-backup/` (an earlier, parked Prisma attempt; git-ignored, not used by the app).
@@ -76,6 +76,8 @@ The URL is assembled in pieces: `app.ts` mounts `/api`, `routes.ts` mounts `/pro
 | `PORT` | No | `3000` | `server.ts` |
 | `CORS_ORIGIN` | No | `http://localhost:4200` | `cors()` in `app.ts`. **Live:** the website's address |
 | `DATABASE_URL_UNPOOLED` | No | — | Only on Vercel/Neon: direct connection used by Prisma commands (`prisma.config.ts`) |
+| `RESEND_API_KEY` | No | empty | Secret key for Resend; empty = no notification emails |
+| `NOTIFY_EMAIL` | No | empty | Where notifications go (the address the Resend account was created with) |
 
 ### Scripts (`api/package.json`)
 
@@ -228,7 +230,7 @@ prisma.skillGroup.findMany({
 
 ### `POST /api/contact` — save a contact message
 
-Handler: `sendMessage` → `createMessage` (`prisma.message.create`). This is the API's only **write**.
+Handler: `sendMessage` → `createMessage` (`prisma.message.create`) → `notifyNewMessage` (email via Resend). This is the API's only **write**.
 
 **Request body** (JSON, `Content-Type: application/json`):
 
@@ -279,6 +281,13 @@ const where: Prisma.ProjectWhereInput = {
 1. **Route**: `contactRouter.post("/", sendMessage)` — `post`, because it *sends* data.
 2. **Controller**: `express.json()` has already turned the body into `req.body`. The controller trims each field, checks the spam trap, then collects every problem into a `fields` object. Any problem → 400 and stop.
 3. **Service**: `prisma.message.create({ data, select: { id: true, createdAt: true } })` → roughly `INSERT INTO messages (name, email, message) VALUES ($1, $2, $3) RETURNING id, created_at`.
-4. **Response**: `res.status(201).json({ ok: true, id, createdAt })`.
+4. **Notify**: `notifyNewMessage()` in `contact.email.ts` asks **Resend** (an email-sending service) to email the owner:
+   - from `Portfolio <onboarding@resend.dev>` (Resend's shared sender, allowed because it only emails the account owner), to `NOTIFY_EMAIL`;
+   - subject `New portfolio message from {name}`, **plain text only** (a visitor can't inject links or HTML);
+   - `replyTo` = the visitor's email, so clicking **Reply** in Gmail answers them;
+   - it **never fails the request**: problems are only logged. Look for one line in the terminal (or Vercel → Logs): `[email] sent to … (id …)`, `[email] failed: …`, or `[email] skipped: …` (settings missing).
+5. **Response**: `res.status(201).json({ ok: true, id, createdAt })`.
+
+Why an email service at all: emails sent straight from a server are usually blocked or marked as spam; Resend is a trusted sender. Free tier: 100 emails/day, 3,000/month.
 
 Diagram: [diagrams/api-request-flow.md](diagrams/api-request-flow.md).

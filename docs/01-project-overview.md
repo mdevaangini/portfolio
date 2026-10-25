@@ -70,7 +70,8 @@ Details: [09 — Deployment](09-deployment-and-configuration.md).
 1. The visitor fills in the form and clicks **Send message**.
 2. Angular checks the fields, then sends `POST /api/contact` with the message in the body.
 3. The API checks everything again, and Prisma saves a new row in `messages`.
-4. The API answers **201 Created**, and the page shows "Thanks, your message was sent."
+4. The API emails the owner a notification through **Resend** (an email-sending service), so no message is missed.
+5. The API answers **201 Created**, and the page shows "Thanks, your message was sent."
 
 The full traces are in [06 — End-to-end data flow](06-end-to-end-data-flow.md).
 
@@ -94,4 +95,5 @@ Every source file starts with an **"ABOUT THIS FILE"** comment explaining what i
 - **Database**: five tables managed by four Prisma migrations; the first one-to-many relationship (`skill_groups` → `skills`); a seed script for experience and skills. Details: [05](05-database-documentation.md).
 - **Web**: standalone components, OnPush, signal inputs, `httpResource` for reading, `HttpClient.post` + Reactive Forms for the contact form, `linkedSignal` to keep the previous list during refetch, shared CSS helpers and CSS-only animations behind `prefers-reduced-motion`. Details: [03](03-frontend-documentation.md).
 - **Deployment**: Vercel (two projects from one repo: `web` and `api`) + Neon Postgres; every push to `main` redeploys. See [09](09-deployment-and-configuration.md).
-- **Not yet present**: authentication / admin area, email notifications, rate limiting.
+- **Email**: new contact messages are also emailed to the owner via Resend (`contact.email.ts`).
+- **Not yet present**: authentication / admin area, rate limiting.

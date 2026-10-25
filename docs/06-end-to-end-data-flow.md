@@ -181,7 +181,8 @@ sequenceDiagram
 5. Controller: trims each field; if the hidden `website` field is filled (a bot), answers 201 without saving; otherwise checks every rule and collects all problems.
 6. Problems → **400** `{ error, fields }` → Angular shows each message under its field (`status` back to `'idle'`).
 7. All good → `createMessage()` → `prisma.message.create(...)` → `INSERT INTO messages …`; PostgreSQL fills in `id` and `created_at`.
-8. API answers **201** `{ ok: true, id, createdAt }` → `status` = `'sent'` → "Thanks, your message was sent." The form is reset.
+8. `notifyNewMessage()` asks **Resend** to email the owner ("New portfolio message from …", Reply-To = the visitor). If that fails, it's only logged.
+9. API answers **201** `{ ok: true, id, createdAt }` → `status` = `'sent'` → "Thanks, your message was sent." The form is reset.
 
 ```mermaid
 sequenceDiagram
@@ -205,6 +206,7 @@ sequenceDiagram
         Svc->>DB: INSERT INTO messages … RETURNING id, created_at
         DB-->>Svc: new row
         Svc-->>Ctl: id, createdAt
+        Ctl->>Ctl: notifyNewMessage → Resend → owner's Gmail
         Ctl-->>F: 201 Created
         F-->>V: "Thanks, your message was sent."
     end
@@ -216,7 +218,9 @@ sequenceDiagram
 | API checks fail | 400 | The API's messages under the fields |
 | API not running / DB down / 500 | Request fails | Red box: "Something went wrong… email me directly." |
 
-Check the result in pgAdmin: `SELECT * FROM messages ORDER BY created_at DESC;`
+Check the result: locally in pgAdmin (`SELECT * FROM messages ORDER BY created_at DESC;`), live in Vercel → Storage → portfolio-db → Data Editor → `messages`, and in the owner's Gmail.
+
+> **Two databases, same code.** Messages sent with Postman or from `localhost:4200` go to the **local** API and the **local** database (pgAdmin). Messages from the **live site** go to the live API and **Neon**. The only difference is `DATABASE_URL`.
 
 ---
 

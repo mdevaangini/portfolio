@@ -7,10 +7,14 @@
 
 import type { Request, Response } from "express";
 import { notifyNewMessage } from "./contact.email.js";
-import { createMessage } from "./contact.service.js";
+import { countRecentMessages, createMessage } from "./contact.service.js";
 
 // Same limits as the columns in schema.prisma, so the database never has to refuse anything.
 const MAX = { name: 100, email: 254, message: 2000 };
+
+// Rate limits: protect my inbox and Resend's free quota (100 emails a day).
+// In one hour: at most 3 messages from the same email address, 20 in total.
+const RATE_LIMIT = { windowMinutes: 60, perEmail: 3, total: 20 };
 
 // A simple "looks like an email" check: something@something.something
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,11 +60,24 @@ export async function sendMessage(req: Request, res: Response) {
     return;
   }
 
-  // 4. All good: save it, and answer 201 "Created" (not 200), the standard reply
+  // 4. Rate limit: count the messages of the last hour (in the database, so it works
+  //    on Vercel too, where many copies of the API run side by side).
+  //    Too many → 429 "Too Many Requests": nothing is saved, no email is sent.
+  const since = new Date(Date.now() - RATE_LIMIT.windowMinutes * 60 * 1000);
+  const recent = await countRecentMessages(email, since);
+  if (recent.fromThisEmail >= RATE_LIMIT.perEmail || recent.total >= RATE_LIMIT.total) {
+    res.setHeader("Retry-After", String(RATE_LIMIT.windowMinutes * 60)); // seconds
+    res.status(429).json({
+      error: "Too many messages right now. Please try again in an hour, or email me directly.",
+    });
+    return;
+  }
+
+  // 5. All good: save it, and answer 201 "Created" (not 200), the standard reply
   //    when something new was stored.
   const saved = await createMessage({ name, email, message });
 
-  // 5. Tell me by email. This never fails the request: the message is already
+  // 6. Tell me by email. This never fails the request: the message is already
   //    saved, so even if the email can't be sent, the visitor still gets 201.
   await notifyNewMessage({ name, email, message });
 

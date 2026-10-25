@@ -2,7 +2,7 @@
 // ABOUT THIS FILE: contact.ts
 // Contact section (05): logic for the contact form.
 // Checks the form in the browser, sends it to the API, and tracks the state
-// (idle → sending → sent / error). The API checks everything again on its side.
+// (idle → sending → sent / error / limited). The API checks everything again on its side.
 // ──────────────────────────────────────────────────────────────────────
 
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,7 +11,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ContactErrorResponse } from '../../contact';
 import { ContactService } from '../../core/contact.service';
 
-type Status = 'idle' | 'sending' | 'sent' | 'error';
+type Status = 'idle' | 'sending' | 'sent' | 'error' | 'limited';
 type FieldName = 'name' | 'email' | 'message';
 
 @Component({
@@ -72,7 +72,9 @@ export class Contact {
           this.serverErrors.set(body.fields);
           this.status.set('idle');
         } else {
-          this.status.set('error'); // network down, server error, etc.
+          // 429 = too many messages in a short time (rate limit); anything else =
+          // network down, server error, etc.
+          this.status.set(err.status === 429 ? 'limited' : 'error');
         }
       },
     });

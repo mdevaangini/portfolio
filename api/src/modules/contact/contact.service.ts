@@ -21,6 +21,22 @@ export interface NewMessage {
  *
  * `select` keeps the reply small: we only send back the new id and the time.
  */
+/**
+ * How many messages arrived since `since`: from this email address, and in total.
+ * Used for rate limiting. Both counts run together in one transaction.
+ *   SELECT COUNT(*) FROM messages WHERE created_at >= $1 AND email ILIKE $2;
+ *   SELECT COUNT(*) FROM messages WHERE created_at >= $1;
+ */
+export async function countRecentMessages(email: string, since: Date) {
+  const [fromThisEmail, total] = await prisma.$transaction([
+    prisma.message.count({
+      where: { createdAt: { gte: since }, email: { equals: email, mode: "insensitive" } },
+    }),
+    prisma.message.count({ where: { createdAt: { gte: since } } }),
+  ]);
+  return { fromThisEmail, total };
+}
+
 export function createMessage(data: NewMessage) {
   return prisma.message.create({
     data,

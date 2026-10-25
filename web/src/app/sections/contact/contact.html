@@ -80,6 +80,13 @@
             <label>Website <input type="text" formControlName="website" tabindex="-1" autocomplete="off" /></label>
           </div>
 
+          @if (status() === 'limited') {
+            <p class="form-error" role="alert">
+              You've sent several messages in a short time. Please try again in an hour, or email me
+              directly at devaangini04&#64;gmail.com.
+            </p>
+          }
+
           @if (status() === 'error') {
             <p class="form-error" role="alert">
               Something went wrong and your message wasn't sent. Please try again, or email me directly.

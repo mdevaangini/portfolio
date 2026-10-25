@@ -1,18 +1,50 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: seed.ts
-// Fills the experience + skills tables with my CV data. Run: `npm run seed`.
+// Fills the projects, experience and skills tables with my CV data. Run: `npm run seed`.
 // WRITE flow, run once by me: seed.ts → Prisma → Postgres. Safe to re-run (clears first).
 // ──────────────────────────────────────────────────────────────────────
 
 /**
- * Seed script: fills the Experience and Skills tables with my CV data.
+ * Seed script: fills the Projects, Experience and Skills tables with my CV data.
  *
  * Run it with:  npm run seed
  *
  * Safe to run again: it first clears these tables, then adds everything fresh,
- * so I never get duplicates. It does NOT touch the projects table.
+ * so I never get duplicates. It does NOT touch the messages table
+ * (those are real messages from visitors).
  */
 import { prisma } from "../src/db/prisma.js";
+
+// ── Projects (copied from my local database, 2026-10-25) ─────────────────
+const projects = [
+  {
+    title: "Flexipay — Digital Payments & Mobile Money Platform",
+    summary:
+      "A scalable digital payments platform supporting peer-to-peer transfers, merchant payments, bill payments, and wallet top-ups with multi-currency support.",
+    description:
+      "Led frontend development of core payment flows, including fund transfers, bill payments, wallet management, and transaction history dashboards. Built reusable Angular components and reactive data flows for high-scale transaction workflows, supporting 69M+ annual transactions and 124K+ merchants.",
+    category: "Payments",
+    displayOrder: 1,
+  },
+  {
+    title: "Arttha Product — Cloud-Native Digital Banking Platform",
+    summary:
+      "A cloud-native Banking-as-a-Service platform powering digital banking, payments, lending, and core banking capabilities across global markets.",
+    description:
+      "Delivered Angular features across Digital Wallet, Payments, Core Banking, BNPL, and Merchant Payments modules. Integrated 30+ REST APIs, implemented micro-frontend features, built reusable Angular Material and PrimeNG components, and improved page load performance by 60% through rendering and OnPush Change Detection optimization.",
+    category: "Banking",
+    displayOrder: 2,
+  },
+  {
+    title: "Loan Origination System — Digital Lending Platform",
+    summary:
+      "An end-to-end digital lending platform covering loan applications, KYC, credit assessment, approval workflows, and disbursement.",
+    description:
+      "Developed dynamic multi-step Angular forms with complex validation, conditional rendering, and real-time error handling. Built loan approval and credit assessment interfaces integrated with backend decision-engine APIs, supporting lending decisions for 5M+ customers and contributing to journeys enabling $120M+ in loan disbursements.",
+    category: "Lending",
+    displayOrder: 3,
+  },
+];
 
 // ── Experience (from the CV). endDate: null = current job ─────────────────
 const experiences = [
@@ -68,10 +100,12 @@ const skillGroups = [
 
 async function main() {
   // 1. Clear old data. Deleting the groups also deletes their skills (onDelete: Cascade).
+  await prisma.project.deleteMany();
   await prisma.experience.deleteMany();
   await prisma.skillGroup.deleteMany();
 
-  // 2. Add the jobs, all in one go.
+  // 2. Add the projects and the jobs, each list in one go.
+  await prisma.project.createMany({ data: projects });
   await prisma.experience.createMany({ data: experiences });
 
   // 3. Add each group TOGETHER with its skills ("nested create").
@@ -89,12 +123,13 @@ async function main() {
     });
   }
 
-  const [jobs, groups, skills] = await Promise.all([
+  const [projectCount, jobs, groups, skills] = await Promise.all([
+    prisma.project.count(),
     prisma.experience.count(),
     prisma.skillGroup.count(),
     prisma.skill.count(),
   ]);
-  console.log(`Seeded: ${jobs} jobs, ${groups} skill groups, ${skills} skills`);
+  console.log(`Seeded: ${projectCount} projects, ${jobs} jobs, ${groups} skill groups, ${skills} skills`);
 }
 
 main()

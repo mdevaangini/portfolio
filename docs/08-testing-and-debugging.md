@@ -28,7 +28,7 @@ The web tests use `provideHttpClientTesting()` so no real request leaves the tes
 | 6 | `GET /api/projects?category=Travel` | `data: []`, `total: 0` |
 | 7 | `GET /api/projects?limit=abc` | **400** |
 | 8 | `GET /api/projects/categories` | Sorted list of categories |
-| 9 | `GET /api/projects/1` / `/999` / `/abc` | 200 / **404** / **400** |
+| 9 | `GET /api/projects/<an id from the list>` / `/999` / `/abc` | 200 / **404** / **400** |
 | 10 | `GET /api/hello` | **404** route not found |
 | 11 | Web: scroll to *Selected work* | Skeleton briefly, then cards and chips |
 | 12 | Web: click a chip | Cards dim, then filter; Network tab shows `?category=…` |

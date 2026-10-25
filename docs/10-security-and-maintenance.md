@@ -50,8 +50,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Task | How |
 |---|---|
 | Update the CV | Replace `web/public/Devaangini-Mehta-CV.pdf`, keeping the same file name |
-| Edit project text | `npx prisma studio` or SQL `UPDATE` (data change, no migration) |
-| Edit experience or skills | Change the arrays in `api/prisma/seed.ts` → `npm run seed` |
+| Edit projects, experience or skills | Change the arrays in `api/prisma/seed.ts` → `npm run seed` (no migration) |
 | Read contact messages | pgAdmin: `SELECT * FROM messages ORDER BY created_at DESC;` |
 | Change the photo | Replace `web/public/headshot.jpg` (square, ~600×600) |
 | Add a column/table | `schema.prisma` → `npx prisma migrate dev --name …` → `npx prisma generate` |

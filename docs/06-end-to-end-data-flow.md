@@ -222,7 +222,7 @@ Check the result in pgAdmin: `SELECT * FROM messages ORDER BY created_at DESC;`
 
 ## Flow 7 — One project by id (API only)
 
-`GET /api/projects/:id` exists in the API ✅ but **the website does not use it yet** (there's no project detail page). Test it directly: `http://localhost:3000/api/projects/1` → 200, `/2` → 404 (deleted row), `/abc` → 400.
+`GET /api/projects/:id` exists in the API ✅ but **the website does not use it yet** (there's no project detail page). Test it directly: take an `id` from `GET /api/projects`, then `http://localhost:3000/api/projects/<that id>` → 200, `/999` → 404, `/abc` → 400. (Ids change each time the seed runs.)
 
 ---
 

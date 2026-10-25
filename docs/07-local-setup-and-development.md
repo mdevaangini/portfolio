@@ -49,17 +49,12 @@ Optional lines (defaults shown): `PORT=3000`, `CORS_ORIGIN=http://localhost:4200
 ### Add some data
 
 ```bash
-npm run seed    # fills experiences, skill_groups and skills with the CV data
+npm run seed    # fills projects, experiences, skill_groups and skills with the CV data
 ```
 
-Expected: `Seeded: 3 jobs, 6 skill groups, 26 skills`. Safe to run again.
+Expected: `Seeded: 3 projects, 3 jobs, 6 skill groups, 26 skills`. Safe to run again.
 
-📝 Projects are **not** in the seed yet, so a new database starts with no projects. Add rows with `npx prisma studio` (opens a spreadsheet-like editor in the browser) or with SQL in pgAdmin, for example:
-
-```sql
-INSERT INTO projects (title, summary, description, category, display_order)
-VALUES ('Example project', 'One-line summary.', 'Longer description.', 'Payments', 1);
-```
+You can also edit rows any time with `npx prisma studio` (a spreadsheet-like editor in the browser) or with SQL in pgAdmin.
 
 ### Run it
 

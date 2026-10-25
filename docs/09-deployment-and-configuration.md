@@ -12,7 +12,7 @@
 | API (development) | `npm run dev` = `tsx watch --env-file=.env src/server.ts` | `api/package.json` |
 | API (production) 🟡 | `npm run build` = `prisma generate && tsc -p tsconfig.build.json` → JavaScript in `api/dist/`; `npm start` = `node dist/src/server.js`; `npm run start:local` adds `--env-file=.env` | `api/package.json`, `api/tsconfig.build.json` |
 | Database migrations | `npm run db:migrate` = `prisma migrate deploy` (applies every migration not yet applied) | `api/prisma/migrations/` |
-| Starting data | `npm run seed` (experience + skills); projects not included yet | `api/prisma/seed.ts` |
+| Starting data | `npm run seed` (projects, experience, skills) | `api/prisma/seed.ts` |
 | API base URL in web | `http://localhost:3000/api` | `web/src/app/core/api.config.ts` |
 | Database connection | `DATABASE_URL` from `.env` | `api/src/config/env.ts` |
 | CORS | Single origin from `CORS_ORIGIN` (default `http://localhost:4200`) | `api/src/app.ts` |
@@ -50,7 +50,7 @@ Three hosted pieces, mirroring local development. Candidate free tiers to compar
 1. **Frontend API address**: make `API_BASE_URL` come from the build (e.g. Angular environment files) instead of the hard-coded localhost value.
 2. **CORS**: set `CORS_ORIGIN` on the API host to the real site address.
 3. **Health check**: a lightweight `GET /api/health` so the host can tell whether the API is alive.
-4. **Projects data**: add projects to the seed (or copy them once) so the live database isn't missing them.
+4. ✅ **Projects data**: now in the seed, so the live database gets everything from one `npm run seed`.
 5. **Rate limiting** on `POST /api/contact` before it is public.
 6. 📝 **Option C**: email the owner when a message arrives (Resend free tier: 100 emails/day, 3,000/month); its API key goes in the host's settings, never in git.
 
@@ -58,7 +58,7 @@ Three hosted pieces, mirroring local development. Candidate free tiers to compar
 
 1. Create the managed database → copy its connection string.
 2. Create the API service: build command `npm run build`, start command `npm start`; set `DATABASE_URL`, `CORS_ORIGIN` (and `PORT` if the host requires it).
-3. Run `npm run db:migrate` against the live database (builds the tables from the migration history), then `npm run seed` and add the projects.
+3. Run `npm run db:migrate` against the live database (builds the tables from the migration history), then `npm run seed`.
 4. Check `https://<api-host>/api/skills` in the browser.
 5. Build the web app with the production API URL → deploy the static files.
 6. Set `CORS_ORIGIN` to the final site URL → check that every section loads and the contact form saves a row.

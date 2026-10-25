@@ -192,7 +192,6 @@ Web: all V1 sections; Projects inside @defer; tests: 3 (headline contains
 Known issues / loose ends:
   - 0_init migration uses SERIAL; the live projects table uses IDENTITY
     (only matters for a fresh DB built from migrations).
-  - projects rows are not in the seed (a fresh DB would have no projects).
   - api/_prisma-backup/ still exists locally (gitignored).
   - Test row "Test" in messages (user may delete it).
   - "My role" + metrics on project cards: POSTPONED by the user

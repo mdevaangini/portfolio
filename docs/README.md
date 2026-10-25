@@ -26,7 +26,7 @@ flowchart LR
 ### The one mental model to keep
 
 > Think of the database as an Excel file with sheets.
-> 1. **Filling the sheets** happens separately: by hand in pgAdmin (`projects`), with the seed script (`experiences`, `skill_groups`, `skills`), or by visitors through the contact form (`messages`).
+> 1. **Filling the sheets** happens separately: with the seed script (`projects`, `experiences`, `skill_groups`, `skills`), or by visitors through the contact form (`messages`).
 > 2. **Reading the sheets** happens on every page load: Angular → API → Prisma → PostgreSQL → back to Angular.
 
 ## Documentation pages
@@ -60,7 +60,7 @@ Diagrams: [system architecture](diagrams/system-architecture.md) · [frontend fl
 cd api
 npm install
 npm run dev                 # http://localhost:3000
-npm run seed                # (re)fill experience + skills from CV data
+npm run seed                # (re)fill projects, experience + skills from CV data
 
 # Web (terminal 2)
 cd web
@@ -91,6 +91,6 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | "My role" line and metrics on project cards | 📝 postponed |
 | Email notification for new messages | 📝 planned at deployment (Resend free tier) |
 | Deployment | 📝 not done; [09](09-deployment-and-configuration.md) has the plan |
-| Projects in the seed script | 📝 projects rows exist only in the local database |
+| Projects in the seed script | ✅ (2026-10-25) |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

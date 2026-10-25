@@ -12,7 +12,7 @@ The database is like a spreadsheet file with sheets (**tables**). Each sheet has
 
 | Table | Filled by | Read by |
 |---|---|---|
-| `projects` | Hand (pgAdmin / Prisma Studio) | `GET /api/projects…` |
+| `projects` | The seed script (originally typed by hand in pgAdmin) | `GET /api/projects…` |
 | `experiences`, `skill_groups`, `skills` | The seed script (`npm run seed`) | `GET /api/experience`, `GET /api/skills` |
 | `messages` | **Visitors**, through the contact form (`POST /api/contact`) | The owner, in pgAdmin (no page shows them yet) |
 
@@ -58,7 +58,7 @@ One row per portfolio project shown in "Selected work".
 | `repo_url` | text | Yes | — | `repoUrl` |
 | `display_order` | integer | No | `0` | `displayOrder` |
 
-Current rows: ids **1** (Flexipay, Payments), **3** (Arttha, Banking), **4** (Loan Origination System, Lending). Id 2 was deleted during learning; ids are never reused.
+Rows: Flexipay (Payments), Arttha (Banking), Loan Origination System (Lending), in that display order. They now come from the seed script, so their ids change each time it runs; nothing depends on the ids.
 
 ### `experiences`
 
@@ -173,8 +173,7 @@ Never edit a migration file after it has run: Prisma stores a checksum of each o
 | You want to… | It's a… | Do this |
 |---|---|---|
 | Add/remove a column or table | **Structure** change | Edit `schema.prisma` → `npx prisma migrate dev --name <what>` → `npx prisma generate` |
-| Add/edit/delete a project | **Data** change | pgAdmin or `npx prisma studio`. No migration |
-| Change experience or skills | **Data** change | Edit the arrays in `prisma/seed.ts` → `npm run seed` |
+| Change projects, experience or skills | **Data** change | Edit the arrays in `prisma/seed.ts` → `npm run seed` (quick fixes: `npx prisma studio`). No migration |
 
 Prisma 7's `migrate dev` does **not** regenerate the client, so always run `generate` afterwards. Don't change structure by hand in pgAdmin, or the schema and the history fall out of sync.
 
@@ -184,8 +183,8 @@ Prisma 7's `migrate dev` does **not** regenerate the client, so always run `gene
 
 **What it does when you run `npm run seed`:**
 
-1. Deletes all rows in `experiences` and `skill_groups` (which also deletes their skills, through the cascade). `projects` and `messages` are **not** touched.
-2. `prisma.experience.createMany({ data: experiences })` adds the jobs.
+1. Deletes all rows in `projects`, `experiences` and `skill_groups` (which also deletes their skills, through the cascade). `messages` is **not** touched: those are real messages from visitors.
+2. `createMany` adds the projects and the jobs.
 3. For each group: a **nested create** saves the group and its skills together; Prisma fills in `group_id` for you:
 
 ```ts
@@ -195,7 +194,7 @@ prisma.skillGroup.create({
 });
 ```
 
-4. Prints `Seeded: 3 jobs, 6 skill groups, 26 skills`.
+4. Prints `Seeded: 3 projects, 3 jobs, 6 skill groups, 26 skills`.
 
 Because it clears first, it is safe to run again and never creates duplicates. Because ids are auto-numbers, re-seeding gives the rows new ids (the site doesn't depend on them).
 
@@ -216,6 +215,6 @@ The `$1`-style placeholders mean values are sent separately from the SQL text, w
 
 | Table | Create | Read | Update | Delete |
 |---|---|---|---|---|
-| `projects` | by hand | ✅ API | by hand | by hand |
+| `projects` | seed script | ✅ API | edit seed → re-run (or Prisma Studio) | seed clears them |
 | `experiences`, `skill_groups`, `skills` | seed script | ✅ API | edit seed → re-run | seed clears them |
 | `messages` | ✅ **API (contact form)** | pgAdmin only | — | by hand |

@@ -51,7 +51,12 @@ Each term has a plain definition, an everyday comparison where it helps, and whe
 | **`.env` file** | A file holding environment variables locally (secret) | A locked drawer | `api/.env` |
 | **CORS** | Browser rule: a page may only read responses from another site if that site allows it | A guest list at the door | API allows `http://localhost:4200` |
 | **Build** | Turning source code into files ready to serve | Printing the final book | `npm run build` in web (→ `web/dist/`) and in api (→ `api/dist/`) |
-| **Deployment** | Putting the app on servers so others can use it | Opening the shop to the public | 📝 the next step |
+| **Deployment** | Putting the app on servers so others can use it | Opening the shop to the public | ✅ Vercel + Neon (2026-10-25) |
+| **Vercel** | A hosting service that builds and serves websites and small backends from a Git repo | A landlord who also builds the shop from your plans | Two projects: `devaangini` (web), `portfolio` (API) |
+| **Serverless function** | Backend code that the host starts on demand when a request arrives, instead of a server running all day | A taxi called when needed instead of a car parked outside | The whole Express app on Vercel |
+| **Neon** | A company that runs PostgreSQL in the cloud | The records room moved to a secure warehouse | `portfolio-db` |
+| **Pooled / unpooled connection** | Pooled: many visitors share a few database connections (for the app). Unpooled: one direct line (for migrations) | A shared taxi rank vs a private car | `DATABASE_URL` / `DATABASE_URL_UNPOOLED` |
+| **Environment file (Angular)** | A file of settings swapped depending on how the app is built | Different address labels for test and real parcels | `environment.ts` / `environment.development.ts` |
 | **ISO date text** | The standard way dates travel in JSON, e.g. `2024-05-01T00:00:00.000Z` | A date written in a fixed international format | `startDate`, `createdAt`; formatted by Angular's `date` pipe |
 | **Scroll-driven animation** | A CSS animation whose progress follows scrolling instead of time | A blind that opens as you walk past | Progress bar, numbers filling, lines drawing |
 | **Error handling** | Deciding what happens when something goes wrong | A plan for complaints | 400/404 in controllers, 500 in `error-handler.ts` |

@@ -20,6 +20,8 @@ The web app is the part people see. It is one page split into sections: header, 
 | Styling | SCSS; colour/font/size **tokens** as CSS variables plus shared helper classes in `styles.scss`; each component has its own `.scss` | `web/src/styles.scss` |
 | Look | "Light & Calm": warm off-white page, navy text, apricot accent | design board J |
 | Fonts | **Nunito** (headings), **Nunito Sans** (text), **JetBrains Mono** (small code-style labels), from Google Fonts | `web/src/index.html` |
+| API address | `src/environments/environment.ts` (live API) and `environment.development.ts` (localhost), swapped by `angular.json` → `fileReplacements` | `web/src/environments/` |
+| Hosting | Vercel project **devaangini**; `web/vercel.json` points Vercel at `dist/web/browser` | `web/vercel.json` |
 | Static files | Everything in `web/public/` is served from the site root: CV, `headshot.jpg`, favicons | `angular.json` → `assets` |
 | Favicon | A code-style `</>` icon: `favicon.svg` (sharp at any size), `favicon.ico` (older browsers), `apple-touch-icon.png` (home screens) | `web/public/`, linked in `index.html` |
 | Lazy loading | Projects section wrapped in `@defer (on viewport; prefetch on idle)` | `app.html` |
@@ -75,7 +77,7 @@ web/src/
 
 | File | Responsibility | Used by |
 |---|---|---|
-| `core/api.config.ts` | `API_BASE_URL` token, default `http://localhost:3000/api` | every service |
+| `core/api.config.ts` | `API_BASE_URL` token = `environment.apiBaseUrl` (localhost in development, the live API in production) | every service |
 | `core/projects.service.ts` | `loadProjects(category)` and `loadCategories()`, each an `httpResource` | Projects |
 | `core/experience.service.ts` | `loadExperiences()` → `httpResource<Experience[]>` | Experience |
 | `core/skills.service.ts` | `loadSkillGroups()` → `httpResource<SkillGroup[]>` | Skills |

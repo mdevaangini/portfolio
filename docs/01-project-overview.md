@@ -18,6 +18,14 @@ Think of a small office:
 
 Where the analogy breaks: reception does not keep copies of the records — every time a section appears, it asks again. And the "mail service" answers in milliseconds, not hours.
 
+## Where it lives
+
+- **Website:** `https://devaangini-portfolio.vercel.app` (Vercel)
+- **API:** `https://portfolio-neon-six-56.vercel.app/api/…` (Vercel, one serverless function)
+- **Database:** Neon PostgreSQL, connected through Vercel
+
+Details: [09 — Deployment](09-deployment-and-configuration.md).
+
 ## Who it is for
 
 - **Recruiters and hiring managers** — the visitors.
@@ -44,7 +52,8 @@ Where the analogy breaks: reception does not keep copies of the records — ever
 | Web app | **Angular 22** (TypeScript, Signals, `httpResource`, `@defer`, Reactive Forms) | The owner's expertise; modern Angular features were a stated goal |
 | API | **Node.js 24 + Express 5 + TypeScript** | Same language as the frontend; Express shows the request → response flow plainly (NestJS was rejected because it hides that flow) |
 | Database access | **Prisma 7** (ORM) | Type-safe queries, migrations and a seed script; raw SQL was learned first |
-| Database | **PostgreSQL 18** | Widely used relational database |
+| Database | **PostgreSQL 18** locally, **Neon** (PostgreSQL in the cloud) live | Widely used relational database |
+| Hosting | **Vercel** (Hobby) | Hosts both the Angular files and the Express API; connects Neon in a few clicks; deploys on every push |
 | Design | Claude Design canvas, board **"J · Light & Calm"** | Light, warm and modern but still professional: off-white page, navy text, apricot accent, Nunito fonts, subtle CSS animations |
 
 ## How information travels (short version)
@@ -84,4 +93,5 @@ Every source file starts with an **"ABOUT THIS FILE"** comment explaining what i
 - **Endpoints**: `GET /api/projects` (paging, `title`, `category`), `GET /api/projects/categories`, `GET /api/projects/:id`, `GET /api/experience`, `GET /api/skills`, `POST /api/contact`. Details: [04](04-api-documentation.md).
 - **Database**: five tables managed by four Prisma migrations; the first one-to-many relationship (`skill_groups` → `skills`); a seed script for experience and skills. Details: [05](05-database-documentation.md).
 - **Web**: standalone components, OnPush, signal inputs, `httpResource` for reading, `HttpClient.post` + Reactive Forms for the contact form, `linkedSignal` to keep the previous list during refetch, shared CSS helpers and CSS-only animations behind `prefers-reduced-motion`. Details: [03](03-frontend-documentation.md).
-- **Not yet present**: authentication / admin area, email notifications, deployment.
+- **Deployment**: Vercel (two projects from one repo: `web` and `api`) + Neon Postgres; every push to `main` redeploys. See [09](09-deployment-and-configuration.md).
+- **Not yet present**: authentication / admin area, email notifications, rate limiting.

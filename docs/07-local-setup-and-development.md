@@ -103,7 +103,11 @@ The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/
 | Change table structure | edit `prisma/schema.prisma` → `npx prisma migrate dev --name <change>` → `npx prisma generate` (api) |
 | Browse/edit data | `npx prisma studio` (api) |
 
-## 7. Common problems
+## 7. Publishing changes to the live site
+
+Commit and push from the `portfolio/` root; Vercel rebuilds the website and the API by itself. Details, including how to update the live database: [09 — Deployment](09-deployment-and-configuration.md#everyday-operations).
+
+## 8. Common problems
 
 | Symptom | Likely cause | Fix |
 |---|---|---|

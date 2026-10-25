@@ -20,12 +20,12 @@ The database is like a spreadsheet file with sheets (**tables**). Each sheet has
 
 | Topic | Value |
 |---|---|
-| Engine | PostgreSQL 18, local, `localhost:5432` |
+| Engine | PostgreSQL 18, local, `localhost:5432` · **Live:** Neon PostgreSQL (Vercel → Storage → `portfolio-db`, free plan) |
 | Database | `portfolio` |
 | Schema (namespace) | `public` |
 | Admin tool | pgAdmin 4 (to see new tables: right-click **Tables → Refresh**) |
 | Access from code | Prisma 7 Client (`api/src/db/prisma.ts`) with the `@prisma/adapter-pg` driver adapter, which uses the `pg` driver underneath |
-| Connection string | `DATABASE_URL` in `api/.env` (format in `api/.env.example`; never commit real values) |
+| Connection string | Local: `DATABASE_URL` in `api/.env`. Live: `DATABASE_URL` (pooled) + `DATABASE_URL_UNPOOLED` (direct) set by Vercel. Never commit real values |
 | Structure definition | `api/prisma/schema.prisma` |
 | Structure history | `api/prisma/migrations/` |
 | Starting data | `api/prisma/seed.ts` |

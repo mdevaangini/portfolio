@@ -1,6 +1,7 @@
 # Portfolio Project — Documentation
 
-> Last verified against the code: **2026-10-22**.
+> Last verified against the code: **2026-10-25**.
+> **Live:** website `https://devaangini-portfolio.vercel.app` · API `https://portfolio-neon-six-56.vercel.app/api/…` (see [09](09-deployment-and-configuration.md)).
 > Status labels used throughout: ✅ **Implemented** · 🟡 **Built, not yet confirmed at runtime** · 📝 **Planned / proposed** · ❓ **Unknown / needs verification**
 
 ## What this project is
@@ -41,7 +42,7 @@ flowchart LR
 | 06 | [End-to-end data flow](06-end-to-end-data-flow.md) | Real features traced from click to database and back (reading **and** writing) |
 | 07 | [Local setup](07-local-setup-and-development.md) | Installing and running everything on a new machine |
 | 08 | [Testing and debugging](08-testing-and-debugging.md) | What tests exist, manual checks, debugging a broken request |
-| 09 | [Deployment and configuration](09-deployment-and-configuration.md) | Current config, production scripts, and the deployment plan |
+| 09 | [Deployment and configuration](09-deployment-and-configuration.md) | How the site runs on Vercel + Neon, what was changed, everyday operations |
 | 10 | [Security and maintenance](10-security-and-maintenance.md) | Protections in place, risks, recommendations |
 | 11 | [Glossary for beginners](11-glossary-for-beginners.md) | Every technical term, in plain English |
 
@@ -87,10 +88,10 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Experience and Skills from the database (+ seed script) | ✅ confirmed by the owner |
 | Contact form saving to the database (`POST /api/contact`) | ✅ confirmed by the owner (Postman + form) |
 | "Light & Calm" redesign, animations, headshot | ✅ applied; latest animation set + code-style favicon 🟡 not yet confirmed |
-| API production scripts (`build`, `start`) | 🟡 built and checked by Claude; not yet run by the owner on Windows |
+| Deployment: Vercel (website + API) + Neon Postgres | ✅ live and confirmed by the owner (2026-10-25) |
 | "My role" line and metrics on project cards | 📝 postponed |
-| Email notification for new messages | 📝 planned at deployment (Resend free tier) |
-| Deployment | 📝 not done; [09](09-deployment-and-configuration.md) has the plan |
+| Email notification for new messages | 📝 next (Resend free tier) |
+| Rate limiting on the contact form | 📝 next (important now that it's public) |
 | Projects in the seed script | ✅ (2026-10-25) |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

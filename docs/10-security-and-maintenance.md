@@ -9,6 +9,8 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Control | Protects against | Where | Status |
 |---|---|---|---|
 | Secrets in `.env`, not in code | Leaking the DB password via git | `api/.env`; root and api `.gitignore` list `.env` | ✅ |
+| Live secrets only in Vercel's settings (marked *Sensitive*); the laptop copy is in git-ignored `api/.env.production.local` | Leaking the Neon password | Vercel → Environment Variables | ✅ |
+| HTTPS everywhere | Messages and data read in transit | Vercel `.vercel.app` domains | ✅ |
 | Private GitHub repository | The CV PDF (contains a phone number) being public | GitHub settings | ✅ |
 | `.env.example` with placeholders only | Sharing setup info without secrets | `api/.env.example` | ✅ |
 | Required-setting check at start-up | Running with a broken config | `api/src/config/env.ts` | ✅ |
@@ -22,26 +24,26 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Generic 500 message; full error only in the server log | Leaking SQL, file paths or stack traces to visitors | `middleware/error-handler.ts` | ✅ |
 | CORS restricted to one origin | Other websites reading the API from a visitor's browser | `app.ts` | ✅ |
 | Only one write endpoint, and it can only **add** messages | Visitors changing or deleting content | `POST /api/contact` | ✅ |
-| Phone number not shown on the site | Spam | design decision | ✅ |
+| Phone number not shown on the site | Spam | design decision (note: it is inside the downloadable CV PDF — the owner's choice) | ✅ |
 
 ## Risks and gaps
 
 | Item | Note | Status |
 |---|---|---|
-| Database connects as the `postgres` superuser | Fine locally; too powerful for production | ⚠️ |
-| No rate limiting | Someone could send thousands of contact messages | ⚠️ — add before deploying |
+| Database connects as the `postgres` superuser (local) / Neon's owner role (live) | Too powerful in principle; acceptable for a portfolio | ⚠️ |
+| No rate limiting | Someone could send thousands of contact messages to the **live** form | ⚠️ — next task (Vercel Firewall rule or a shared store; in-memory limits don't work on serverless) |
 | Messages are stored with the sender's email | Personal data the owner is responsible for | ⚠️ — keep the DB private; delete old messages |
 | No security headers (e.g. via Helmet) | Missing hardening headers | ⚠️ |
 | No authentication | Fine today; required before any admin page (e.g. reading messages on the site) | — |
-| No database backups configured | Local data could be lost | ⚠️ |
+| Backups | Neon keeps restore history on its free plan (check current limits); the seed can rebuild all content except `messages` | ⚠️ |
 | CORS errors are browser-only protection | CORS doesn't stop non-browser clients; that's expected because the data is public | — |
 
 ## Recommendations 📝
 
 1. Commit regularly from the `portfolio/` root; never commit `.env`.
 2. In production, use a dedicated database user with only the needed permissions.
-3. Before deploying: add rate limiting to `POST /api/contact` (e.g. a few messages per minute per visitor).
-4. Add security headers and HTTPS on the hosted API.
+3. Add rate limiting to the live `POST /api/contact` (e.g. a few messages per minute per visitor).
+4. Add security headers (e.g. Helmet) to the API; HTTPS is already provided by Vercel.
 5. Back up the production database (most managed providers offer this).
 6. Keep dependencies updated: `npm outdated` and `npm audit` in both projects. Note that Prisma 7 is pinned on purpose; Prisma 8 changes the APIs.
 

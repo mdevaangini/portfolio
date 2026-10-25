@@ -1,6 +1,6 @@
 ==============================================================================
  SESSION_CONTEXT.txt  —  Portfolio project (Angular + Node/Express + PostgreSQL)
- Last updated: 2026-10-22, ~18:10 IST (Asia/Calcutta)
+ Last updated: 2026-10-25, ~19:20 IST (Asia/Calcutta)
  Location: C:\Users\HP\OneDrive\Desktop\portfolio\SESSION_CONTEXT.txt
 ==============================================================================
 
@@ -38,7 +38,7 @@ A. PROJECT OVERVIEW
 
 What: Devaangini Mehta's personal portfolio website, built as an end-to-end
 full-stack LEARNING project:  Angular frontend → Node/Express API →
-PostgreSQL database → (next) deployment.
+PostgreSQL database → deployment (LIVE on Vercel since 2026-10-25).
 
 Who: Devaangini Mehta, Frontend Engineer (4.5+ yrs Angular, fintech),
 Noida, India. Strong in Angular; beginner in Node.js, backend, databases.
@@ -59,7 +59,11 @@ Rules from the brief:
 
 V1 status: ALL sections are built (Hero, numbers strip, Expertise, Projects,
 Experience, Skills, Contact form, Footer). Projects, Experience, Skills and the
-Contact form go through the API and database.
+Contact form go through the API and database. The site is DEPLOYED:
+  website  https://devaangini-portfolio.vercel.app  (renamed from
+           devaangini-nine.vercel.app on 2026-10-25 — [UNCONFIRMED] which
+           name is final; check Vercel → devaangini → Domains)
+  API      https://portfolio-neon-six-56.vercel.app/api/…
 
 The user's mental model (confirmed 2026-10-19, keep using it):
   "Postgres = an Excel file with sheets. (1) Fill the sheets once: by hand in
@@ -169,13 +173,58 @@ B9. Production scripts for the API (point 2 of the plan)  [UNCONFIRMED]
     still needs to run `npm run build` + `npm run start:local` on Windows
     (TypeScript 7).
 
+B10. Projects added to the seed  [VERIFIED by user]
+  - seed.ts now clears + refills projects, experiences, skill groups/skills
+    (never messages). Prints "Seeded: 3 projects, 3 jobs, 6 skill groups,
+    26 skills". Project texts copied from the local DB (user pasted them).
+    Side effect: project ids change on every seed (nothing depends on ids).
+
+B11. Deployment to Vercel + Neon  [VERIFIED by user: "yes its working"]
+  Code changes (api/):
+  - src/app.ts: `export default app;` (Vercel finds src/app.ts with a default
+    export and runs the whole Express app as ONE serverless function;
+    server.ts + app.listen still used locally).
+  - prisma7.config.ts RENAMED to prisma.config.ts (Prisma auto-loads only
+    that exact name). datasource url = DATABASE_URL_UNPOOLED ?? DATABASE_URL
+    (migrations need Neon's direct connection; app uses the pooled one).
+  - package.json: "vercel-build": "prisma generate && prisma migrate deploy"
+    → every Vercel deploy regenerates the client and applies migrations.
+  - TypeScript 7.0.2 → ~6.0.3 (Vercel's transpiler failed with TS7:
+    "TS2688 Cannot find type definition file for 'node'").
+  Code changes (web/):
+  - src/environments/environment.ts (production: live API URL) and
+    environment.development.ts (localhost); angular.json development config
+    has fileReplacements; core/api.config.ts reads environment.apiBaseUrl.
+  - web/vercel.json: framework angular, buildCommand "npm run build",
+    outputDirectory "dist/web/browser" (without it Vercel showed a 404).
+  Vercel dashboard (user did it):
+  - Hobby plan, GitHub login, access only to the portfolio repo.
+  - Project "portfolio" = API (Root Directory api, preset Express).
+  - Neon "portfolio-db" (free) via Storage tab, connected to "portfolio"
+    with env-var prefix DATABASE (NOT the default STORAGE) → DATABASE_URL,
+    DATABASE_URL_UNPOOLED, PG* vars. No DB branches for previews.
+  - Project "devaangini" = website (Root Directory web, preset Angular).
+  - CORS_ORIGIN on the API project = the website's https address.
+  Data: seed run from the laptop against Neon with a git-ignored file
+  api/.env.production.local (DATABASE_URL=<Neon unpooled URL>):
+      npx tsx --env-file=.env.production.local prisma/seed.ts
+  Every git push to main now redeploys both projects automatically.
+
 ==============================================================================
 C. CURRENT STATE
 ==============================================================================
 
-Database tables: projects, experiences, skill_groups, skills, messages,
-_prisma_migrations (0_init, add_project_category, add_experience_and_skills,
-add_messages).
+LIVE (production):
+  Website  devaangini-portfolio.vercel.app (see A: confirm final name)
+  API      portfolio-neon-six-56.vercel.app  (e.g. /api/skills)
+  Database Neon "portfolio-db" (Vercel Storage), seeded 2026-10-25.
+  Vercel projects: "portfolio" (= API!) and "devaangini" (= website).
+  The extra Vercel URLs (…-git-main-…, …-<hash>-…) are protected by Vercel
+  login by default — always use the production domains.
+
+Database tables (local and Neon): projects, experiences, skill_groups, skills,
+messages, _prisma_migrations (0_init, add_project_category,
+add_experience_and_skills, add_messages).
 
 Endpoints:
   GET  /api/projects?limit&offset&title&category  → { data, total, limit, offset }
@@ -184,24 +233,32 @@ Endpoints:
   GET  /api/experience                            → Experience[] (newest first)
   GET  /api/skills                                → SkillGroup[] with skills[]
   POST /api/contact                               → 201 | 400 { error, fields }
-  unknown → 404 JSON; crash → 500 safe message
+  unknown (incl. GET /) → 404 JSON; crash → 500 safe message
 
 Web: all V1 sections; Projects inside @defer; tests: 3 (headline contains
 "I build Angular apps"; nav links "01. expertise" … "04. skills").
 
 Known issues / loose ends:
-  - 0_init migration uses SERIAL; the live projects table uses IDENTITY
-    (only matters for a fresh DB built from migrations).
+  - No rate limiting on POST /api/contact (now public!). On Vercel an
+    in-memory limiter doesn't work across function instances → use Vercel
+    Firewall rate-limit rules or a shared store (e.g. Upstash) — discuss.
+  - Contact messages only visible in Neon (Vercel → Storage → portfolio-db
+    → Data Editor) or local pgAdmin; no email notification yet (option C).
+  - 0_init migration uses SERIAL; local projects table uses IDENTITY (Neon
+    was built from migrations, so it uses SERIAL — harmless).
+  - CV PDF (with phone number) is publicly downloadable on the live site —
+    the user explicitly chose to keep it (2026-10-25).
   - api/_prisma-backup/ still exists locally (gitignored).
-  - Test row "Test" in messages (user may delete it).
-  - "My role" + metrics on project cards: POSTPONED by the user
-    ("categories are enough for now"); reference in api/_prisma-backup/.
+  - "My role" + metrics on project cards: POSTPONED by the user.
+  - Vercel build warnings (harmless): engines ">=22" auto-upgrade notice,
+    npm "cache-dir", npm 11 allowScripts skipped install scripts (Prisma
+    still works), "Prisma 8 available" (deliberately staying on 7).
 
-Exact stopping point (2026-10-22):
-  Plan agreed: (1) finish V1 content ✓  (2) housekeeping ← IN PROGRESS
-  (3) deployment.
-  Point 2 progress: production scripts ✓ (B9); this file ✓; docs/ update
-  in progress. NEXT after docs: point 3, deployment.
+Exact stopping point (2026-10-25):
+  Plan (1) V1 content ✓ (2) housekeeping ✓ (3) deployment ✓ — site LIVE and
+  confirmed working by the user. SESSION_CONTEXT + docs updated for the
+  deployment. NEXT: pick from G (rate limiting first, then email (option C),
+  custom domain, health check, V2 ideas).
 
 ==============================================================================
 D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
@@ -227,6 +284,11 @@ D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
     signals; shared CSS helpers in styles.scss (.btn, .lift, .arrow, .pop,
     .reveal, .stagger, .mono-label).
   - Contact: B now (save to DB), C (email via Resend) at deployment.
+  - Hosting: Vercel (Hobby) for BOTH web and API (two projects from one repo,
+    Root Directory web / api) + Neon Postgres from the Vercel Marketplace.
+    Migrations run automatically in "vercel-build"; seed is run by hand.
+    Separate domains → CORS_ORIGIN must equal the live website address.
+  - API stays on TypeScript 6 (TS7 broke Vercel's transpiler).
   - Design: "J · Light & Calm" (light page, navy text, apricot accent,
     Nunito). Phone number never shown. No availability badge. Favicon is a
     code icon, not the user's photo.
@@ -275,6 +337,14 @@ F. PROBLEMS, FAILED ATTEMPTS, LESSONS
   - pgAdmin doesn't show new tables until Tables → Refresh.
   - git add . inside web/ only stages web → commit from the root.
   - First Prisma attempt too fast → revert and redo slowly.
+  - Vercel/Neon lessons: Neon connect dialog defaults the env prefix to
+    STORAGE → change to DATABASE. First API build fails before Neon is
+    connected (expected). "Redeploy" on an OLD deployment page rebuilds that
+    OLD commit — use the Deployments list / latest row. Angular output is in
+    dist/web/browser (needs vercel.json). Settings → "Environments" is not
+    "Environment Variables" (the latter is in the project's main menu).
+    Env-var changes need a redeploy. Explain Neon simply: "Postgres in the
+    cloud".
   - Claude-side tooling: type-check api with
     `node ../web/node_modules/typescript/bin/tsc -p tsconfig.json` (TS 7 is a
     Windows binary); web with `node node_modules/@angular/compiler-cli/
@@ -287,28 +357,21 @@ F. PROBLEMS, FAILED ATTEMPTS, LESSONS
 ==============================================================================
 G. IMMEDIATE NEXT STEPS (prioritised)
 ==============================================================================
-  G1. User: check the site (animations, favicon), run `npm test`,
-      `npm run build` + `npm run start:local` in api, then commit + push.
-  G2. Finish point 2: update docs/ for everything since 2026-10-19
-      (new tables + relationship, seed, experience/skills/contact modules,
-      contact flow (write direction), redesign, production scripts, fixed
-      issues). Re-validate links and Mermaid diagrams.
-  G3. Point 3 — deployment (discuss hosts first, free tiers):
-      Angular → static host (Vercel / Netlify / Cloudflare Pages);
-      API → Node host (Render / Railway); Postgres → Neon / Supabase.
-      Make API_BASE_URL environment-based (Angular environments or a
-      build-time replacement) and set CORS_ORIGIN to the live site; run
-      `npm run db:migrate` + seed against the live DB; add projects data.
-  G4. Option C: email notification on new contact message (Resend).
-  G5. Later / postponed: "My role" + metrics (one-to-many ProjectMetric),
-      projects in the seed, rate limiting on POST /api/contact, an admin view
-      for messages (V2).
+  G1. Confirm the final website domain (devaangini-portfolio vs -nine) and
+      that CORS_ORIGIN matches it exactly (https, no trailing slash).
+  G2. Rate limiting for POST /api/contact (Vercel Firewall rule or Upstash).
+  G3. Option C: email notification for new messages (Resend free tier:
+      100/day, 3,000/month); API key as a Vercel env var, never in git.
+  G4. GET /api/health; optional custom domain (e.g. devaangini.dev).
+  G5. Later / postponed: "My role" + metrics (ProjectMetric one-to-many),
+      admin view for messages (needs auth, V2), more tests (Supertest for
+      the API, HttpTestingController for services).
 
 ==============================================================================
 H. IMPORTANT CONTEXT AND REFERENCES
 ==============================================================================
 API (portfolio/api)
-  scripts: dev · build · start · start:local · db:migrate · seed · typecheck
+  scripts: dev · build · vercel-build · start · start:local · db:migrate · seed · typecheck
   src/server.ts · src/app.ts (cors → json → /api → notFound → errorHandler)
   src/routes.ts   /projects · /experience · /skills · /contact
   src/config/env.ts · src/db/prisma.ts · src/middleware/{not-found,error-handler}.ts
@@ -327,6 +390,12 @@ Web (portfolio/web/src)
   app/layout/ header, footer · app/shared/section-heading (index, title, headingId)
   app/sections/ hero, impact-strip, expertise, projects, experience, skills, contact
   public/ Devaangini-Mehta-CV.pdf, headshot.jpg, favicon.svg/.ico, apple-touch-icon.png
+
+Deploying changes
+  git add . && git commit -m "…" && git push   (from the portfolio ROOT)
+  → Vercel rebuilds both projects; API build also runs prisma migrate deploy.
+  New data for the live DB: edit prisma/seed.ts, then
+  npx tsx --env-file=.env.production.local prisma/seed.ts   (in api/)
 
 Run locally
   api: npm run dev (3000) · npm run seed · npm run build && npm run start:local

@@ -52,7 +52,7 @@ Also present: `readme.txt` (the owner's learning notes) and `_prisma-backup/` (a
 4. `app.ts` registers middleware and routes in order.
 5. `server.ts` calls `app.listen(env.port)` and logs `API running at http://localhost:3000`.
 
-In production the same code runs as plain JavaScript: `npm run build` then `npm start` (see [09](09-deployment-and-configuration.md)).
+On **Vercel**, `server.ts` is not used: Vercel imports the **default export** of `src/app.ts` and runs the app as one serverless function. Before that, its build runs `vercel-build` (`prisma generate && prisma migrate deploy`). On a classic Node host the same code runs as plain JavaScript: `npm run build` then `npm start`. See [09](09-deployment-and-configuration.md).
 
 ### Request lifecycle (`api/src/app.ts`)
 
@@ -74,7 +74,8 @@ The URL is assembled in pieces: `app.ts` mounts `/api`, `routes.ts` mounts `/pro
 |---|---|---|---|
 | `DATABASE_URL` | **Yes** | — | Prisma connection (`db/prisma.ts`) |
 | `PORT` | No | `3000` | `server.ts` |
-| `CORS_ORIGIN` | No | `http://localhost:4200` | `cors()` in `app.ts` |
+| `CORS_ORIGIN` | No | `http://localhost:4200` | `cors()` in `app.ts`. **Live:** the website's address |
+| `DATABASE_URL_UNPOOLED` | No | — | Only on Vercel/Neon: direct connection used by Prisma commands (`prisma.config.ts`) |
 
 ### Scripts (`api/package.json`)
 
@@ -82,7 +83,8 @@ The URL is assembled in pieces: `app.ts` mounts `/api`, `routes.ts` mounts `/pro
 |---|---|---|
 | `npm run dev` | `tsx watch --env-file=.env src/server.ts` | Everyday development |
 | `npm run seed` | `tsx --env-file=.env prisma/seed.ts` | Refill experience + skills |
-| `npm run build` | `prisma generate && tsc -p tsconfig.build.json` | Make production JavaScript in `dist/` |
+| `npm run build` | `prisma generate && tsc -p tsconfig.build.json` | Make production JavaScript in `dist/` (other hosts) |
+| `npm run vercel-build` | `prisma generate && prisma migrate deploy` | Run by **Vercel** on every deploy |
 | `npm start` | `node dist/src/server.js` | Production (the host provides the settings) |
 | `npm run start:local` | `node --env-file=.env dist/src/server.js` | Try the production build locally |
 | `npm run db:migrate` | `prisma migrate deploy` | Apply migrations to a (production) database |

@@ -34,6 +34,23 @@ export class Contact {
     website: [''], // hidden spam trap
   });
 
+  /**
+   * WhatsApp number in international format: country code + number,
+   * no "+", spaces or dashes (e.g. 91 for India). Shown inside the link, so it is public.
+   */
+  private readonly whatsappNumber = '916283411585';
+
+  /**
+   * Link that opens a WhatsApp chat with me. If the visitor already typed a name or
+   * message in the form, it's pre-filled into the chat so they don't type it twice.
+   */
+  protected whatsappLink(): string {
+    const { name, message } = this.form.getRawValue();
+    const intro = name.trim() ? `Hi Devaangini, I'm ${name.trim()}.` : 'Hi Devaangini,';
+    const body = message.trim() || 'I found your portfolio and would like to connect.';
+    return `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(`${intro} ${body}`)}`;
+  }
+
   protected readonly status = signal<Status>('idle');
   /** Field errors sent back by the API (400), shown under each input. */
   protected readonly serverErrors = signal<Partial<Record<FieldName, string>>>({});

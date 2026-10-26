@@ -184,8 +184,27 @@ textarea {
   overflow: hidden;
 }
 
-.send {
-  align-self: flex-start;
+/* Send button + "or" + WhatsApp button, side by side (they wrap on small screens) */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+}
+
+.actions__or {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* WhatsApp-green icon and border on hover; the button itself stays calm */
+.whatsapp svg {
+  color: #128c7e;
+}
+
+.whatsapp:hover {
+  border-color: #25d366;
 }
 
 /* Shown after a successful send */

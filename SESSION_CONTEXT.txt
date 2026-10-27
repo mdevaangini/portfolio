@@ -396,7 +396,19 @@ Exact stopping point (2026-10-25):
   Firewall: after the rewrite the API project may see Vercel's IP instead
   of the visitor's → user asked to add the same rate-limit rule on the
   WEBSITE project "devaangini" (path /api/contact + POST) and test.
-  NEXT: user tests locally + live; then 1c (API tests). Docs for 1a go into
+  1b CONFIRMED by user ("done", 2026-10-28): local, live, firewall rule on
+  "devaangini".
+  1c WRITTEN [UNCONFIRMED]: api/vitest.config.ts (include tests/**/*.test.ts;
+  fake DATABASE_URL in test.env so the real .env/DB is never used);
+  api/tests/app.test.ts = 5 tests without DB (404 JSON; contact 400 empty /
+  bad email / too long; spam trap 201 {ok:true}). package.json scripts
+  test (vitest run) + test:watch; tsconfig include tests + vitest.config.ts.
+  User must run in api/: npm install -D vitest supertest @types/supertest
+  (Claude can't install: her node_modules are Windows binaries).
+  Tests that need a database (auth, posts) come with milestone 3 → decide
+  a separate test database then.
+  NEXT: user installs + npm test (expect 5 passed) → docs for M1 (03, 07,
+  08, 09, README) → Milestone 2 (database). Docs for 1a go into
   docs/03 at the end of milestone 1.
   (old) NEXT: wait for the user to say the plan is approved (or bring the lead's
   comments → update the doc). Only then start Blog milestone 1, one step at

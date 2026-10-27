@@ -163,6 +163,8 @@ Dates arrive as text such as `"2024-05-01T00:00:00.000Z"` (JSON has no date type
   4. **400** → the API's `fields` messages appear under the matching inputs.
   5. Anything else (API down, 500) → a red box: "Something went wrong… email me directly."
 - Why `HttpClient.post` and not `httpResource`: `httpResource` is for **reading** data that loads on its own; sending a form is a one-off action triggered by a click.
+- **429** (too many messages) → its own box (status `limited`); see [06 Flow 6b](06-end-to-end-data-flow.md).
+- **Chat on WhatsApp** sits beside Send ("Send · or · Chat on WhatsApp"). `whatsappLink()` builds a `https://wa.me/<number>?text=…` link from whatever name and message are typed, and opens it in a new tab. It never calls the API. See [06 Flow 6c](06-end-to-end-data-flow.md).
 
 ### 8. Footer — static ✅
 "© 2026 Devaangini Mehta" and "Built with Angular · Node.js · PostgreSQL".

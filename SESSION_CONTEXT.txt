@@ -1,6 +1,6 @@
 ==============================================================================
  SESSION_CONTEXT.txt  —  Portfolio project (Angular + Node/Express + PostgreSQL)
- Last updated: 2026-10-25, ~23:00 IST (Asia/Calcutta)
+ Last updated: 2026-10-27, ~11:15 IST (Asia/Calcutta)
  Location: C:\Users\HP\OneDrive\Desktop\portfolio\SESSION_CONTEXT.txt
 ==============================================================================
 
@@ -272,6 +272,62 @@ B14. Rate limiting for POST /api/contact (two layers)
       To tell them apart: DevTools → Network → Response. 429, not 409.
     Written up for her in docs/06 "Flow 6b".
 
+B15. WhatsApp button next to Send  [UNCONFIRMED: user to check locally]
+  - web contact.ts: whatsappNumber = '916283411585'; whatsappLink() builds a
+    wa.me link with pre-filled text. contact.html: ".actions" group =
+    Send · "or" · outline button "Chat on WhatsApp" (chat-bubble icon).
+    contact.scss: .actions, .actions__or, .whatsapp.
+  - The number appears only inside the wa.me link (user's choice), not as
+    visible text. Docs DONE 2026-10-27: docs/06 "Flow 6c" (steps, diagram,
+    Send-vs-WhatsApp table), docs/03 contact section, docs README status.
+
+B16. BLOG FEATURE — PLAN ONLY  [PLANNED; NO CODE WRITTEN]
+  - The user sent a brief: plan first, then STOP and wait for approval.
+    "Do not create or modify application code, database schemas, API
+    endpoints, or project configuration until I explicitly approve the plan."
+    Admin rights enforced by the BACKEND; visitors see PUBLISHED posts only;
+    no unnecessary libraries; follow existing conventions; keep docs and
+    this file updated during implementation.
+  - Plan doc (Claude Docs, private, to show her LEAD for sign-off):
+    https://claude.ai/artifact/MQui2S4EGWACMJfQAkdhD7
+    "Portfolio: Next Steps and Blog Feature Plan". It starts with "The plan
+    in simple words" (she found the full version too complex at first),
+    then the detailed sections, 10 milestones, "Agreed decisions" and an
+    approval checklist.
+  - Agreed decisions (from the chat):
+      Login: session cookie (HttpOnly, Secure, SameSite=Strict) + sessions
+        table (only a HASH of the token stored); password hashed with
+        crypto.scrypt; lockout after failed logins; CSRF Origin check.
+      API served from the website's address via a Vercel rewrite (same-site
+        cookie, no CORS needed).
+      Writing: her OWN admin page (/admin, lazy routes, CanMatch guard),
+        Markdown textarea + live preview; rendered with `marked` + Angular's
+        sanitizer.
+      Grouping: TAGS ONLY (no categories in V1).
+      One admin (her), created by `npm run create-admin`; no sign-up page.
+      Cover image = URL only. Blog at /blog, nav label "writing".
+      Home: "Latest posts" strip, 3 newest, hidden when none.
+      Not in V1: comments, search, uploads, scheduling, RSS, more admins.
+      Packages: cookie-parser (api), marked (web), Vitest + Supertest (api,
+        dev only). Nothing else.
+      First posts (she will write them): Signals vs RxJS in practice; OnPush
+        and the 60% speed-up; what I learned building this portfolio.
+  - Data model: 5 new tables users, sessions, posts, tags, post_tags
+    (many-to-many join). posts: title, slug (unique), excerpt (≤300),
+    content (Markdown), cover_image_url?, status DRAFT|PUBLISHED,
+    published_at (set on first publish, kept), author_id, timestamps.
+    Seed NEVER touches blog/user tables.
+  - Endpoints (planned): public GET /api/posts?limit&offset&tag,
+    GET /api/posts/:slug (draft → 404), GET /api/tags; auth POST
+    /api/auth/login, POST /api/auth/logout, GET /api/auth/me; admin
+    /api/admin/posts[/:id] (+ publish/unpublish) behind requireAdmin (401
+    without a session, controller never runs).
+  - Milestones: 1 foundation (same-site rewrite, routing, API tests) →
+    2 database (5 tables, create-admin) → 3 auth API → 4 admin blog API →
+    5 public blog API → 6 Angular admin (login, table, editor) → 7 Angular
+    blog pages (list, article, home strip) → 8 security review → 9 go live
+    (admin on Neon, first post) → 10 docs wrap-up.
+
 ==============================================================================
 C. CURRENT STATE
 ==============================================================================
@@ -320,8 +376,13 @@ Exact stopping point (2026-10-25):
   confirmed working by the user. Option C (email via Resend) live and
   verified; unit tests fixed (3 pass). Docs + this file updated.
   Rate limiting added (B14: code + Vercel Firewall).
-  NEXT: confirm the firewall test (which action: 429 or Deny), then G4
-  (health check, custom domain) or testing data sections (HttpTestingController).
+  2026-10-26/27: WhatsApp button added (B15). Blog feature PLANNED (B16):
+  plan doc finished with tags only + "Agreed decisions" + approval
+  checklist. The user is showing it to her LEAD.
+  NEXT: wait for the user to say the plan is approved (or bring the lead's
+  comments → update the doc). Only then start Blog milestone 1, one step at
+  a time, updating docs/ + this file at each milestone. DO NOT write blog
+  code before that approval.
 
 ==============================================================================
 D. DECISIONS AND RATIONALE (do not reopen unless the user asks)
@@ -424,6 +485,10 @@ F. PROBLEMS, FAILED ATTEMPTS, LESSONS
 ==============================================================================
 G. IMMEDIATE NEXT STEPS (prioritised)
 ==============================================================================
+  G0. BLOG: wait for lead/user approval of the plan (B16). Then milestone 1.
+      (WhatsApp docs: DONE 2026-10-27.)
+  G0b. User to commit + push the WhatsApp change from the portfolio ROOT,
+      and check the button locally.
   G1. Confirm the final website domain (devaangini-portfolio vs -nine) and
       that CORS_ORIGIN matches it exactly (https, no trailing slash).
   G2. [DONE 2026-10-25] Rate limiting (B14). Confirm the live firewall test.
@@ -479,6 +544,8 @@ users, 3B+ txns/yr, 20+ markets; 60% faster page loads; Flexipay 69M+ txns,
 University 2018–2022; Employee of the Month ×4; mentors 3–5 juniors.
 Contact shown: devaangini04@gmail.com, linkedin.com/in/devaangini-mehta-4775ab1a3,
 Noida, India.
+
+Blog plan doc (private): https://claude.ai/artifact/MQui2S4EGWACMJfQAkdhD7
 
 Secrets: NOT stored here. DATABASE_URL lives only in api/.env.
 ==============================================================================

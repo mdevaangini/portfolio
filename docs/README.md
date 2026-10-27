@@ -93,5 +93,7 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Email notification for new messages (Resend) | ✅ live and confirmed (2026-10-25) |
 | Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP) — live firewall test pending |
 | Projects in the seed script | ✅ (2026-10-25) |
+| "Chat on WhatsApp" button next to Send (opens WhatsApp with a pre-filled message) | 🟡 added 2026-10-26, check pending |
+| Blog (admin login + posts) | 📝 planned, waiting for approval — no code yet |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

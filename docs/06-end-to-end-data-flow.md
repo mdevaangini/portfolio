@@ -270,6 +270,43 @@ Earlier test messages from the last hour count too, so always test with a brand-
 
 ---
 
+## Flow 6c — "Chat on WhatsApp" (no API, no database)
+
+Next to **Send** there is a second button: **Chat on WhatsApp**. It is a plain link, so this flow never touches our API or the database.
+
+### Step by step
+1. The visitor clicks **Chat on WhatsApp** (it can be clicked at any time, even with an empty form).
+2. `whatsappLink()` in `contact.ts` builds the address **at that moment**:
+   - starts from `https://wa.me/` + my number in international format (`91…`, no `+`, spaces or dashes);
+   - if a **name** is typed → "Hi Devaangini, I'm *name*." otherwise "Hi Devaangini,";
+   - if a **message** is typed it's added; otherwise "I found your portfolio and would like to connect.";
+   - the text is made URL-safe with `encodeURIComponent` and added as `?text=…`.
+3. The link opens in a new tab: WhatsApp (app or web) opens a chat with me, the text already filled in. The visitor presses send **inside WhatsApp**.
+
+```mermaid
+flowchart LR
+    V[Visitor clicks<br/>Chat on WhatsApp] --> L["whatsappLink()<br/>wa.me/91… + ?text=…"]
+    L --> W[WhatsApp opens<br/>a chat with me]
+    W --> S[Visitor presses send<br/>in WhatsApp]
+```
+
+### Angular analogy
+It's like a `routerLink` that leads **out** of the site: no `HttpClient`, no service, no signal changes. The only "logic" is building a string from the current form values.
+
+### Send vs WhatsApp
+
+| | **Send** | **Chat on WhatsApp** |
+|---|---|---|
+| Goes through our API | ✅ `POST /api/contact` | ❌ |
+| Saved in `messages` | ✅ | ❌ |
+| Email to me (Resend) | ✅ | ❌ (I get it in WhatsApp) |
+| Rate limited (Flow 6b) | ✅ | ❌ (WhatsApp handles spam) |
+| Needs the form valid | ✅ | ❌ |
+
+> **Privacy note:** the number sits inside the link, so anyone can see it by hovering the button. That was a deliberate choice; it's not shown as text on the page.
+
+---
+
 ## Flow 7 — One project by id (API only)
 
 `GET /api/projects/:id` exists in the API ✅ but **the website does not use it yet** (there's no project detail page). Test it directly: take an `id` from `GET /api/projects`, then `http://localhost:3000/api/projects/<that id>` → 200, `/999` → 404, `/abc` → 400. (Ids change each time the seed runs.)
@@ -287,5 +324,6 @@ Earlier test messages from the last hour count too, so always test with a brand-
 | Experience | `Experience` + `ExperienceService` | `GET /api/experience` | `experiences` (read) |
 | Skills | `Skills` + `SkillsService` | `GET /api/skills` | `skill_groups` + `skills` (read, linked) |
 | Contact form | `Contact` + `ContactService` (POST) | `POST /api/contact` | `messages` (**write**) |
+| Chat on WhatsApp | `Contact.whatsappLink()` builds a `wa.me` link | — | — |
 | Too many messages | `Contact` shows the "several messages" box on 429 | Vercel Firewall (per IP) + `RATE_LIMIT` in the controller | `messages` (counted, not written) |
 | Project by id | not used | `GET /api/projects/:id` | `projects` (read) |

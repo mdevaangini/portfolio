@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: api.config.ts
 // Where the API lives (API_BASE_URL). The value comes from src/environments/:
-// localhost during development, the live Vercel address in the production build.
+// "/api" everywhere: the website passes /api calls on to the API
+// (proxy.conf.json on your laptop, vercel.json "rewrites" when live).
 // ──────────────────────────────────────────────────────────────────────
 
 import { InjectionToken } from '@angular/core';

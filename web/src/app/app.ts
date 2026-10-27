@@ -1,22 +1,17 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: app.ts
-// Root component: builds the page from the header and all sections.
+// Root component: the frame every page shares (header, footer) plus the
+// <router-outlet> where the current page appears. Pages are listed in app.routes.ts.
 // ──────────────────────────────────────────────────────────────────────
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { Header } from './layout/header/header';
 import { Footer } from './layout/footer/footer';
-import { Contact } from './sections/contact/contact';
-import { Experience } from './sections/experience/experience';
-import { Expertise } from './sections/expertise/expertise';
-import { Hero } from './sections/hero/hero';
-import { ImpactStrip } from './sections/impact-strip/impact-strip';
-import { Projects } from './sections/projects/projects';
-import { Skills } from './sections/skills/skills';
 
 @Component({
   selector: 'app-root',
-  imports: [Header, Hero, ImpactStrip, Expertise, Projects, Experience, Skills, Contact, Footer],
+  imports: [RouterOutlet, Header, Footer],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

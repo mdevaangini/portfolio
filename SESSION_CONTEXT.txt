@@ -379,7 +379,26 @@ Exact stopping point (2026-10-25):
   2026-10-26/27: WhatsApp button added (B15). Blog feature PLANNED (B16):
   plan doc finished with tags only + "Agreed decisions" + approval
   checklist. The user is showing it to her LEAD.
-  NEXT: wait for the user to say the plan is approved (or bring the lead's
+  2026-10-27 23:30: USER APPROVED starting the plan ("yes we can start with
+  the plan"; she'll understand the logic as we go step by step).
+  Milestone 1 = 1a routing · 1b same-site API (Vercel rewrite) · 1c API tests.
+  1a DONE [UNCONFIRMED by user]: web/src/app/pages/home/ (home.ts/.html/.scss
+  /.spec.ts) holds all sections + @defer; app.html = skip link + header +
+  <main><router-outlet/></main> + footer; app.routes.ts: '' → Home (eager,
+  title "Devaangini Mehta · Frontend Engineer"), '**' → ''. app.spec.ts
+  provides provideRouter([]); h1 test moved to home.spec.ts (expect 3 tests).
+  1a CONFIRMED by user ("yes done", 2026-10-28).
+  1b DONE [UNCONFIRMED]: web apiBaseUrl = '/api' in BOTH environment files;
+  web/proxy.conf.json (/api → http://localhost:3000) linked in angular.json
+  serve.options.proxyConfig; web/vercel.json "rewrites": /api/:path* →
+  https://portfolio-neon-six-56.vercel.app/api/:path*, then /(.*) →
+  /index.html (SPA deep links like /blog). CORS kept in the API (harmless).
+  Firewall: after the rewrite the API project may see Vercel's IP instead
+  of the visitor's → user asked to add the same rate-limit rule on the
+  WEBSITE project "devaangini" (path /api/contact + POST) and test.
+  NEXT: user tests locally + live; then 1c (API tests). Docs for 1a go into
+  docs/03 at the end of milestone 1.
+  (old) NEXT: wait for the user to say the plan is approved (or bring the lead's
   comments → update the doc). Only then start Blog milestone 1, one step at
   a time, updating docs/ + this file at each milestone. DO NOT write blog
   code before that approval.

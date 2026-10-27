@@ -1,0 +1,23 @@
+<!--
+  ABOUT THIS FILE: pages/home/home.html
+  The ORDER of the sections on the home page. Projects loads lazily with
+  @defer (its code + API call only start when you scroll near it).
+-->
+<app-hero />
+<app-impact-strip />
+<app-expertise />
+
+<!--
+  Below-the-fold content is loaded lazily: the Projects code (and its API call)
+  only loads when this spot nears the screen. "prefetch on idle" downloads the
+  code in the background as soon as the browser is free, so it's ready in time.
+-->
+@defer (on viewport; prefetch on idle) {
+  <app-projects />
+} @placeholder {
+  <div class="deferred-placeholder" id="work"></div>
+}
+
+<app-experience />
+<app-skills />
+<app-contact />

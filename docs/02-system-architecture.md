@@ -83,7 +83,7 @@ Express 5 forwards errors from `async` handlers to the error handler automatical
 
 ## Configuration and deployment boundaries
 
-- The web app knows the API address only through `API_BASE_URL` (currently `http://localhost:3000/api`).
+- The web app knows the API address only through `API_BASE_URL`, which is simply **`/api`** (the website's own address). The website passes `/api` requests on to the API: `proxy.conf.json` on the laptop, `rewrites` in `web/vercel.json` when live. See [09](09-deployment-and-configuration.md#one-address-for-website-and-api).
 - The API knows the database only through `DATABASE_URL`, and the allowed frontend only through `CORS_ORIGIN`.
 - These values are the seams to change when deploying. See [09](09-deployment-and-configuration.md).
 

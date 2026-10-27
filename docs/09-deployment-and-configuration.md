@@ -45,10 +45,30 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 
 | Change | Why |
 |---|---|
-| `src/environments/environment.ts` → live API URL; `environment.development.ts` → `http://localhost:3000/api` | The site must call a different API address locally and live. |
+| `src/environments/*.ts` → `apiBaseUrl: '/api'` (both) | The site always calls its own address; the forwarding is done by `proxy.conf.json` / `vercel.json` (see "One address" above). Before Blog milestone 1 these held the full API URLs. |
 | `angular.json` → development config `fileReplacements` | `npm start` swaps in the development file; `npm run build` keeps the live one. |
 | `core/api.config.ts` → `factory: () => environment.apiBaseUrl` | Every service still reads one `API_BASE_URL`. |
 | `web/vercel.json` → `outputDirectory: "dist/web/browser"` | Angular puts the built site in a `browser` sub-folder; without this Vercel served a 404 page. |
+
+### One address for website and API
+
+Since Blog milestone 1, the browser talks **only to the website's address**. Requests starting with `/api` are passed on to the API project behind the scenes, like a front desk forwarding calls:
+
+```text
+Browser ──▶ devaangini-portfolio.vercel.app ──"/api/…"──▶ portfolio-neon-six-56.vercel.app ──▶ Neon
+        ◀────────────── the answer comes back the same way
+```
+
+| Where | Who forwards `/api` | Setting |
+|---|---|---|
+| Laptop | Angular dev server | `web/proxy.conf.json`: `/api` → `http://localhost:3000` |
+| Live | Vercel (website project) | `web/vercel.json` `rewrites`: `/api/:path*` → `https://portfolio-neon-six-56.vercel.app/api/:path*` |
+
+The second rewrite, `/(.*)` → `/index.html`, lets addresses like `/blog` open Angular instead of a Vercel 404. Real files (JS, CSS, the CV) are still served first.
+
+**Why:** the Blog's admin login uses a cookie. Browsers only treat a cookie safely when it comes from the **same address** as the page. One address also means CORS is no longer involved (`CORS_ORIGIN` stays set; it's harmless).
+
+**Firewall consequence:** the API project now sees requests coming *from Vercel*, not from each visitor, so its per-IP rule can't tell visitors apart. The same rule therefore also lives on the **website** project (the door visitors really use).
 
 ### Vercel settings (done in the dashboard)
 
@@ -60,6 +80,7 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 | portfolio (API) | Firewall custom rule "Contact form rate limit" | Path `/api/contact` + Method `POST` → Rate Limit, fixed window 60 s, 3 requests, key IP → 429/Deny (Hobby: 1 rate-limit rule) |
 | portfolio (API) | `CORS_ORIGIN` | the website's address, e.g. `https://devaangini-portfolio.vercel.app` (https, no trailing `/`) |
 | devaangini (web) | Root Directory | `web` (preset Angular) |
+| devaangini (web) | Firewall custom rule "Contact form rate limit" (added 2026-10-28) | Same as above: Path `/api/contact` + Method `POST` → Rate Limit, fixed window 60 s, 3 requests, key IP → 429. This is the one that sees the visitor's IP |
 
 Secrets live only in Vercel's settings (marked *Sensitive*) and in git-ignored `.env*` files on the laptop.
 
@@ -80,7 +101,7 @@ Secrets live only in Vercel's settings (marked *Sensitive*) and in git-ignored `
 
 - **Use the production domains.** The extra Vercel addresses (`…-git-main-…`, `…-<random>-…`) are protected by a Vercel login by default; visitors can't open them.
 - **"Redeploy" rebuilds the commit of that deployment.** To build the newest commit, push again or use the latest row in the Deployments list.
-- **Separate domains → CORS.** If the website's address changes, update `CORS_ORIGIN` and redeploy the API, or every section shows "couldn't be loaded".
+- **If an API address changes,** update the `/api` rewrite in `web/vercel.json` and push. (The website's own address can change freely now; `CORS_ORIGIN` no longer matters for it.)
 - **Build-log warnings that are harmless:** the `engines ">=22"` auto-upgrade notice, npm `cache-dir`, npm 11 "install scripts not covered by allowScripts", and "Prisma 8 available" (we stay on Prisma 7 on purpose).
 - The CV PDF (with phone number) is publicly downloadable — the owner's explicit choice.
 

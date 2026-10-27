@@ -13,18 +13,19 @@ The web app is the part people see. It is one page split into sections: header, 
 | Framework | Angular 22, standalone components, TypeScript ~6.0 | `web/package.json` |
 | Entry point | `bootstrapApplication(App, appConfig)` | `web/src/main.ts` |
 | App-wide providers | `provideBrowserGlobalErrorListeners()`, `provideRouter(routes)`, `provideHttpClient()` | `web/src/app/app.config.ts` |
-| Routing | Router is set up but **no routes** exist; the site is one page and uses `#anchor` links | `web/src/app/app.routes.ts` |
-| Root layout | Skip link → header → `<main>` with the sections → footer | `web/src/app/app.html` |
+| Routing | `''` → `Home` (all sections, loaded directly); anything else → back to `/`. `/blog` and `/admin` come with the Blog. Inside Home, the header still uses `#anchor` links | `web/src/app/app.routes.ts` |
+| Root layout | The frame every page shares: skip link → header → `<main>` with `<router-outlet>` (the current page goes here) → footer | `web/src/app/app.html` |
+| Home page | The sections in order, with Projects inside `@defer` | `web/src/app/pages/home/` |
 | Change detection | `ChangeDetectionStrategy.OnPush` on every component | each `*.ts` |
 | State | Signals: `signal`, `computed`, `linkedSignal`; reading via `httpResource`; the form via Reactive Forms | sections |
 | Styling | SCSS; colour/font/size **tokens** as CSS variables plus shared helper classes in `styles.scss`; each component has its own `.scss` | `web/src/styles.scss` |
 | Look | "Light & Calm": warm off-white page, navy text, apricot accent | design board J |
 | Fonts | **Nunito** (headings), **Nunito Sans** (text), **JetBrains Mono** (small code-style labels), from Google Fonts | `web/src/index.html` |
-| API address | `src/environments/environment.ts` (live API) and `environment.development.ts` (localhost), swapped by `angular.json` → `fileReplacements` | `web/src/environments/` |
-| Hosting | Vercel project **devaangini**; `web/vercel.json` points Vercel at `dist/web/browser` | `web/vercel.json` |
+| API address | `apiBaseUrl: '/api'` in both environment files: the website's **own** address. Locally `proxy.conf.json` passes `/api` to `localhost:3000`; live, `vercel.json` `rewrites` pass it to the API project | `web/src/environments/`, `web/proxy.conf.json` |
+| Hosting | Vercel project **devaangini**; `web/vercel.json` points Vercel at `dist/web/browser` and holds the two `rewrites` (`/api/…` → API, everything else → `index.html`) | `web/vercel.json` |
 | Static files | Everything in `web/public/` is served from the site root: CV, `headshot.jpg`, favicons | `angular.json` → `assets` |
 | Favicon | A code-style `</>` icon: `favicon.svg` (sharp at any size), `favicon.ico` (older browsers), `apple-touch-icon.png` (home screens) | `web/public/`, linked in `index.html` |
-| Lazy loading | Projects section wrapped in `@defer (on viewport; prefetch on idle)` | `app.html` |
+| Lazy loading | Projects section wrapped in `@defer (on viewport; prefetch on idle)` | `pages/home/home.html` |
 | Accessibility | Skip link, visible focus ring, `aria-labelledby` on sections, real `<button>`s with `aria-pressed` for chips, `role="status"`/`role="alert"` for loading/error, labelled form fields with `aria-invalid` + `aria-describedby`, decorative pieces `aria-hidden` | various |
 | Motion | CSS-only animations, all inside `@media (prefers-reduced-motion: no-preference)` (see section E) | `styles.scss` + component styles |
 
@@ -33,7 +34,7 @@ The web app is the part people see. It is one page split into sections: header, 
 1. The browser loads `index.html`, which contains `<app-root>`.
 2. `main.ts` calls `bootstrapApplication(App, appConfig)`.
 3. `appConfig` registers `HttpClient` (needed by `httpResource` and the contact form).
-4. `App` renders `app.html`. Experience and Skills start their API requests straight away; Projects waits behind a **placeholder**.
+4. `App` renders `app.html` (header, footer, `<router-outlet>`). The router sees the address `/` and puts `Home` into the outlet. Experience and Skills start their API requests straight away; Projects waits behind a **placeholder**.
 5. When the placeholder scrolls near the viewport, Angular downloads the Projects code and renders it. "Prefetch on idle" downloads that code in the background earlier, as soon as the browser is free.
 
 ## B. Folder-by-folder
@@ -44,10 +45,11 @@ web/src/
 ├── main.ts               bootstraps the app
 ├── styles.scss           tokens + shared helpers (.btn, .lift, .arrow, .reveal, .pop, .stagger …)
 └── app/
-    ├── app.ts / .html / .scss     root component and page layout
+    ├── app.ts / .html / .scss     root component: the frame (header, <router-outlet>, footer)
     ├── app.config.ts              providers (HttpClient, router)
-    ├── app.routes.ts              empty route list
-    ├── app.spec.ts                unit tests
+    ├── app.routes.ts              pages: '' → Home, '**' → ''
+    ├── app.spec.ts                unit tests for the frame (2)
+    ├── pages/home/                Home page: the sections in order (+ home.spec.ts: headline test)
     ├── project.ts                 interfaces for /projects JSON
     ├── experience.ts              interface for /experience JSON
     ├── skill.ts                   interface for /skills JSON
@@ -77,7 +79,7 @@ web/src/
 
 | File | Responsibility | Used by |
 |---|---|---|
-| `core/api.config.ts` | `API_BASE_URL` token = `environment.apiBaseUrl` (localhost in development, the live API in production) | every service |
+| `core/api.config.ts` | `API_BASE_URL` token = `environment.apiBaseUrl` = `'/api'` (forwarded to the API by `proxy.conf.json` locally and `vercel.json` live) | every service |
 | `core/projects.service.ts` | `loadProjects(category)` and `loadCategories()`, each an `httpResource` | Projects |
 | `core/experience.service.ts` | `loadExperiences()` → `httpResource<Experience[]>` | Experience |
 | `core/skills.service.ts` | `loadSkillGroups()` → `httpResource<SkillGroup[]>` | Skills |

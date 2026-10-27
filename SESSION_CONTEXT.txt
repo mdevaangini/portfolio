@@ -407,8 +407,14 @@ Exact stopping point (2026-10-25):
   (Claude can't install: her node_modules are Windows binaries).
   Tests that need a database (auth, posts) come with milestone 3 → decide
   a separate test database then.
-  NEXT: user installs + npm test (expect 5 passed) → docs for M1 (03, 07,
-  08, 09, README) → Milestone 2 (database). Docs for 1a go into
+  1c CONFIRMED: "it passed" (5 tests, 2026-10-28).
+  MILESTONE 1 COMPLETE. Docs updated: 01, 02, 03 (routing/home/API
+  address), 06, 07 (proxy, API tests command), 08 (API tests, debugging),
+  09 ("One address for website and API" + firewall on devaangini), 10,
+  README status.
+  NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
+  Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
+  npm run create-admin script). Docs for 1a go into
   docs/03 at the end of milestone 1.
   (old) NEXT: wait for the user to say the plan is approved (or bring the lead's
   comments → update the doc). Only then start Blog milestone 1, one step at

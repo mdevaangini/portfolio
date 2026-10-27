@@ -32,7 +32,7 @@ No API, no database. Failure points: none at runtime (mistakes surface at build 
 2. **Angular renders `Projects`** (`web/src/app/sections/projects/projects.ts`). Its field initializers call the service:
    - `loadCategories()` → request A
    - `loadProjects(this.selectedCategory)` with `null` → request B
-3. **The service builds the request** (`web/src/app/core/projects.service.ts`): `GET http://localhost:3000/api/projects` with no params.
+3. **The service builds the request** (`web/src/app/core/projects.service.ts`): `GET /api/projects` with no params (the website's own address; the dev server or Vercel passes it on to the API).
 4. **The browser sends it.** Different port, so the browser applies **CORS**.
 5. **API receives it** (`api/src/app.ts`): `cors` adds the allow header for `http://localhost:4200` → `express.json()` → `/api` → `routes.ts` → `/projects` → `projects.routes.ts` `GET "/"` → `listProjects`.
 6. **Controller validates** (`projects.controller.ts`): `limit` = 10, `offset` = 0 (defaults), no `title`, no `category`.

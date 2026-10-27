@@ -6,15 +6,19 @@
 
 | Project | Framework | Tests | Status |
 |---|---|---|---|
-| `web/` | Angular unit-test builder (`@angular/build:unit-test`) with **Vitest** + jsdom | `src/app/app.spec.ts`: 3 tests — the app is created; the `<h1>` contains "I build Angular apps"; the nav shows exactly `01. expertise`, `02. work`, `03. experience`, `04. skills` | ✅ passing (`npm test`) |
-| `api/` | none | none | No test framework or `test` script; checked manually (Postman / browser) |
+| `web/` | Angular unit-test builder (`@angular/build:unit-test`) with **Vitest** + jsdom | 3 tests. `app.spec.ts`: the app is created; the nav shows exactly `01. expertise`, `02. work`, `03. experience`, `04. skills`. `pages/home/home.spec.ts`: the `<h1>` contains "I build Angular apps" | ✅ passing (`npm test`) |
+| `api/` | **Vitest** (runs the tests) + **Supertest** (sends fake HTTP requests into the Express `app`, like Postman inside a test) | `tests/app.test.ts`: 5 tests — unknown route → 404 JSON; contact: empty → 400 with 3 fields, bad email → 400 (email only), message > 2000 → 400, spam field → 201 `{ ok: true }` | ✅ passing (`npm test`, 2026-10-28) |
+
+**Vitest in one line:** an npm package that runs tests in the terminal. The web project uses it too: Angular calls it behind the scenes. The API has no Angular in between, so it calls Vitest directly (`api/vitest.config.ts`).
+
+**API tests never touch a database.** `vitest.config.ts` gives them a fake `DATABASE_URL` and doesn't load `.env`. The 5 tests only check what happens *before* the database. Tests that need data (login, blog posts) will need a separate test database; that's decided in Blog milestone 3.
 
 The web tests use `provideHttpClientTesting()` so no real request leaves the test, and `DeferBlockBehavior.Manual` so the deferred Projects section stays on its placeholder. Because Experience and Skills start requests that are **never answered** in tests, the tests call `fixture.detectChanges()` (draw once) instead of `await fixture.whenStable()` (which would wait forever and time out after 5 s). These are smoke tests: they don't check any data yet. When nav items or the headline change, update the expectations in `app.spec.ts`.
 
 ### 📝 Recommended next tests (not implemented)
 
 - **web**: `ProjectsService` with `HttpTestingController` (URL and `category` param); the Contact form (invalid form sends nothing; a 400 puts messages under fields; 201 shows "Thanks").
-- **api**: because `app.ts` exports the app without starting it, endpoint tests can use Supertest against `app` (e.g. `?limit=abc` → 400, `POST /api/contact` with an empty body → 400 with three `fields`, spam field → 201 and no row).
+- **api**: more checks before the database, e.g. `GET /api/projects?limit=abc` → 400. Login and admin permissions arrive with the Blog (milestones 3–5).
 
 ## Manual test checklist
 
@@ -69,7 +73,7 @@ Work from the screen backwards, one layer at a time:
 
 ### "CORS error" on every request
 
-If **all** requests (projects, skills, experience, contact) show "CORS error" and the response headers are empty, the API is simply **not running** (or crashed / port 3000 is busy). Open `http://localhost:3000/api/skills` directly; if it doesn't load, restart `npm run dev`. A real CORS-setting problem shows a response with missing `Access-Control-Allow-Origin`.
+If **all** requests (projects, skills, experience, contact) fail, the API is simply **not running** (or crashed / port 3000 is busy). Since Blog milestone 1 the browser calls `localhost:4200/api/…`, so this now shows as **500/504** with "proxy error" in the `npm start` terminal (before, it showed "CORS error"). Open `http://localhost:3000/api/skills` directly; if it doesn't load, restart `npm run dev`. A real CORS-setting problem shows a response with missing `Access-Control-Allow-Origin`.
 
 ### No notification email
 

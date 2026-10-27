@@ -33,7 +33,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Item | Note | Status |
 |---|---|---|
 | Database connects as the `postgres` superuser (local) / Neon's owner role (live) | Too powerful in principle; acceptable for a portfolio | ⚠️ |
-| Rate limiting, layer 1: **Vercel Firewall** rule on `POST /api/contact` — max 3 per 60 s per IP | Bots flooding the form from one address; blocked before the API runs | Vercel → portfolio → Firewall | ✅ (dashboard setting, not in git) |
+| Rate limiting, layer 1: **Vercel Firewall** rule on `POST /api/contact` — max 3 per 60 s per IP | Bots flooding the form from one address; blocked before the API runs | Vercel → **devaangini** → Firewall (the website, which visitors really reach since the `/api` rewrite) + the older copy on portfolio | ✅ (dashboard setting, not in git) |
 | *(How the two layers work together, with examples: [06 — Flow 6b](06-end-to-end-data-flow.md#flow-6b--too-many-messages-rate-limiting-two-layers))* | | | |
 | Rate limiting, layer 2: **code** — max 3 per email and 20 in total per hour → 429 | Floods that change email or come from many IPs; protects the inbox and Resend's 100/day | `contact.controller.ts` | ✅ |
 | Messages are stored with the sender's email | Personal data the owner is responsible for | ⚠️ — keep the DB private; delete old messages |

@@ -91,9 +91,9 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Deployment: Vercel (website + API) + Neon Postgres | ✅ live and confirmed by the owner (2026-10-25) |
 | "My role" line and metrics on project cards | 📝 postponed |
 | Email notification for new messages (Resend) | ✅ live and confirmed (2026-10-25) |
-| Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP) — live firewall test pending |
+| Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP), on the website project since 2026-10-28 |
 | Projects in the seed script | ✅ (2026-10-25) |
 | "Chat on WhatsApp" button next to Send (opens WhatsApp with a pre-filled message) | 🟡 added 2026-10-26, check pending |
-| Blog (admin login + posts) | 📝 planned, waiting for approval — no code yet |
+| Blog (admin login + posts) | 🚧 plan approved 2026-10-27. **Milestone 1 ✅** (routes + Home page, one address for website and API, API tests: 5 passing). Next: milestone 2, database tables |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

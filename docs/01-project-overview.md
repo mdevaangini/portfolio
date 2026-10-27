@@ -60,7 +60,7 @@ Details: [09 — Deployment](09-deployment-and-configuration.md).
 
 **Reading** (e.g. Skills):
 
-1. The page loads; the Skills section asks the API: `GET http://localhost:3000/api/skills`.
+1. The page loads; the Skills section asks the API: `GET /api/skills` (on the website's own address, which passes it on to the API).
 2. The API asks Prisma for every skill group **together with** its skills.
 3. Prisma turns that into SQL and asks PostgreSQL, using the link between the two tables.
 4. The rows come back as nested JSON, and Angular draws the groups and chips.

@@ -74,7 +74,9 @@ npm install
 npm start       # ng serve → http://localhost:4200
 ```
 
-The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/core/api.config.ts`).
+The web app calls **`/api/...` on its own address** (`localhost:4200/api/...`). The dev server passes those requests on to the API at `localhost:3000` (set in `web/proxy.conf.json`, linked in `angular.json` → `serve`). So the API must be running too. After changing `proxy.conf.json` or `angular.json`, restart `npm start`.
+
+In DevTools → Network you'll see `localhost:4200/api/skills`, not `:3000`. That's expected.
 
 ## 5. Check each layer
 
@@ -98,6 +100,7 @@ The web app expects the API at `http://localhost:3000/api` (set in `web/src/app/
 | Start web | `npm start` (web) |
 | Build web for production | `npm run build` (web) → `web/dist/` |
 | Run web tests | `npm test` (web) — 3 tests; see [08](08-testing-and-debugging.md) |
+| Run API tests | `npm test` (api) — 5 tests, no database needed; `npm run test:watch` re-runs on save |
 | Refill experience + skills | `npm run seed` (api) |
 | Build / run the API like production | `npm run build`, `npm run start:local` (api) |
 | Change table structure | edit `prisma/schema.prisma` → `npx prisma migrate dev --name <change>` → `npx prisma generate` (api) |

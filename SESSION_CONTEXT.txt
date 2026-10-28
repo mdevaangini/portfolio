@@ -496,6 +496,9 @@ E. USER REQUIREMENTS AND PREFERENCES (follow strictly)
   - When the user is confused, give ONE simple mental model (the Excel-sheets
     model above worked; long explanations did not).
   - Short, single answers to quick questions.
+  - EVERY question the user asks (doubts, "why", "what is") must be added
+    with a short answer to docs/12-my-questions-faq.md (created 2026-10-28
+    at her request) and, where it fits, to the detailed doc page too.
   Engineering
   - Real-world best practices, scalable folder structure.
   - Keep the user's own notes in files (projects.service.ts bottom,

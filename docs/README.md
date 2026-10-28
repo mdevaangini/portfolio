@@ -45,12 +45,13 @@ flowchart LR
 | 09 | [Deployment and configuration](09-deployment-and-configuration.md) | How the site runs on Vercel + Neon, what was changed, everyday operations |
 | 10 | [Security and maintenance](10-security-and-maintenance.md) | Protections in place, risks, recommendations |
 | 11 | [Glossary for beginners](11-glossary-for-beginners.md) | Every technical term, in plain English |
+| 12 | [My questions (FAQ)](12-my-questions-faq.md) | The questions I asked while building it, with short answers ("front desk", Vitest, create-admin, two databases…) |
 
 Diagrams: [system architecture](diagrams/system-architecture.md) · [frontend flow](diagrams/frontend-flow.md) · [API request flow](diagrams/api-request-flow.md) · [database relationships](diagrams/database-relationships.md)
 
 ## Suggested reading order
 
-**New to programming?** 01 → 11 (glossary, keep it open) → 02 → 06 → 03 → 04 → 05.
+**New to programming?** 01 → 11 (glossary, keep it open) → 12 (my questions) → 02 → 06 → 03 → 04 → 05.
 
 **Developer joining the project?** 01 → 02 → 07 (get it running) → 06 → 04 → 05 → 03 → 08 → 10 → 09.
 

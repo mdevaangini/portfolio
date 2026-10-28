@@ -412,7 +412,36 @@ Exact stopping point (2026-10-25):
   address), 06, 07 (proxy, API tests command), 08 (API tests, debugging),
   09 ("One address for website and API" + firewall on devaangini), 10,
   README status.
-  NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
+  M2 started 2026-10-28. 2a WRITTEN [schema validated with Prisma's
+  checker; migration not yet run by user]: schema.prisma "BLOG" block
+  (before "My notes") = enums Role{ADMIN}→user_role, PostStatus{DRAFT,
+  PUBLISHED}→post_status; User(email unique 254, passwordHash, role,
+  failedLogins, lockedUntil, createdAt) → users; Session(tokenHash unique,
+  userId cascade, expiresAt) → sessions; Post(title 150, slug unique 80,
+  excerpt 300 default "", content default "", coverImageUrl 500?, status
+  default DRAFT, publishedAt?, createdAt, updatedAt @updatedAt, authorId →
+  User) → posts, @@index([status, publishedAt]); Tag(name unique 30, slug
+  unique 40) → tags; PostTag(@@id[postId,tagId], both cascade) → post_tags.
+  User runs: npx prisma migrate dev --name add_blog → npx prisma generate.
+  2a DONE: migration 20261028131436_add_blog created + generate run by user.
+  2b WRITTEN [UNCONFIRMED]: api/src/lib/password.ts (hashPassword /
+  verifyPassword, Node crypto.scrypt N16384 r8 p1 64-byte key, format
+  scrypt$N$r$p$salt$hash, timingSafeEqual; checked by Claude);
+  api/scripts/create-admin.ts (asks email + hidden password twice, min 12
+  chars; upsert by email → create, or reset password + unlock + delete
+  sessions); script "create-admin" (local .env); for Neon:
+  npx tsx --env-file=.env.production.local scripts/create-admin.ts (only at
+  milestone 9). tests/password.test.ts = 4 tests → npm test expects 9.
+  tsconfig include "scripts". 2b CONFIRMED by user ("ok done", 2026-10-28:
+  create-admin run locally, 9 tests).
+  MILESTONE 2 COMPLETE. Docs: 05 (Blog tables, enum, many-to-many, ER
+  diagram, migration row, E2 create-admin, seed never touches blog tables),
+  diagrams/database-relationships.md, 07 (create-admin command, 9 tests),
+  08, README status. Explained to user: create-admin = "cousin of seed";
+  scripts/ vs prisma/ (seed may run automatically; create-admin only by hand).
+  NEXT: user commits + pushes M2 (code + docs in one commit) → MILESTONE 3
+  (auth API: login/logout/me, sessions, cookie, requireAdmin, lockout).
+  (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into
   docs/03 at the end of milestone 1.

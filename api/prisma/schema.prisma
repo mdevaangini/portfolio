@@ -85,6 +85,109 @@ model Message {
   @@map("messages")
 }
 
+// ══ BLOG (milestone 2) ══════════════════════════════════════════════════
+// Five tables: users + sessions (login), posts (the writing), tags + post_tags
+// (labels). Column limits match the API checks, like Message above.
+
+// Enums = a column that may only hold one of a fixed list of values.
+// Role has one value for now; the column exists so more roles could come later.
+enum Role {
+  ADMIN
+
+  @@map("user_role")
+}
+
+// A post is either a draft (only I see it) or published (everyone sees it).
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+
+  @@map("post_status")
+}
+
+// Someone who can log in to /admin. In practice one row: me.
+// Created by the `npm run create-admin` script, never through the website.
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique @db.VarChar(254)
+  /// Never the password itself: a scrambled "fingerprint" of it (scrypt hash).
+  passwordHash String    @map("password_hash")
+  role         Role      @default(ADMIN)
+  /// Wrong passwords in a row. Too many → locked for a while (stops guessing).
+  failedLogins Int       @default(0) @map("failed_logins")
+  lockedUntil  DateTime? @map("locked_until")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  sessions     Session[]
+  posts        Post[]
+
+  @@map("users")
+}
+
+// One row per logged-in browser (the "wristband"). Logging out deletes the row.
+model Session {
+  id        Int      @id @default(autoincrement())
+  /// Only a hash of the cookie's token: a stolen database can't be used to log in.
+  tokenHash String   @unique @map("token_hash")
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// One blog post. Drafts may be half-empty; the API checks more before publishing.
+model Post {
+  id            Int        @id @default(autoincrement())
+  title         String     @db.VarChar(150)
+  /// The post's address: /blog/<slug>. Lowercase letters, digits and "-".
+  slug          String     @unique @db.VarChar(80)
+  excerpt       String     @default("") @db.VarChar(300)
+  /// The text, written in Markdown.
+  content       String     @default("")
+  coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
+  status        PostStatus @default(DRAFT)
+  /// Set the first time the post is published; kept if it's unpublished later.
+  publishedAt   DateTime?  @map("published_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  /// Prisma updates this itself on every change.
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  authorId      Int        @map("author_id")
+  author        User       @relation(fields: [authorId], references: [id])
+  tags          PostTag[]
+
+  // Speeds up the public list: "published posts, newest first".
+  @@index([status, publishedAt])
+  @@map("posts")
+}
+
+// A label like "angular" or "signals". Created on the fly from the editor.
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique @db.VarChar(30)
+  /// Used in addresses: /blog?tag=<slug>
+  slug  String    @unique @db.VarChar(40)
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+// The JOIN table for many-to-many: one row = "this post has this tag".
+// A post has many tags, and a tag is on many posts. Deleting a post (or tag)
+// removes its rows here automatically (onDelete: Cascade).
+model PostTag {
+  postId Int  @map("post_id")
+  tagId  Int  @map("tag_id")
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  // No id column: the pair (post, tag) is the key, so the same tag can't be added twice.
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
 // ── My notes ────────────────────────────────────────────────────────────
 // schema.prisma: the map of my database. Before `db pull` it had only the
 // two setup blocks (generator and datasource); db pull added the model.

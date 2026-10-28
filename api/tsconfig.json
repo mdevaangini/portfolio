@@ -11,5 +11,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src", "tests", "prisma.config.ts", "prisma/seed.ts", "vitest.config.ts"]
+  "include": ["src", "tests", "scripts", "prisma.config.ts", "prisma/seed.ts", "vitest.config.ts"]
 }

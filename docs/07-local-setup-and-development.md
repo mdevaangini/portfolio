@@ -100,8 +100,9 @@ In DevTools → Network you'll see `localhost:4200/api/skills`, not `:3000`. Tha
 | Start web | `npm start` (web) |
 | Build web for production | `npm run build` (web) → `web/dist/` |
 | Run web tests | `npm test` (web) — 3 tests; see [08](08-testing-and-debugging.md) |
-| Run API tests | `npm test` (api) — 5 tests, no database needed; `npm run test:watch` re-runs on save |
+| Run API tests | `npm test` (api) — 9 tests, no database needed; `npm run test:watch` re-runs on save |
 | Refill experience + skills | `npm run seed` (api) |
+| Create / reset my blog admin login | `npm run create-admin` (api); asks email + password. See [05](05-database-documentation.md#e2-the-create-admin-script-apiscriptscreate-admints) |
 | Build / run the API like production | `npm run build`, `npm run start:local` (api) |
 | Change table structure | edit `prisma/schema.prisma` → `npx prisma migrate dev --name <change>` → `npx prisma generate` (api) |
 | Browse/edit data | `npx prisma studio` (api) |

@@ -4,7 +4,7 @@
 
 ## In plain English
 
-The database is like a spreadsheet file with sheets (**tables**). Each sheet has fixed **column** headers, and each **row** is one record. This project has five sheets: `projects`, `experiences`, `skill_groups`, `skills` and `messages`.
+The database is like a spreadsheet file with sheets (**tables**). Each sheet has fixed **column** headers, and each **row** is one record. This project has ten sheets: five for the portfolio (`projects`, `experiences`, `skill_groups`, `skills`, `messages`) and five for the Blog (`users`, `sessions`, `posts`, `tags`, `post_tags`; added in Blog milestone 2, still empty except my admin row).
 
 **Structure vs data:** the column headers are the *structure*, and the rows are the *data*. They're changed in different ways (see "Changing things" below).
 
@@ -15,6 +15,9 @@ The database is like a spreadsheet file with sheets (**tables**). Each sheet has
 | `projects` | The seed script (originally typed by hand in pgAdmin) | `GET /api/projects…` |
 | `experiences`, `skill_groups`, `skills` | The seed script (`npm run seed`) | `GET /api/experience`, `GET /api/skills` |
 | `messages` | **Visitors**, through the contact form (`POST /api/contact`) | The owner, in pgAdmin (no page shows them yet) |
+| `users` | **Me**, with `npm run create-admin` (never the website: there is no sign-up page) | The login (Blog milestone 3) |
+| `sessions` | The login, one row per logged-in browser (milestone 3) | Every admin request |
+| `posts`, `tags`, `post_tags` | Me, through the admin page (milestones 4–6) | The public blog pages (milestones 5–7) |
 
 ## A. Fundamentals
 
@@ -124,6 +127,23 @@ One row per message sent through the contact form.
 
 The maximum lengths match the API's checks. The API gives friendly errors first; the database limits are a last safety net. `created_at` is filled in by PostgreSQL when the row is saved.
 
+### Blog tables (Blog milestone 2)
+
+Five tables, added by the migration `add_blog`. Two new ideas appear here:
+
+- **Enum:** a column that may only hold one value from a fixed list, like a TypeScript union type. `posts.status` is `DRAFT` or `PUBLISHED`; `users.role` is `ADMIN`. The database itself refuses anything else. (PostgreSQL types: `post_status`, `user_role`.)
+- **Many-to-many:** one post has many tags *and* one tag is on many posts. Neither table can hold that, so a third table, **`post_tags`**, lists the pairs (`post 1 – angular`, `post 1 – signals`, `post 2 – angular`). Its key is the pair itself, so the same tag can't be added to a post twice.
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `users` | `email` (unique, max 254), `password_hash`, `role` (default `ADMIN`), `failed_logins` (default 0), `locked_until` (nullable), `created_at` | One row: me. `password_hash` is a **scrypt fingerprint** (`scrypt$16384$8$1$<salt>$<hash>`), never the password. The two lock columns stop password guessing (milestone 3) |
+| `sessions` | `token_hash` (unique), `user_id` → `users`, `expires_at`, `created_at` | One row per logged-in browser (the "wristband"). Only a hash of the cookie's token is stored. Deleting a user deletes their sessions (cascade) |
+| `posts` | `title` (150), `slug` (unique, 80), `excerpt` (300, default `''`), `content` (Markdown, default `''`), `cover_image_url` (500, nullable), `status` (default `DRAFT`), `published_at` (nullable), `created_at`, `updated_at`, `author_id` → `users` | `updated_at` is set by Prisma on every change (`@updatedAt`). `published_at` is set on the first publish and kept. Index on (`status`, `published_at`) for "published, newest first" |
+| `tags` | `name` (unique, 30), `slug` (unique, 40) | Created on the fly from the post editor |
+| `post_tags` | `post_id` + `tag_id` (together the primary key) | Deleting a post or a tag removes its pairs (cascade) |
+
+The seed script **never** touches these tables.
+
 ### `_prisma_migrations`
 
 Created and managed by Prisma: one row per applied migration. Don't edit it by hand.
@@ -134,7 +154,7 @@ The database uses `snake_case`; TypeScript and JSON use `camelCase`. Prisma conv
 
 ## C. Relationship diagram
 
-See [diagrams/database-relationships.md](diagrams/database-relationships.md) for every table. The relationship part:
+See [diagrams/database-relationships.md](diagrams/database-relationships.md) for every table. The portfolio relationship:
 
 ```mermaid
 erDiagram
@@ -153,6 +173,50 @@ erDiagram
     }
 ```
 
+The Blog relationships (users → sessions and posts, posts ↔ tags through `post_tags`):
+
+```mermaid
+erDiagram
+    users ||--o{ sessions : "logs in with"
+    users ||--o{ posts : "writes"
+    posts ||--o{ post_tags : "has"
+    tags ||--o{ post_tags : "labels"
+    users {
+        int id PK
+        varchar email UK "max 254"
+        text password_hash "scrypt fingerprint"
+        enum role "ADMIN"
+        int failed_logins "default 0"
+        timestamp locked_until "nullable"
+    }
+    sessions {
+        int id PK
+        text token_hash UK
+        int user_id FK
+        timestamp expires_at
+    }
+    posts {
+        int id PK
+        varchar title "max 150"
+        varchar slug UK "max 80"
+        varchar excerpt "max 300"
+        text content "Markdown"
+        varchar cover_image_url "nullable"
+        enum status "DRAFT or PUBLISHED"
+        timestamp published_at "nullable"
+        int author_id FK
+    }
+    tags {
+        int id PK
+        varchar name UK "max 30"
+        varchar slug UK "max 40"
+    }
+    post_tags {
+        int post_id PK,FK
+        int tag_id PK,FK
+    }
+```
+
 ## D. Migrations (the structure's history)
 
 A **migration** is a saved SQL file for one structure change, like a Git commit for tables.
@@ -163,6 +227,7 @@ A **migration** is a saved SQL file for one structure change, like a Git commit 
 | `20261017133430_add_project_category/` | Adds `projects.category` | `npx prisma migrate dev --name add_project_category` |
 | `20261019132505_add_experience_and_skills/` | Creates `experiences`, `skill_groups`, `skills` + the foreign key | `npx prisma migrate dev --name add_experience_and_skills` |
 | `20261022104122_add_messages/` | Creates `messages` | `npx prisma migrate dev --name add_messages` |
+| `20261028131436_add_blog/` | Creates the enums `user_role`, `post_status` and the tables `users`, `sessions`, `posts`, `tags`, `post_tags` (+ unique keys, indexes, foreign keys) | `npx prisma migrate dev --name add_blog` (Blog milestone 2) |
 
 ⚠️ **Known discrepancy:** the live `projects` table uses `id … GENERATED ALWAYS AS IDENTITY`, but `0_init` creates `id SERIAL`. Both auto-number. A fresh database built from the migrations (e.g. when deploying) will use `SERIAL`. This doesn't affect the app.
 
@@ -196,7 +261,29 @@ prisma.skillGroup.create({
 
 4. Prints `Seeded: 3 projects, 3 jobs, 6 skill groups, 26 skills`.
 
+It never touches the Blog tables (`users`, `sessions`, `posts`, `tags`, `post_tags`): that's real content, not starting data.
+
 Because it clears first, it is safe to run again and never creates duplicates. Because ids are auto-numbers, re-seeding gives the rows new ids (the site doesn't depend on them).
+
+## E2. The create-admin script (`api/scripts/create-admin.ts`)
+
+**What it is:** a small cousin of the seed script. It writes **one row** into `users`: my admin login. It's the **only** way to create a user, since the website has no sign-up page.
+
+**Why it's in `scripts/` and not `prisma/`:** `prisma/seed.ts` is content that Prisma may run automatically (e.g. after a reset). `create-admin` creates a real account with a password, asks questions, and must only run when I choose. `scripts/` is the usual home for such run-by-hand tools.
+
+```text
+npm run create-admin
+  → asks Email, Password (hidden), Password again
+  → hashPassword() (api/src/lib/password.ts) makes a scrypt fingerprint
+  → prisma.user.upsert(): create the row, or, if the email exists, reset the
+    password, unlock it and log out every browser (deletes its sessions)
+  → prints "✔ Admin created: … (id 1)"
+```
+
+- The password never touches a file, git or the terminal history; only the fingerprint is stored.
+- Running it again with the same email = "forgot password".
+- **Live database (Neon):** `npx tsx --env-file=.env.production.local scripts/create-admin.ts` (in `api/`), done at go-live (Blog milestone 9).
+- **Check in pgAdmin:** Tables → Refresh → `users` → View/Edit Data → All Rows. Or: `SELECT id, email, password_hash, role FROM users;` → `password_hash` starts with `scrypt$`.
 
 ## F. Query walkthroughs
 

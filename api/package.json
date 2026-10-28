@@ -11,6 +11,7 @@
     "start:local": "node --env-file=.env dist/src/server.js",
     "db:migrate": "prisma migrate deploy",
     "seed": "tsx --env-file=.env prisma/seed.ts",
+    "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

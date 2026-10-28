@@ -49,7 +49,55 @@ erDiagram
     }
 ```
 
-One relationship so far: **one skill group has many skills**. `skills.group_id` points at `skill_groups.id`; deleting a group deletes its skills (`ON DELETE CASCADE`). The other tables stand alone. `_prisma_migrations` (managed by Prisma) is omitted.
+Portfolio: **one skill group has many skills**. `skills.group_id` points at `skill_groups.id`; deleting a group deletes its skills (`ON DELETE CASCADE`). The other portfolio tables stand alone. `_prisma_migrations` (managed by Prisma) is omitted.
+
+## Blog tables (Blog milestone 2, implemented)
+
+```mermaid
+erDiagram
+    users ||--o{ sessions : "logs in with"
+    users ||--o{ posts : "writes"
+    posts ||--o{ post_tags : "has"
+    tags ||--o{ post_tags : "labels"
+    users {
+        int id PK
+        varchar email UK "max 254"
+        text password_hash "scrypt fingerprint"
+        enum role "ADMIN"
+        int failed_logins "default 0"
+        timestamp locked_until "nullable"
+    }
+    sessions {
+        int id PK
+        text token_hash UK
+        int user_id FK
+        timestamp expires_at
+    }
+    posts {
+        int id PK
+        varchar title "max 150"
+        varchar slug UK "max 80"
+        varchar excerpt "max 300"
+        text content "Markdown"
+        varchar cover_image_url "nullable"
+        enum status "DRAFT or PUBLISHED"
+        timestamp published_at "nullable"
+        int author_id FK
+    }
+    tags {
+        int id PK
+        varchar name UK "max 30"
+        varchar slug UK "max 40"
+    }
+    post_tags {
+        int post_id PK,FK
+        int tag_id PK,FK
+    }
+```
+
+- One user (me) has many **sessions** (logged-in browsers) and writes many **posts**.
+- **Many-to-many:** posts ↔ tags, through the join table `post_tags` (one row per pair; the pair is the key).
+- Deleting a user deletes their sessions; deleting a post or tag deletes its `post_tags` rows (cascade).
 
 ## 📝 Possible next (postponed)
 

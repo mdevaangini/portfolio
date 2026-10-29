@@ -95,6 +95,6 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP), on the website project since 2026-10-28 |
 | Projects in the seed script | ✅ (2026-10-25) |
 | "Chat on WhatsApp" button next to Send (opens WhatsApp with a pre-filled message) | 🟡 added 2026-10-26, check pending |
-| Blog (admin login + posts) | 🚧 plan approved 2026-10-27. **Milestone 1 ✅** (routes + Home page, one address for website and API, API tests). **Milestone 2 ✅** (5 Blog tables, `create-admin` script, password hashing; 9 API tests). Next: milestone 3, the login API |
+| Blog (admin login + posts) | 🚧 plan approved 2026-10-27. **Milestone 1 ✅** (routes + Home page, one address for website and API, API tests). **Milestone 2 ✅** (5 Blog tables, `create-admin` script, password hashing). **Milestone 3 ✅** (login / me / logout with a session cookie, `requireAdmin` guard, Origin check; 17 API tests). Next: milestone 4, admin blog API |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

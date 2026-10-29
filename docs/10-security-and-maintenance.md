@@ -25,7 +25,15 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Parameterised queries via Prisma | **SQL injection** (values are never pasted into SQL text) | `projects.service.ts` | ✅ |
 | Generic 500 message; full error only in the server log | Leaking SQL, file paths or stack traces to visitors | `middleware/error-handler.ts` | ✅ |
 | CORS restricted to one origin | Other websites reading the API from a visitor's browser | `app.ts` | ✅ |
-| Only one write endpoint, and it can only **add** messages | Visitors changing or deleting content | `POST /api/contact` | ✅ |
+| Public write endpoint can only **add** messages; every other change lives under `/api/admin` | Visitors changing or deleting content | `POST /api/contact`; `/api/admin` | ✅ |
+| **Admin guard** `requireAdmin` in front of every `/api/admin` route (valid session + `ADMIN`, else 401; the route code never runs) | Anyone calling admin endpoints directly (Postman, scripts), not just hidden buttons | `middleware/require-admin.ts`, `admin.routes.ts` | ✅ Blog M3 |
+| Passwords stored only as **scrypt** fingerprints (random salt); compared with `timingSafeEqual` | A database leak revealing passwords | `lib/password.ts` | ✅ |
+| Session tokens: 32 random bytes; only the **SHA-256 fingerprint** stored; 7-day expiry | A database leak giving working logins | `lib/session-token.ts`, `sessions` table | ✅ |
+| Login cookie `httpOnly`, `secure` (live), `sameSite=strict`, `path=/api` | Scripts stealing it; sniffing; other sites using my login (CSRF) | `auth.controller.ts` | ✅ |
+| **Origin check** on POST/PATCH/DELETE to `/auth` and `/admin` → 403 from other websites | CSRF (second lock next to `sameSite`) | `middleware/check-origin.ts` | ✅ |
+| Lockout: 5 wrong passwords → 15 minutes (429); same 401 message for unknown email and wrong password; equal timing | Password guessing; finding out which emails have an account | `auth.service.ts` | ✅ |
+| No sign-up page: users only via `npm run create-admin` | Strangers creating accounts | `scripts/create-admin.ts` | ✅ |
+| Website and API on **one address** (`/api` rewrite) | Needed for the cookie to be first-party and `sameSite` to work | `web/vercel.json`, `web/proxy.conf.json` | ✅ Blog M1 |
 | Phone number not shown on the site | Spam | design decision (note: it is inside the downloadable CV PDF — the owner's choice) | ✅ |
 
 ## Risks and gaps
@@ -38,7 +46,8 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Rate limiting, layer 2: **code** — max 3 per email and 20 in total per hour → 429 | Floods that change email or come from many IPs; protects the inbox and Resend's 100/day | `contact.controller.ts` | ✅ |
 | Messages are stored with the sender's email | Personal data the owner is responsible for | ⚠️ — keep the DB private; delete old messages |
 | No security headers (e.g. via Helmet) | Missing hardening headers | ⚠️ |
-| No authentication | Fine today; required before any admin page (e.g. reading messages on the site) | — |
+| Lockout can be triggered by someone else (5 wrong guesses lock **me** out for 15 min) | Annoying, not dangerous; wait, or re-run `create-admin` to unlock | ⚠️ accepted |
+| `CORS_ORIGIN` doubles as the allowed Origin for logins | If the live website address changes and `CORS_ORIGIN` isn't updated, live logins get 403 | ⚠️ check at Blog go-live |
 | Backups | Neon keeps restore history on its free plan (check current limits); the seed can rebuild all content except `messages` | ⚠️ |
 | CORS errors are browser-only protection | CORS doesn't stop non-browser clients; that's expected because the data is public | — |
 
@@ -46,7 +55,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 
 1. Commit regularly from the `portfolio/` root; never commit `.env`.
 2. In production, use a dedicated database user with only the needed permissions.
-3. Add rate limiting to the live `POST /api/contact` (e.g. a few messages per minute per visitor).
+3. ~~Add rate limiting to the live `POST /api/contact`~~ ✅ done (firewall + code).
 4. Add security headers (e.g. Helmet) to the API; HTTPS is already provided by Vercel.
 5. Back up the production database (most managed providers offer this).
 6. Keep dependencies updated: `npm outdated` and `npm audit` in both projects. Note that Prisma 7 is pinned on purpose; Prisma 8 changes the APIs.

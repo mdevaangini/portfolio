@@ -475,9 +475,15 @@ Exact stopping point (2026-10-25):
   ⚠ LIVE: Origin check uses CORS_ORIGIN on the API project → it must equal
   the live website address exactly, or live login/admin changes get 403
   (check at milestone 9, ties to G1).
-  NEXT: user tests (/api/admin/check logged in → 200, logged out → 401;
-  npm test 17) → M3 docs (04 API auth section, 10 security, 02, 06 flow,
-  FAQ) + decide test database for DB tests.
+  3c CONFIRMED by user ("3c yes done", 2026-10-29; committed ebbc84a).
+  MILESTONE 3 COMPLETE. Docs: 04 (folder tree, lifecycle +cookieParser,
+  VERCEL env, scripts, "Authentication (Blog milestone 3)" section, 4
+  endpoint sections), 06 Flow 8 (sequence diagram), 08 (17 tests), 10
+  (protections + risks: lockout DoS accepted, CORS_ORIGIN = allowed Origin),
+  README status, FAQ (many cookie Q&As).
+  NEXT: user commits docs → propose test DB (local portfolio_test) for
+  DB tests → MILESTONE 4 (admin blog API: posts CRUD, publish/unpublish,
+  slug + tags, validation) — explain first, then code.
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into

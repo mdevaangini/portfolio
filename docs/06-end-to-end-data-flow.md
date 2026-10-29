@@ -313,6 +313,50 @@ It's like a `routerLink` that leads **out** of the site: no `HttpClient`, no ser
 
 ---
 
+## Flow 8 — Logging in and an admin request (Blog milestone 3, API only for now)
+
+No page uses this yet (the admin page comes in milestone 6); test it with Postman. Full details: [04 — Authentication](04-api-documentation.md#authentication-blog-milestone-3).
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (or Postman)
+    participant API as Express API
+    participant DB as Postgres
+
+    Note over B,DB: 1. Login (password checked ONCE)
+    B->>API: POST /api/auth/login {email, password}
+    API->>DB: users WHERE email
+    API->>API: scrypt(password) = password_hash?
+    API->>DB: INSERT sessions (token_hash = SHA-256 of a new random token)
+    API-->>B: 200 {user} + Set-Cookie: session=token
+    Note over B: browser stores the cookie
+
+    Note over B,DB: 2. Every admin request (cookie checked EVERY time)
+    B->>API: GET /api/admin/check + Cookie: session=token (added by the browser)
+    API->>API: checkOrigin, then requireAdmin: SHA-256(token)
+    API->>DB: sessions WHERE token_hash, not expired, user is ADMIN
+    alt found
+        API-->>B: 200 "You are the admin"
+    else not found / expired
+        API-->>B: 401 "Not logged in." (admin code never runs)
+    end
+
+    Note over B,DB: 3. Logout
+    B->>API: POST /api/auth/logout + Cookie
+    API->>DB: DELETE sessions WHERE token_hash
+    API-->>B: 204 + Set-Cookie that deletes the cookie
+```
+
+| Step | Status | What I see in Postman |
+|---|---|---|
+| Login right | 200 | Response **Headers** → `Set-Cookie: session=…` |
+| Login wrong | 401 | "Wrong email or password." |
+| 5× wrong | 429 | "Too many failed attempts…" |
+| `/api/admin/check` logged in | 200 | "You are the admin: …" |
+| `/api/admin/check` logged out | 401 | "Not logged in." |
+
+---
+
 ## Summary table
 
 | Feature | Web | API | Database |
@@ -327,3 +371,4 @@ It's like a `routerLink` that leads **out** of the site: no `HttpClient`, no ser
 | Chat on WhatsApp | `Contact.whatsappLink()` builds a `wa.me` link | — | — |
 | Too many messages | `Contact` shows the "several messages" box on 429 | Vercel Firewall (per IP) + `RATE_LIMIT` in the controller | `messages` (counted, not written) |
 | Project by id | not used | `GET /api/projects/:id` | `projects` (read) |
+| Admin login / guard | not yet (milestone 6) | `/api/auth/login`, `/me`, `/logout`; `requireAdmin` on `/api/admin` | `users`, `sessions` |

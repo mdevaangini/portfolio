@@ -41,4 +41,10 @@ export const env = {
   resendApiKey: optional("RESEND_API_KEY", ""),
   /** Where the notification goes: the address you signed up to Resend with */
   notifyEmail: optional("NOTIFY_EMAIL", ""),
+
+  /**
+   * true on Vercel (Vercel sets VERCEL=1 by itself). Used for the login cookie:
+   * live it must be "Secure" (sent over https only); on the laptop we use plain http.
+   */
+  isProduction: process.env["VERCEL"] === "1",
 };

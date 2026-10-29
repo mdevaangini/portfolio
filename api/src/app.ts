@@ -1,9 +1,11 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: app.ts
 // Builds the Express app: the steps EVERY request passes through, in order:
-// CORS → turn JSON body into req.body → /api routes → 404 → error handler.
+// CORS → turn JSON body into req.body → read cookies into req.cookies → /api routes
+// → 404 → error handler.
 // ──────────────────────────────────────────────────────────────────────
 
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { env } from "./config/env.js";
@@ -21,6 +23,7 @@ export const app = express();
 // 1. Before routes: prepare the request
 app.use(cors({ origin: env.corsOrigin })); // allow the Angular app to read responses
 app.use(express.json()); // turn a JSON request body into req.body (needed for POST later)
+app.use(cookieParser()); // turn the Cookie header into req.cookies (the login "key card")
 
 // 2. The routes: every feature lives under /api
 app.use("/api", apiRouter);

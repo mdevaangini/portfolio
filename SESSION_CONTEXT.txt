@@ -439,8 +439,30 @@ Exact stopping point (2026-10-25):
   diagrams/database-relationships.md, 07 (create-admin command, 9 tests),
   08, README status. Explained to user: create-admin = "cousin of seed";
   scripts/ vs prisma/ (seed may run automatically; create-admin only by hand).
-  NEXT: user commits + pushes M2 (code + docs in one commit) → MILESTONE 3
-  (auth API: login/logout/me, sessions, cookie, requireAdmin, lockout).
+  M2 committed + pushed (c6a8f17). docs/12-my-questions-faq.md created.
+  M3 started 2026-10-28. 3a WRITTEN [typecheck OK; UNCONFIRMED by user]:
+  env.isProduction (VERCEL === "1"); src/lib/session-token.ts
+  (createSessionToken = 32 random bytes base64url; hashSessionToken =
+  sha256 hex); modules/auth/{auth.routes,auth.controller,auth.service}.ts;
+  routes.ts mounts /auth. POST /api/auth/login: 400 missing/non-text
+  (email ≤254, password ≤200; email trimmed+lowercased, password not
+  trimmed); unknown email → dummy-hash verify (same timing) → 401 "Wrong
+  email or password." (same msg for both); AUTH_RULES maxFailedLogins 5 →
+  lock 15 min → 429 + Retry-After; success → $transaction(reset counter,
+  delete expired sessions, create session 7 days) → cookie "session"
+  (httpOnly, secure=isProduction, sameSite strict, path /api, expires) +
+  200 { user: {id,email} }; token never in JSON. 2 new tests (400s) →
+  npm test expects 11. Re-running create-admin unlocks a locked account.
+  Explained cookie settings with a "hotel key card" picture (FAQ updated).
+  3b WRITTEN [UNCONFIRMED; user must install cookie-parser +
+  @types/cookie-parser]: app.ts app.use(cookieParser()) after json;
+  service findSessionUser(token) (by token_hash, not expired → {id,email,
+  role}) + deleteSession(token); controller sessionToken(req), me (200
+  {user} / 401 "Not logged in." + clearCookie if bad token), logout
+  (deleteSession, clearCookie, 204 always); routes GET /me, POST /logout.
+  2 more tests (no cookie) → npm test expects 13.
+  NEXT: user installs, tests 3a + 3b in Postman → 3c (requireAdmin
+  middleware, Origin check, DB tests decision) → docs for M3.
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into
@@ -496,6 +518,12 @@ E. USER REQUIREMENTS AND PREFERENCES (follow strictly)
   - When the user is confused, give ONE simple mental model (the Excel-sheets
     model above worked; long explanations did not).
   - Short, single answers to quick questions.
+  - BEFORE writing code for a step (user's request 2026-10-29, after the
+    cookie confusion): first explain the concept, WHO does what (backend /
+    browser / Angular), and what each file + key line will do; THEN code;
+    then a file-by-file walkthrough with the real lines; then the test.
+    Never assume she knows backend/browser behaviour (e.g. that the backend
+    sets cookies via Set-Cookie and the browser sends them automatically).
   - EVERY question the user asks (doubts, "why", "what is") must be added
     with a short answer to docs/12-my-questions-faq.md (created 2026-10-28
     at her request) and, where it fits, to the detailed doc page too.

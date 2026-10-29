@@ -55,3 +55,36 @@ describe("POST /api/contact: checks before saving", () => {
     expect(res.body).toEqual({ ok: true });
   });
 });
+
+describe("POST /api/auth/login: checks before the database", () => {
+  it("rejects a missing email or password with 400", async () => {
+    const res = await request(app).post("/api/auth/login").send({ email: "me@example.com" });
+
+    expect(res.status).toBe(400);
+    expect(res.headers["set-cookie"]).toBeUndefined(); // no wristband
+  });
+
+  it("rejects values that aren't text (e.g. a hacker sends an object)", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: { $ne: "" }, password: ["x"] });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /api/auth/me and POST /api/auth/logout without a key card", () => {
+  it("me: no cookie → 401 'Not logged in.'", async () => {
+    const res = await request(app).get("/api/auth/me");
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Not logged in.");
+  });
+
+  it("logout: no cookie → 204, and the browser is told to delete the cookie", async () => {
+    const res = await request(app).post("/api/auth/logout");
+
+    expect(res.status).toBe(204);
+    expect(String(res.headers["set-cookie"])).toContain("session=;");
+  });
+});

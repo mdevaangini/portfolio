@@ -92,6 +92,9 @@ export async function findSessionUser(token: string) {
   return session.user;
 }
 
+/** The logged-in user, as findSessionUser returns it: { id, email, role }. */
+export type SessionUser = NonNullable<Awaited<ReturnType<typeof findSessionUser>>>;
+
 /**
  * Logout: deletes this key card's session row, so the card stops working
  * even if someone kept a copy. deleteMany = no error if it's already gone.

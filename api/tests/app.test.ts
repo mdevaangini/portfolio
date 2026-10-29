@@ -88,3 +88,36 @@ describe("GET /api/auth/me and POST /api/auth/logout without a key card", () => 
     expect(String(res.headers["set-cookie"])).toContain("session=;");
   });
 });
+
+describe("The admin door (requireAdmin guard)", () => {
+  it("no key card → 401, and the admin code never runs", async () => {
+    const res = await request(app).get("/api/admin/check");
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Not logged in.");
+    expect(res.body.ok).toBeUndefined(); // the admin answer was never sent
+  });
+});
+
+describe("Origin check on changes", () => {
+  it("blocks a change started from another website → 403", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .set("Origin", "https://evil.example")
+      .send({ email: "me@example.com", password: "whatever-password" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("lets my own website through (here it reaches the normal 400 check)", async () => {
+    const res = await request(app).post("/api/auth/login").set("Origin", "http://localhost:4200").send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it("never blocks reading (GET), even from another website", async () => {
+    const res = await request(app).get("/api/auth/me").set("Origin", "https://evil.example");
+
+    expect(res.status).toBe(401); // the normal "not logged in", not 403
+  });
+});

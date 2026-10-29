@@ -38,6 +38,11 @@ The password is checked once (step 2); after that, only the cookie is checked (s
 
 **If the cookie doesn't match (step 5 fails):** the API just answers **401 "Not logged in."** Nothing is deleted from `sessions`: there's no matching row to delete. `/me` also tells the browser to throw away the useless cookie. Rows are deleted only by **logout** (my own row) and by the clean-up of **expired** sessions at the next login.
 
+### Milestone 3 in three lines (my summary, checked ✓)
+- **3a, login:** check the password; if right, create a session and **give** the cookie (`Set-Cookie` in the **response** header). We only write the response header; the browser attaches the request headers by itself.
+- **3b, read it:** **read** the cookie from the **request** (cookie-parser) and use it for `/me` (who am I?) and `/logout` (delete the session).
+- **3c, guard it:** before any `/api/admin/...` action, read the cookie, check **logged in** (fingerprint in `sessions`, not expired), then check **admin** (`role = ADMIN`). Either no → 401 and the action never runs.
+
 ### Who attaches the cookie: the API or the browser?
 Both, but in **different directions** and with **different headers**:
 

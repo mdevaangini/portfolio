@@ -461,8 +461,23 @@ Exact stopping point (2026-10-25):
   {user} / 401 "Not logged in." + clearCookie if bad token), logout
   (deleteSession, clearCookie, 204 always); routes GET /me, POST /logout.
   2 more tests (no cookie) → npm test expects 13.
-  NEXT: user installs, tests 3a + 3b in Postman → 3c (requireAdmin
-  middleware, Origin check, DB tests decision) → docs for M3.
+  cookie-parser + @types installed by user (2026-10-29). Long Q&A on how
+  cookies flow (all in docs/12 FAQ). 3b Postman test: not reported yet.
+  3c WRITTEN [typecheck OK; UNCONFIRMED]: middleware/require-admin.ts
+  (sessionToken → findSessionUser → !user || role !== ADMIN → 401 "Not
+  logged in."; else res.locals.user + next()); middleware/check-origin.ts
+  (POST/PATCH/DELETE with an Origin not in {env.corsOrigin,
+  http://localhost:4200} → 403; no Origin (Postman) allowed; GET never
+  blocked); modules/admin/{admin.routes (adminRouter.use(requireAdmin);
+  GET /check), admin.controller (check → 200 {ok, message})};
+  auth.service exports type SessionUser; routes.ts: /auth and /admin both
+  behind checkOrigin. 4 more tests → npm test expects 17.
+  ⚠ LIVE: Origin check uses CORS_ORIGIN on the API project → it must equal
+  the live website address exactly, or live login/admin changes get 403
+  (check at milestone 9, ties to G1).
+  NEXT: user tests (/api/admin/check logged in → 200, logged out → 401;
+  npm test 17) → M3 docs (04 API auth section, 10 security, 02, 06 flow,
+  FAQ) + decide test database for DB tests.
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into

@@ -48,6 +48,43 @@ Things that differ live, set by settings rather than code: the database (`DATABA
 The guard used to stand at the API's door, counting visitors per IP. Now everyone reaches the API **through the front desk**, so the API may see only "the front desk" and count all visitors as one. So a guard also stands at the **website's door**, the one visitors really walk through.
 → [09](09-deployment-and-configuration.md#one-address-for-website-and-api)
 
+### What exactly is Express doing?
+**Express is a library (npm package) that makes it easy to build a web server in Node.** Node alone can receive requests, but only raw ones: one function gets every request and must work out everything itself. Express gives that raw request a structure.
+
+| Without Express (plain Node `http`) | With Express |
+|---|---|
+| One function receives **every** request; write `if (url === "/api/skills" && method === "GET")` for each one | **Routing:** `router.get("/skills", getSkills)` |
+| Read the body yourself, piece by piece, and parse the JSON | `express.json()` → `req.body` |
+| Read the raw `Cookie` text yourself | `cookieParser()` → `req.cookies` |
+| Write the status, headers and JSON text by hand | `res.status(404).json({...})`, `res.cookie(...)` |
+| Build your own "run these checks first" system | **Middleware:** `app.use(...)`: steps every request passes in order (CORS, guard, 404, errors) |
+| Read `/api/projects/3` and pull out `3` yourself | `req.params.id`, `req.query.limit` |
+
+**Comparison (better version, my own correction ✓):** Express is closer to **React** than to Angular. It's *minimal and unopinionated*: it gives the basics (routing, middleware, `req`/`res` helpers) and leaves the structure to me. That's why the controller / service / `modules/` layout is **our convention**, not something Express requires. (Express calls itself a "minimal framework"; in practice it behaves like a library.)
+
+| Frontend | Backend (Node) | Style |
+|---|---|---|
+| React | **Express** | minimal: you choose the structure |
+| Angular | **NestJS** | full framework: modules, controllers, services, dependency injection, decorators (NestJS is inspired by Angular) |
+
+Why this project uses Express and not NestJS: Express shows the request flow plainly (nothing hidden behind decorators), which is better for learning how a backend works. NestJS is common in companies for big teams because it enforces one structure. Good interview answer: "I used Express to understand the fundamentals; I organised it NestJS-style myself: routes, controllers, services, middleware."
+
+In our project, Express is: `express()` in `app.ts` (the app), `Router()` in every `*.routes.ts`, `req`/`res` in every controller, and middleware like `requireAdmin`. Services and Prisma don't use Express at all.
+
+### Is middleware like an Angular interceptor?
+**Yes, the same idea:** a chain of steps a request passes through, where each step can **look at or change** it, **pass it on**, or **stop it**. Even the code shape matches: an interceptor calls `next.handle(req)`; Express middleware calls `next()`.
+
+Two differences:
+1. **Where it runs:** an Angular interceptor runs in the **browser**, on requests going **out**. Express middleware runs on the **server**, on requests coming **in**.
+2. **Not every middleware runs for every request:** it depends on where it's registered.
+
+| Middleware | Registered | Runs for |
+|---|---|---|
+| `cors()`, `express.json()`, `cookieParser()` | `app.use(...)` in `app.ts` | **every** request, before routing |
+| `checkOrigin` | in front of `/auth` and `/admin` (`routes.ts`) | only those paths |
+| `requireAdmin` | inside `admin.routes.ts` | only `/api/admin/...` (like a `CanActivate` guard) |
+| `notFound`, `errorHandler` | at the **end** of `app.ts` | only as a fallback: nothing answered (404) or a crash (500) |
+
 ### What's the difference between `server.ts` and `app.ts`?
 **`server.ts` runs ONCE, when the API starts. `app.ts` describes what happens to EVERY request.** A request from Angular never "goes through" `server.ts`; it only goes through what `app.ts` set up.
 
@@ -64,6 +101,19 @@ The guard used to stand at the API's door, counting visitors per IP. Now everyon
 npm run dev → server.ts → imports app (built in app.ts) → app.listen(3000)   ← once
 Request     → port 3000 → app.ts pipeline → routes.ts → controller → …         ← every time
 ```
+
+**My own summary (checked ✓):** `npm run dev` runs `server.ts` once; from then on the server is **running** and keeps listening on port 3000 for requests from Angular, until I stop it (Ctrl + C or closing the terminal). Its code finished after `app.listen(3000)`, but the open port keeps the program alive. Saving a file makes `tsx watch` restart it. (Word to avoid mixing up: this is the **running local** server; "live" means the deployed site on Vercel.)
+
+**What `app.ts` does, line by line in plain words (my summary, checked ✓):**
+1. `express()` creates the app (an empty pipeline).
+2. `cors(...)`: adds a header to answers saying which website may **read** them (`CORS_ORIGIN`). It doesn't block requests; the **browser** enforces it. Since the `/api` front desk, page and API share one address, so CORS rarely matters now.
+3. `express.json(...)`: reads the request **body** (the payload Angular sends, e.g. the contact form) → `req.body`.
+4. `cookieParser()`: reads the **`Cookie`** request header → `req.cookies` (other headers are already in `req.headers`).
+5. `app.use("/api", apiRouter)`: hands the request to `routes.ts` → the feature's routes → controller.
+6. `notFound` and `errorHandler` are only reached if nothing answered (404) or something crashed (500).
+7. Exports the `app` instance twice: `export const app` (for `server.ts` and tests) and `export default app` (for Vercel). It never starts listening itself.
+
+**Do GET requests skip `express.json()`?** No line is skipped: **every** request walks the whole pipeline. But a GET has **no body** (its data travels in the URL: `/api/projects?limit=10` → `req.query.limit`, `/api/projects/3` → `req.params.id`). So `express.json()` looks, finds no JSON body, does nothing and passes it on. Bodies come with POST, PATCH and PUT. `cookieParser()` also runs every time; with no cookie, `req.cookies` is just `{}`.
 
 **Why split them:** so the same `app` can be used in three places (laptop, Vercel, tests). Only the laptop needs `server.ts` to open a port.
 

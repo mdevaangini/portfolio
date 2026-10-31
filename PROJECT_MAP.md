@@ -141,6 +141,19 @@ In one file, Vercel and the tests would also try to open port 3000, which they c
 | `middleware/check-origin.ts` 🆕 | Changes to `/auth` and `/admin` must come from my website, else 403 |
 | `middleware/require-admin.ts` 🆕 | The guard at the admin door: valid login cookie + admin role, else 401. Admin code never runs without it |
 
+#### Middleware = the server's interceptors and guards
+
+**Middleware is the server's version of interceptors and guards. Some steps run for every request, others only on specific paths, and a couple only when something goes wrong.**
+
+Same idea as an Angular interceptor: each step can look at or change the request, **pass it on** (`next()`, like `next.handle(req)`), or **stop it**. The difference: interceptors run in the **browser** on requests going **out**; middleware runs on the **server** on requests coming **in**.
+
+| Middleware | Registered | Runs for |
+|---|---|---|
+| `cors()` · `express.json()` · `cookieParser()` | `app.use(...)` at the top of `app.ts` | **every** request, before routing |
+| `checkOrigin` | in front of `/auth` and `/admin` in `routes.ts` | only those paths |
+| `requireAdmin` | inside `admin.routes.ts` | only `/api/admin/...` (like a `CanActivate` guard) |
+| `notFound` · `errorHandler` | at the **end** of `app.ts` | only as a fallback: nothing answered (404) or a crash (500) |
+
 ### Features (each one = routes + controller + service)
 | Folder | What it does and why |
 |---|---|

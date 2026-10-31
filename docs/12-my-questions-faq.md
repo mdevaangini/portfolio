@@ -19,6 +19,29 @@ Before, the browser visited **two addresses**: the website for the page and the 
 **Why:** the Blog login uses a cookie (a wristband). Browsers only trust a wristband given out by the building you're standing in. One address means the same building.
 → [09 — One address for website and API](09-deployment-and-configuration.md#one-address-for-website-and-api)
 
+### How does the /api front desk work on the live server?
+On the laptop, `npm start` runs the **Angular dev server**, and `proxy.conf.mjs` tells it to forward `/api`. **Live there is no Angular dev server at all.** `ng build` turns the app into plain files (HTML, JS, CSS) and Vercel serves them. So `proxy.conf.mjs` isn't used live; **Vercel itself** does the forwarding, following the `rewrites` in `web/vercel.json`.
+
+| | Laptop (`npm start`) | Live (Vercel) |
+|---|---|---|
+| Who serves the website | Angular dev server, `localhost:4200` | Vercel project **devaangini**, `devaangini-portfolio.vercel.app` (built files) |
+| Who forwards `/api` | the dev server, using `proxy.conf.mjs` | Vercel, using `rewrites` in `vercel.json` |
+| Where it forwards to | Express on `localhost:3000` | Vercel project **portfolio** (Express as a serverless function) |
+| Database | local PostgreSQL | Neon |
+| What Angular calls | `/api/skills` | `/api/skills` (same code) |
+
+```text
+Visitor's browser
+  └─ GET devaangini-portfolio.vercel.app/api/skills
+       └─ Vercel (website project) reads vercel.json → rule 1 matches /api/…
+            └─ forwards to portfolio-neon-six-56.vercel.app/api/skills
+                 └─ Vercel starts the Express app (api/src/app.ts) → routes → controller → service → Prisma
+                      └─ Neon (DATABASE_URL set in the API project's settings)
+       ◀─ the answer comes back the same way; the browser only ever saw the website's address
+```
+
+Things that differ live, set by settings rather than code: the database (`DATABASE_URL` → Neon), the cookie is `Secure` (https only, because Vercel sets `VERCEL=1`), the allowed Origin (`CORS_ORIGIN` = the live website address), and the contact-form firewall rule on the website project.
+
 ### Why did we add a Firewall rule on the website project too?
 The guard used to stand at the API's door, counting visitors per IP. Now everyone reaches the API **through the front desk**, so the API may see only "the front desk" and count all visitors as one. So a guard also stands at the **website's door**, the one visitors really walk through.
 → [09](09-deployment-and-configuration.md#one-address-for-website-and-api)

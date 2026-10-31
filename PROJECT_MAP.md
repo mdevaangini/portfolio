@@ -105,6 +105,34 @@ Receives every request, **never trusts the browser**, applies the rules, decides
 | `config/env.ts` | Reads the settings (`.env`) in one place; stops at start-up if one is missing |
 | `db/prisma.ts` | The one shared database connection every service uses |
 
+#### `server.ts` vs `app.ts`
+
+**A request from Angular never goes through `server.ts`.** `server.ts` runs only **once**, when the API starts. `app.ts` describes what happens to **every** request.
+
+Picture a restaurant:
+- **`server.ts` = unlocking the front door at 9 a.m.** It happens once, when you run `npm run dev`. Its whole job is one line: "start listening on port 3000". After that, it does nothing.
+- **`app.ts` = what happens to each customer who walks in:** greeted, seated, order taken, food served. That routine repeats for **every** request:
+  ```
+  CORS check → read JSON body → read cookies → /api routes → (nothing matched → 404) → (crash → 500)
+  ```
+
+| API | Angular | Runs |
+|---|---|---|
+| `server.ts` | `main.ts` (`bootstrapApplication`) | once, at start |
+| `app.ts` | `app.config.ts` + `app.routes.ts` | rules applied to every request |
+
+```
+Start:    npm run dev → server.ts → takes the app from app.ts → listens on port 3000   ← ONCE
+Request:  Angular → port 3000 → app.ts pipeline → routes.ts → controller → service    ← EVERY TIME
+```
+
+**Why two files?** The same `app` is used in **three places**, and only one of them needs a port:
+1. **Laptop:** `server.ts` opens port 3000 and hands requests to `app`.
+2. **Vercel:** doesn't use `server.ts`; it has its own "door" and takes `app` straight from `app.ts` (`export default app`).
+3. **Tests:** Supertest sends fake requests straight into `app`, no port needed.
+
+In one file, Vercel and the tests would also try to open port 3000, which they can't and shouldn't.
+
 ### Middleware (runs around the routes)
 | File | What it does and why |
 |---|---|

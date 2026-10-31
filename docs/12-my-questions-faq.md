@@ -48,6 +48,25 @@ Things that differ live, set by settings rather than code: the database (`DATABA
 The guard used to stand at the API's door, counting visitors per IP. Now everyone reaches the API **through the front desk**, so the API may see only "the front desk" and count all visitors as one. So a guard also stands at the **website's door**, the one visitors really walk through.
 → [09](09-deployment-and-configuration.md#one-address-for-website-and-api)
 
+### What's the difference between `server.ts` and `app.ts`?
+**`server.ts` runs ONCE, when the API starts. `app.ts` describes what happens to EVERY request.** A request from Angular never "goes through" `server.ts`; it only goes through what `app.ts` set up.
+
+| | `server.ts` | `app.ts` |
+|---|---|---|
+| Runs | once, at start-up (`npm run dev`) | its pipeline runs for every request |
+| Job | opens the door: "listen on port 3000" | the route every request walks: CORS → JSON body → cookies → `/api` routes → 404 → 500 |
+| Angular equivalent | `main.ts` (`bootstrapApplication`, runs once) | `app.config.ts` + `app.routes.ts` (how the app handles everything) |
+| Restaurant picture | unlocking the door at 9 a.m. | what happens to each customer: greeted, seated, order taken, served |
+| Used live on Vercel? | **no**: Vercel opens its own door | **yes**: Vercel takes the app from `app.ts` (its `export default`) |
+| Used by tests? | no | yes: Supertest sends fake requests straight into `app` |
+
+```text
+npm run dev → server.ts → imports app (built in app.ts) → app.listen(3000)   ← once
+Request     → port 3000 → app.ts pipeline → routes.ts → controller → …         ← every time
+```
+
+**Why split them:** so the same `app` can be used in three places (laptop, Vercel, tests). Only the laptop needs `server.ts` to open a port.
+
 ### What is Vitest? Is it part of VS Code, Angular or Node?
 None of them. It's an **npm package that runs tests in the terminal** (`npm test`). The web project already used it: Angular calls Vitest behind the scenes, which is how the "3 passed" appeared. The API has no Angular in between, so it calls Vitest directly. **Supertest** is a helper that acts like Postman inside a test: it sends a request into the Express app and checks the answer.
 → [08 — Testing](08-testing-and-debugging.md)

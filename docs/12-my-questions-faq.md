@@ -40,6 +40,8 @@ Visitor's browser
        ◀─ the answer comes back the same way; the browser only ever saw the website's address
 ```
 
+**My own summary (checked ✓):** website and API are two separate servers, both locally and live, so something must forward `/api` requests from the website's server to the API's server. Locally that's `proxy.conf.mjs` (4200 → the API **running** on port 3000). Live it's the `rewrites` in `vercel.json`, whose `destination` is the address of the API project deployed separately on Vercel.
+
 Things that differ live, set by settings rather than code: the database (`DATABASE_URL` → Neon), the cookie is `Secure` (https only, because Vercel sets `VERCEL=1`), the allowed Origin (`CORS_ORIGIN` = the live website address), and the contact-form firewall rule on the website project.
 
 ### Why did we add a Firewall rule on the website project too?

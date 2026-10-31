@@ -12,7 +12,7 @@ The questions I asked while building this project, with the short answers that m
 
 ### What did we do with `/api`? What's the point? (the "front desk")
 Before, the browser visited **two addresses**: the website for the page and the API for the data. Now it only ever talks to the **website's address**. Requests starting with `/api` are forwarded to the API behind the scenes, like a front desk passing a call to the right office.
-- On the laptop, the front desk is `web/proxy.conf.json` (4200 → 3000).
+- On the laptop, the front desk is `web/proxy.conf.mjs` (4200 → 3000).
 - Live, it's the `rewrites` in `web/vercel.json`.
 - So Angular just calls `/api/skills`; `/api` is a label meaning "this is not a page, pass it to the API".
 

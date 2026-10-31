@@ -74,7 +74,7 @@ npm install
 npm start       # ng serve → http://localhost:4200
 ```
 
-The web app calls **`/api/...` on its own address** (`localhost:4200/api/...`). The dev server passes those requests on to the API at `localhost:3000` (set in `web/proxy.conf.json`, linked in `angular.json` → `serve`). So the API must be running too. After changing `proxy.conf.json` or `angular.json`, restart `npm start`.
+The web app calls **`/api/...` on its own address** (`localhost:4200/api/...`). The dev server passes those requests on to the API at `localhost:3000` (set in `web/proxy.conf.mjs`, linked in `angular.json` → `serve`). So the API must be running too. After changing `proxy.conf.mjs` or `angular.json`, restart `npm start`.
 
 In DevTools → Network you'll see `localhost:4200/api/skills`, not `:3000`. That's expected.
 

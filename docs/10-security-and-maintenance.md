@@ -33,7 +33,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | **Origin check** on POST/PATCH/DELETE to `/auth` and `/admin` → 403 from other websites | CSRF (second lock next to `sameSite`) | `middleware/check-origin.ts` | ✅ |
 | Lockout: 5 wrong passwords → 15 minutes (429); same 401 message for unknown email and wrong password; equal timing | Password guessing; finding out which emails have an account | `auth.service.ts` | ✅ |
 | No sign-up page: users only via `npm run create-admin` | Strangers creating accounts | `scripts/create-admin.ts` | ✅ |
-| Website and API on **one address** (`/api` rewrite) | Needed for the cookie to be first-party and `sameSite` to work | `web/vercel.json`, `web/proxy.conf.json` | ✅ Blog M1 |
+| Website and API on **one address** (`/api` rewrite) | Needed for the cookie to be first-party and `sameSite` to work | `web/vercel.json`, `web/proxy.conf.mjs` | ✅ Blog M1 |
 | Phone number not shown on the site | Spam | design decision (note: it is inside the downloadable CV PDF — the owner's choice) | ✅ |
 
 ## Risks and gaps

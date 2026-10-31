@@ -87,8 +87,8 @@ The browser only ever talks to the **website's address**. Anything starting with
 
 | File | What it does and why |
 |---|---|
-| `web/proxy.conf.json` 💻 | On my computer: `localhost:4200/api/…` → `localhost:3000/api/…` |
-| `web/vercel.json` | Live: `/api/…` → the API project on Vercel. Every other address → Angular's `index.html` (so `/blog` works) |
+| `web/proxy.conf.mjs` 💻 | On my computer: `localhost:4200/api/…` → `localhost:3000/api/…`. Explained in comments inside the file |
+| `web/vercel.json` | Live: `/api/…` → the API project on Vercel. Every other address → Angular's `index.html` (so `/blog` works). JSON can't hold comments, so it's explained in [`web/vercel.json.md`](web/vercel.json.md) |
 
 ---
 

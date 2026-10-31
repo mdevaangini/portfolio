@@ -389,7 +389,7 @@ Exact stopping point (2026-10-25):
   provides provideRouter([]); h1 test moved to home.spec.ts (expect 3 tests).
   1a CONFIRMED by user ("yes done", 2026-10-28).
   1b DONE [UNCONFIRMED]: web apiBaseUrl = '/api' in BOTH environment files;
-  web/proxy.conf.json (/api → http://localhost:3000) linked in angular.json
+  web/proxy.conf.mjs (/api → http://localhost:3000) linked in angular.json
   serve.options.proxyConfig; web/vercel.json "rewrites": /api/:path* →
   https://portfolio-neon-six-56.vercel.app/api/:path*, then /(.*) →
   /index.html (SPA deep links like /blog). CORS kept in the API (harmless).
@@ -481,9 +481,49 @@ Exact stopping point (2026-10-25):
   endpoint sections), 06 Flow 8 (sequence diagram), 08 (17 tests), 10
   (protections + risks: lockout DoS accepted, CORS_ORIGIN = allowed Origin),
   README status, FAQ (many cookie Q&As).
-  NEXT: user commits docs → propose test DB (local portfolio_test) for
-  DB tests → MILESTONE 4 (admin blog API: posts CRUD, publish/unpublish,
-  slug + tags, validation) — explain first, then code.
+  M4 plan explained (7 endpoints; steps 4a create/list/get, 4b edit/delete,
+  4c publish/unpublish, 4d test DB). User: "let's see, I'll read the files".
+  4a WRITTEN [typecheck OK; pure tests run by Claude in sandbox; UNCONFIRMED]:
+  lib/slug.ts (toSlug, SLUG_PATTERN); modules/admin-posts/
+  {admin-posts.validation.ts (checkPostInput(body,{partial}) → {ok,data}|
+  {ok:false,fields}; POST_LIMITS title 3–150, slug 3–80 auto from title,
+  excerpt 300, content 100k, cover https or null ≤500, tags ≤8 names 2–30
+  lowercased, deduped by slug; status ignored), admin-posts.service.ts
+  (postSelect incl. tags via post_tags; listPosts without content, updatedAt
+  desc; getPost; createPost nested write with connectOrCreate by tag slug;
+  P2002 → slug-taken), admin-posts.controller.ts (list 200 {data}; getOne
+  400/404/200; create 400 {error, fields} / 409 slug / 201 post),
+  admin-posts.routes.ts (GET /, GET /:id, POST /)}; admin.routes mounts
+  /posts after requireAdmin; app.ts express.json({limit:"300kb"}).
+  tests/posts.test.ts 9 tests → npm test expects 26.
+  ⏸ 2026-10-31: USER PAUSED THE PROJECT TO RESET THE WAY WE WORK.
+  Her feedback: she was only approving my choices (e.g. co-learner asked
+  "why not JWT?"), can't explain why controller vs service exist, the flow
+  isn't in her head, and she isn't reading the long docs. She wants
+  FLOW-level understanding (why each file exists), NOT line-by-line code,
+  still fast (uses AI), equal frontend/backend/DB, interview-ready.
+  AGREED NEW PROCESS (follow strictly from now on):
+   1. Problem first → 2–3 industry approaches with trade-offs → SHE decides
+      and says why → explain the flow (who does what, which files and why)
+      → code → short flow-level recap → 3-question check she answers in
+      her own words. Ideally she writes first drafts; I review like a PR.
+   2. Don't revert code: 4a stays PARKED, uncommitted (api/src/lib/slug.ts,
+      modules/admin-posts/, tests/posts.test.ts, app.ts json limit,
+      admin.routes /posts line).
+   3. "Project map" artifact (one line per layer/file, no code) replaces
+      reading the docs for now: https://claude.ai/artifact/UgJZUJ6EBAPnaMTQxMmxb6
+      (source: scratchpad project-map/project-map.html; republish when
+      files change). ALSO in the repo root as PROJECT_MAP.md (user asked,
+      so she can read it on GitHub anytime) — keep BOTH in sync.
+   4. Revision sessions, chat-based, teach-back: Session A = shape of the
+      project (routes/controller/service/Prisma + following GET
+      /api/skills through every layer); Session B = auth flow + sessions vs
+      JWT as HER decision (if JWT → rebuild auth files only).
+   5. Then resume Milestone 4 with the new process.
+  2026-10-31: proxy.conf.json renamed to web/proxy.conf.mjs (JS so it can
+  hold comments; angular.json proxyConfig updated; all docs updated).
+  vercel.json can't hold comments → explained in web/vercel.json.md.
+  NEXT: Session A (in progress), then Session B.
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into

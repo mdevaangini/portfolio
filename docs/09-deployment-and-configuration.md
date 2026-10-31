@@ -45,7 +45,7 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 
 | Change | Why |
 |---|---|
-| `src/environments/*.ts` → `apiBaseUrl: '/api'` (both) | The site always calls its own address; the forwarding is done by `proxy.conf.json` / `vercel.json` (see "One address" above). Before Blog milestone 1 these held the full API URLs. |
+| `src/environments/*.ts` → `apiBaseUrl: '/api'` (both) | The site always calls its own address; the forwarding is done by `proxy.conf.mjs` / `vercel.json` (see "One address" above). Before Blog milestone 1 these held the full API URLs. |
 | `angular.json` → development config `fileReplacements` | `npm start` swaps in the development file; `npm run build` keeps the live one. |
 | `core/api.config.ts` → `factory: () => environment.apiBaseUrl` | Every service still reads one `API_BASE_URL`. |
 | `web/vercel.json` → `outputDirectory: "dist/web/browser"` | Angular puts the built site in a `browser` sub-folder; without this Vercel served a 404 page. |
@@ -61,7 +61,7 @@ Browser ──▶ devaangini-portfolio.vercel.app ──"/api/…"──▶ port
 
 | Where | Who forwards `/api` | Setting |
 |---|---|---|
-| Laptop | Angular dev server | `web/proxy.conf.json`: `/api` → `http://localhost:3000` |
+| Laptop | Angular dev server | `web/proxy.conf.mjs`: `/api` → `http://localhost:3000` |
 | Live | Vercel (website project) | `web/vercel.json` `rewrites`: `/api/:path*` → `https://portfolio-neon-six-56.vercel.app/api/:path*` |
 
 The second rewrite, `/(.*)` → `/index.html`, lets addresses like `/blog` open Angular instead of a Vercel 404. Real files (JS, CSS, the CV) are still served first.

@@ -164,6 +164,28 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
 | `modules/admin-posts` ⏸️ | Create, list and open my blog posts (+ a validation file with the field rules) |
 
+#### Inside one feature: routes, controller, service
+
+| File | One-line definition | Angular equivalent |
+|---|---|---|
+| `*.routes.ts` | **The address book:** which URL + method calls which controller function | `app.routes.ts` |
+| `*.controller.ts` | **The receptionist:** reads the request, checks the input, calls the service, and picks the status code for the answer | a **component**: uses the service's methods and deals with the outside world |
+| `*.service.ts` | **The worker:** the helper functions that read and write the database through Prisma. Knows nothing about HTTP | an **Angular service**: the reusable data logic the component calls |
+
+Just like a component calls a service's methods, **a controller calls the service's helper functions**. The controller never touches the database; the service never touches `req` or `res`.
+
+**The order the files run in** (example: `GET /api/skills`):
+```
+app.ts               pipeline: CORS → JSON body → cookies → hands /api/… on
+  → routes.ts          switchboard: /skills → skills.routes.ts
+  → skills.routes.ts   GET / → controller function listSkillGroups
+  → skills.controller.ts   checks input, calls the service
+  → skills.service.ts      findSkillGroups() asks Prisma for the groups + skills
+  → db/prisma.ts → Postgres   SQL runs, rows come back
+  ← service returns data ← controller sends res.status(200).json(...) ← back to Angular
+```
+Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `admin.routes.ts` → `requireAdmin` → feature routes → controller → service.
+
 ### Helpers, scripts and tests
 | File | What it does and why |
 |---|---|

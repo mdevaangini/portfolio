@@ -210,6 +210,21 @@ Stores everything. **Structure** (tables, columns) changes only through migratio
 | `prisma.config.ts` | Tells the Prisma commands where the database is |
 | `generated/prisma/` | Code made by `prisma generate` from the schema. Not committed |
 
+#### How Prisma gets into the picture
+
+**Prisma is the translator between TypeScript and the database.** Services write `prisma.skillGroup.findMany(...)`; Prisma turns it into SQL, runs it on Postgres, and hands back rows as TypeScript objects.
+
+```
+schema.prisma          I describe the tables once
+  → npx prisma generate   builds a typed client in generated/prisma/ (prisma.skillGroup.findMany …)
+  → db/prisma.ts          creates ONE client from it + the database address (DATABASE_URL)
+  → *.service.ts          import that one client and call it (only services do this)
+```
+
+**When does `db/prisma.ts` run?** **Once, when the API starts.** Nobody calls it directly: `server.ts` imports `app.ts` → routes → controllers → services, and the first service that imports `prisma` makes Node run `db/prisma.ts`. Node then **remembers** the result, so every other service gets the **same** client. It doesn't even connect yet; the connection opens on the first query.
+
+Angular equivalent: a service with `providedIn: 'root'`, created once and shared by everyone who injects it. On Vercel it runs once each time the API function starts up.
+
 ### Tables
 | Table | One row is | Filled by |
 |---|---|---|

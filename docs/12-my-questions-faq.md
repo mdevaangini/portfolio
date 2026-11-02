@@ -294,6 +294,21 @@ It's just a link (`wa.me/<number>?text=…`). It doesn't go through our API, isn
 
 ## Database and Prisma
 
+### How does Prisma get into the picture, and when does `db/prisma.ts` run?
+
+**Prisma is the translator between TypeScript and the database.** Services write `prisma.skillGroup.findMany(...)`; Prisma turns it into SQL, runs it on Postgres, and hands back rows as TypeScript objects.
+
+```
+schema.prisma          I describe the tables once
+  → npx prisma generate   builds a typed client in generated/prisma/ (prisma.skillGroup.findMany …)
+  → db/prisma.ts          creates ONE client from it + the database address (DATABASE_URL)
+  → *.service.ts          import that one client and call it (only services do this)
+```
+
+**When does `db/prisma.ts` run?** **Once, when the API starts.** Nobody calls it directly: `server.ts` imports `app.ts` → routes → controllers → services, and the first service that imports `prisma` makes Node run `db/prisma.ts`. Node then **remembers** the result, so every other service gets the **same** client. It doesn't even connect yet; the connection opens on the first query.
+
+Angular equivalent: a service with `providedIn: 'root'`, created once and shared by everyone who injects it. On Vercel it runs once each time the API function starts up.
+
 ### Why are there two databases?
 The **same code** runs in two places: on my laptop it uses the **local** PostgreSQL (seen in pgAdmin), and live it uses **Neon** (seen in Vercel → Storage → Data Editor). Each has its own rows. The address comes from `DATABASE_URL`: `.env` locally, Vercel's settings live.
 

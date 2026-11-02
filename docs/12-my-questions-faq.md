@@ -296,18 +296,40 @@ It's just a link (`wa.me/<number>?text=…`). It doesn't go through our API, isn
 
 ### How does Prisma get into the picture, and when does `db/prisma.ts` run?
 
-**Prisma is the translator between TypeScript and the database.** Services write `prisma.skillGroup.findMany(...)`; Prisma turns it into SQL, runs it on Postgres, and hands back rows as TypeScript objects.
+**Prisma is the translator between TypeScript and the database.** A service writes `prisma.skillGroup.findMany(...)`; Prisma turns it into SQL, runs it on Postgres, and hands back the rows as normal TypeScript objects. Nobody writes SQL by hand.
 
+**What "client" means:** the object your code uses to talk to the database, named `prisma` in our code. It has one property per table (`prisma.skillGroup`, `prisma.post` …) and methods on each (`findMany`, `create`, `update`, `delete`). Angular has the same idea: `HttpClient` is the object you use to talk to an API; the **Prisma Client** is the object you use to talk to a database.
+
+**Part 1 · The two commands (setup, run by me in the terminal).** Only when I change `schema.prisma`, never while the API is serving requests.
+
+| Command | What it does | Changes |
+|---|---|---|
+| `npx prisma migrate dev --name x` | Reads the schema, writes a SQL file into `migrations/`, runs it on my local database → the **tables** exist | the database |
+| `npx prisma generate` | Reads the schema and writes the **client's code** into `generated/prisma/`, so TypeScript knows `prisma.skillGroup`, its columns, and autocompletes them | the code (TypeScript) |
+
+Order: migrate first (build the tables), then generate (teach TypeScript about them). Live, Vercel runs both automatically on every deploy.
+
+**Part 2 · Start-up: `db/prisma.ts` runs once.** When the API starts, `server.ts` imports `app.ts` → routes → controllers → services. The first service that imports `prisma` makes Node run `db/prisma.ts`, which creates **one instance** of the client with the database address (`DATABASE_URL`). Node remembers it, so **every service shares that same instance**. No new one is created per file or per request. It connects on the first query and then reuses the connection. *(Angular: a service with `providedIn: 'root'`.)*
+
+**Part 3 · Every request: what happens when a service runs.** Real code from the Skills feature:
+```ts
+// skills.controller.ts
+const groups = await findSkillGroups();
+res.status(200).json(groups);
+
+// skills.service.ts
+export function findSkillGroups() {
+  return prisma.skillGroup.findMany({ orderBy: …, select: { …, skills: … } });
+}
 ```
-schema.prisma          I describe the tables once
-  → npx prisma generate   builds a typed client in generated/prisma/ (prisma.skillGroup.findMany …)
-  → db/prisma.ts          creates ONE client from it + the database address (DATABASE_URL)
-  → *.service.ts          import that one client and call it (only services do this)
-```
+1. **Controller** calls the service function `findSkillGroups()`.
+2. **Service** calls a method on the shared `prisma` instance: `prisma.skillGroup.findMany(...)`.
+3. **Prisma** writes the SQL: `SELECT … FROM skill_groups … ORDER BY display_order` (+ one for the skills).
+4. **Postgres** runs it and sends back rows.
+5. **Prisma** turns the rows into objects: `display_order` → `displayOrder`, each group with its `skills` inside.
+6. **Service → controller:** the service `return`s that result; the controller `await`s it and sends it with `res.json`.
 
-**When does `db/prisma.ts` run?** **Once, when the API starts.** Nobody calls it directly: `server.ts` imports `app.ts` → routes → controllers → services, and the first service that imports `prisma` makes Node run `db/prisma.ts`. Node then **remembers** the result, so every other service gets the **same** client. It doesn't even connect yet; the connection opens on the first query.
-
-Angular equivalent: a service with `providedIn: 'root'`, created once and shared by everyone who injects it. On Vercel it runs once each time the API function starts up.
+**What does `return` give back?** Not Prisma itself: the **result** of Prisma's call. Because the database takes a moment, that result is a Promise of the data, so the controller writes `await`. Same as an Angular service doing `return this.http.get(...)`: the component receives the data, not the `HttpClient`.
 
 ### Why are there two databases?
 The **same code** runs in two places: on my laptop it uses the **local** PostgreSQL (seen in pgAdmin), and live it uses **Neon** (seen in Vercel → Storage → Data Editor). Each has its own rows. The address comes from `DATABASE_URL`: `.env` locally, Vercel's settings live.

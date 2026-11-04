@@ -163,6 +163,44 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/auth` 🆕 | Login (check password, give the badge + locker key as two cookies), `/refresh` (key → new badge + new key), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
 
+#### How we build an API endpoint (the recipe)
+
+Every endpoint is built the same way, **from the database outwards**, in 5 steps. Only the method, the input and the Prisma call change.
+
+| Step | File | What you write | Skills example (GET) |
+|---|---|---|---|
+| 0 | `schema.prisma` | The table exists (migrate + generate) | `SkillGroup`, `Skill` |
+| 1 | `*.service.ts` | One function with the **Prisma call** | `findSkillGroups()` → `prisma.skillGroup.findMany(...)` |
+| 2 | `*.controller.ts` | Read the input → check it → call the service → send status + JSON | `listSkillGroups` → `res.json(groups)` |
+| 3 | `*.routes.ts` | Method + path → controller | `skillsRouter.get("/", listSkillGroups)` |
+| 4 | `routes.ts` | Mount the feature once (one line) | `apiRouter.use("/skills", skillsRouter)` |
+| 5 | Postman / test | Call it; then an Angular service uses it | `GET /api/skills` |
+
+**How the URL is assembled:** `app.ts` adds `/api` + `routes.ts` adds `/skills` + `skills.routes.ts` adds `/` → **`GET /api/skills`**.
+
+**What changes per method:**
+
+| Method | Meaning | Input comes from | Prisma call | Success |
+|---|---|---|---|---|
+| **GET** | read | URL: `req.query` (`?limit=10`), `req.params` (`/:id`) | `findMany` / `findUnique` | 200 |
+| **POST** | create | body: `req.body` | `create` | **201** |
+| **PATCH** | change some fields | `req.params.id` + `req.body` (only changed fields) | `update` | 200 |
+| **PUT** | replace the whole thing | `req.params.id` + `req.body` (everything) | `update` | 200 |
+| **DELETE** | remove | `req.params.id` | `delete` | **204** (no body) |
+
+Two real examples side by side:
+```ts
+// READ (GET /api/skills)                         // CREATE (POST /api/contact)
+skillsRouter.get("/", listSkillGroups);           contactRouter.post("/", sendMessage);
+// controller                                     // controller
+const groups = await findSkillGroups();           const { name, email, message } = req.body;   // + checks → 400
+res.json(groups);                                 const saved = await createMessage({ name, email, message });
+                                                  res.status(201).json({ ok: true, id: saved.id });
+// service                                        // service
+prisma.skillGroup.findMany({ ... })               prisma.message.create({ data })
+```
+Admin endpoints are built the same way; they just live under `/api/admin`, so the guard (`requireAdmin`) runs first automatically.
+
 #### Inside one feature: routes, controller, service
 
 | File | One-line definition | Angular equivalent |

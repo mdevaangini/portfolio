@@ -77,6 +77,7 @@ The second rewrite, `/(.*)` → `/index.html`, lets addresses like `/blog` open 
 | portfolio (API) | Root Directory | `api` (preset Express) |
 | portfolio (API) | Neon connection | env-var prefix **`DATABASE`** (the default `STORAGE` would have created `STORAGE_URL`, which the code doesn't read) → `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PG*` |
 | portfolio (API) | `RESEND_API_KEY`, `NOTIFY_EMAIL` | the Resend key (Sensitive) and `devaangini04@gmail.com` — see [04](04-api-documentation.md) |
+| portfolio (API) | `JWT_SECRET` (added 4 Nov 2026) | signs the login tokens (Sensitive, ≥ 32 characters, **different** from the laptop's). **Required:** without it the live API won't start, so it must be set *before* pushing code that needs it. Found in the project's main menu → **Environment Variables** (not Settings → Environments) |
 | portfolio (API) | Firewall custom rule "Contact form rate limit" | Path `/api/contact` + Method `POST` → Rate Limit, fixed window 60 s, 3 requests, key IP → 429/Deny (Hobby: 1 rate-limit rule) |
 | portfolio (API) | `CORS_ORIGIN` | the website's address, e.g. `https://devaangini-portfolio.vercel.app` (https, no trailing `/`) |
 | devaangini (web) | Root Directory | `web` (preset Angular) |

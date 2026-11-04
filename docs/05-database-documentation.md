@@ -4,7 +4,7 @@
 
 ## In plain English
 
-The database is like a spreadsheet file with sheets (**tables**). Each sheet has fixed **column** headers, and each **row** is one record. This project has ten sheets: five for the portfolio (`projects`, `experiences`, `skill_groups`, `skills`, `messages`) and five for the Blog (`users`, `sessions`, `posts`, `tags`, `post_tags`; added in Blog milestone 2, still empty except my admin row).
+The database is like a spreadsheet file with sheets (**tables**). Each sheet has fixed **column** headers, and each **row** is one record. This project has ten sheets: five for the portfolio (`projects`, `experiences`, `skill_groups`, `skills`, `messages`) and five for the Blog (`users`, `refresh_tokens`, `posts`, `tags`, `post_tags`; added in Blog milestone 2, still empty except my admin row).
 
 **Structure vs data:** the column headers are the *structure*, and the rows are the *data*. They're changed in different ways (see "Changing things" below).
 
@@ -16,7 +16,7 @@ The database is like a spreadsheet file with sheets (**tables**). Each sheet has
 | `experiences`, `skill_groups`, `skills` | The seed script (`npm run seed`) | `GET /api/experience`, `GET /api/skills` |
 | `messages` | **Visitors**, through the contact form (`POST /api/contact`) | The owner, in pgAdmin (no page shows them yet) |
 | `users` | **Me**, with `npm run create-admin` (never the website: there is no sign-up page) | The login (Blog milestone 3) |
-| `sessions` | The login, one row per logged-in browser (milestone 3) | Every admin request |
+| `refresh_tokens` | The login: one row per refresh token ("locker key"), 7 days | `/api/auth/refresh`, logout |
 | `posts`, `tags`, `post_tags` | Me, through the admin page (milestones 4–6) | The public blog pages (milestones 5–7) |
 
 ## A. Fundamentals
@@ -137,7 +137,7 @@ Five tables, added by the migration `add_blog`. Two new ideas appear here:
 | Table | Key columns | Notes |
 |---|---|---|
 | `users` | `email` (unique, max 254), `password_hash`, `role` (default `ADMIN`), `failed_logins` (default 0), `locked_until` (nullable), `created_at` | One row: me. `password_hash` is a **scrypt fingerprint** (`scrypt$16384$8$1$<salt>$<hash>`), never the password. The two lock columns stop password guessing (milestone 3) |
-| `sessions` | `token_hash` (unique), `user_id` → `users`, `expires_at`, `created_at` | One row per logged-in browser (the "wristband"). Only a hash of the cookie's token is stored. Deleting a user deletes their sessions (cascade) |
+| `refresh_tokens` (was `sessions` until 4 Nov 2026) | `token_hash` (unique), `user_id` → `users`, `expires_at`, `created_at` | Reception's **book**: one row per refresh token. Only its SHA-256 fingerprint is stored. A refresh deletes the row and writes a new one (rotation); logout deletes it. The access token (JWT) is stored **nowhere**. Deleting a user deletes their rows (cascade) |
 | `posts` | `title` (150), `slug` (unique, 80), `excerpt` (300, default `''`), `content` (Markdown, default `''`), `cover_image_url` (500, nullable), `status` (default `DRAFT`), `published_at` (nullable), `created_at`, `updated_at`, `author_id` → `users` | `updated_at` is set by Prisma on every change (`@updatedAt`). `published_at` is set on the first publish and kept. Index on (`status`, `published_at`) for "published, newest first" |
 | `tags` | `name` (unique, 30), `slug` (unique, 40) | Created on the fly from the post editor |
 | `post_tags` | `post_id` + `tag_id` (together the primary key) | Deleting a post or a tag removes its pairs (cascade) |
@@ -173,11 +173,11 @@ erDiagram
     }
 ```
 
-The Blog relationships (users → sessions and posts, posts ↔ tags through `post_tags`):
+The Blog relationships (users → refresh_tokens and posts, posts ↔ tags through `post_tags`):
 
 ```mermaid
 erDiagram
-    users ||--o{ sessions : "logs in with"
+    users ||--o{ refresh_tokens : "has"
     users ||--o{ posts : "writes"
     posts ||--o{ post_tags : "has"
     tags ||--o{ post_tags : "labels"
@@ -189,7 +189,7 @@ erDiagram
         int failed_logins "default 0"
         timestamp locked_until "nullable"
     }
-    sessions {
+    refresh_tokens {
         int id PK
         text token_hash UK
         int user_id FK
@@ -228,6 +228,7 @@ A **migration** is a saved SQL file for one structure change, like a Git commit 
 | `20261019132505_add_experience_and_skills/` | Creates `experiences`, `skill_groups`, `skills` + the foreign key | `npx prisma migrate dev --name add_experience_and_skills` |
 | `20261022104122_add_messages/` | Creates `messages` | `npx prisma migrate dev --name add_messages` |
 | `20261028131436_add_blog/` | Creates the enums `user_role`, `post_status` and the tables `users`, `sessions`, `posts`, `tags`, `post_tags` (+ unique keys, indexes, foreign keys) | `npx prisma migrate dev --name add_blog` (Blog milestone 2) |
+| `20261104082801_jwt_refresh_tokens/` | Replaces `sessions` with `refresh_tokens` (same columns) for the JWT login | `npx prisma migrate dev --name jwt_refresh_tokens` (Session B) |
 
 ⚠️ **Known discrepancy:** the live `projects` table uses `id … GENERATED ALWAYS AS IDENTITY`, but `0_init` creates `id SERIAL`. Both auto-number. A fresh database built from the migrations (e.g. when deploying) will use `SERIAL`. This doesn't affect the app.
 
@@ -261,7 +262,7 @@ prisma.skillGroup.create({
 
 4. Prints `Seeded: 3 projects, 3 jobs, 6 skill groups, 26 skills`.
 
-It never touches the Blog tables (`users`, `sessions`, `posts`, `tags`, `post_tags`): that's real content, not starting data.
+It never touches the Blog tables (`users`, `refresh_tokens`, `posts`, `tags`, `post_tags`): that's real content, not starting data.
 
 Because it clears first, it is safe to run again and never creates duplicates. Because ids are auto-numbers, re-seeding gives the rows new ids (the site doesn't depend on them).
 
@@ -276,7 +277,7 @@ npm run create-admin
   → asks Email, Password (hidden), Password again
   → hashPassword() (api/src/lib/password.ts) makes a scrypt fingerprint
   → prisma.user.upsert(): create the row, or, if the email exists, reset the
-    password, unlock it and log out every browser (deletes its sessions)
+    password, unlock it and log out every browser (deletes its refresh tokens)
   → prints "✔ Admin created: … (id 1)"
 ```
 

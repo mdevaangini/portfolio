@@ -1,26 +1,52 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: auth.controller.ts
-// HTTP layer for login, "who am I?" and logout. Login hands out the COOKIE
-// (the key card); me reads it; logout takes it back. Never touches the database.
+// HTTP layer for login. Puts the two tokens into two COOKIES (the browser
+// keeps and sends them by itself), and reads them back.
+//   access_token  = the BADGE (JWT, 15 min)       → sent to every /api/... request
+//   refresh_token = the LOCKER KEY (7 days)       → sent ONLY to /api/auth/...
+// Endpoints: login, refresh, me, logout. Never touches the database.
 // Flow: routes → controller (THIS) → service → Prisma → Postgres
 // ──────────────────────────────────────────────────────────────────────
 
 import type { CookieOptions, Request, Response } from "express";
 import { env } from "../../config/env.js";
-import { deleteSession, findSessionUser, login as loginService } from "./auth.service.js";
+import { ACCESS_TOKEN_SECONDS, verifyAccessToken } from "../../lib/jwt.js";
+import { type IssuedTokens, login as loginService, logout as logoutService, refresh as refreshService } from "./auth.service.js";
 
-/** The cookie's name. The browser sends it back by itself on every /api request. */
-export const SESSION_COOKIE = "session";
+export const ACCESS_COOKIE = "access_token";
+export const REFRESH_COOKIE = "refresh_token";
 
 /**
- * How the cookie is stored in the browser. Each option is a safety rule:
+ * The cookie safety rules (same for both cookies):
  *  httpOnly  page scripts (even Angular) can't read it → a hacked script can't steal it
  *  secure    sent over https only (live); off on the laptop, which uses http
  *  sameSite  "strict": only sent when the request comes from OUR site
- *  path      only sent to /api/... addresses, not with every page or image
+ *  path      which addresses the browser sends it to
  */
-export function sessionCookieOptions(expires?: Date): CookieOptions {
-  return { httpOnly: true, secure: env.isProduction, sameSite: "strict", path: "/api", expires };
+function cookieOptions(path: string, maxAgeMs?: number): CookieOptions {
+  return { httpOnly: true, secure: env.isProduction, sameSite: "strict", path, maxAge: maxAgeMs };
+}
+/** The badge goes to every API address. */
+const accessCookie = (maxAgeMs?: number) => cookieOptions("/api", maxAgeMs);
+/** The locker key only goes to reception (/api/auth/refresh, /logout), never to the admin doors. */
+const refreshCookie = (maxAgeMs?: number) => cookieOptions("/api/auth", maxAgeMs);
+
+/** Hands both tokens to the browser as cookies (Set-Cookie headers). */
+function setAuthCookies(res: Response, tokens: IssuedTokens) {
+  res.cookie(ACCESS_COOKIE, tokens.accessToken, accessCookie(ACCESS_TOKEN_SECONDS * 1000));
+  res.cookie(REFRESH_COOKIE, tokens.refreshToken, refreshCookie(tokens.refreshExpiresAt.getTime() - Date.now()));
+}
+
+/** Tells the browser to throw both cookies away. */
+function clearAuthCookies(res: Response) {
+  res.clearCookie(ACCESS_COOKIE, accessCookie());
+  res.clearCookie(REFRESH_COOKIE, refreshCookie());
+}
+
+/** Reads one cookie the browser sent (cookie-parser put it in req.cookies), or "". */
+export function readCookie(req: Request, name: string): string {
+  const value: unknown = req.cookies?.[name];
+  return typeof value === "string" ? value : "";
 }
 
 /** Reads a field from the body: must be text (no trimming: spaces can be part of a password). */
@@ -60,30 +86,38 @@ export async function login(req: Request, res: Response) {
     return;
   }
 
-  // 4. Success: give the browser its wristband (cookie) and say who logged in.
-  //    The token itself is ONLY in the cookie, never in the JSON.
-  res.cookie(SESSION_COOKIE, result.token, sessionCookieOptions(result.expiresAt));
+  // 4. Success: badge + locker key as cookies; the JSON only says who logged in.
+  setAuthCookies(res, result.tokens);
   res.status(200).json({ user: result.user });
 }
 
-/** The key card the browser sent (cookie-parser put it in req.cookies), or "". */
-export function sessionToken(req: Request): string {
-  const value: unknown = req.cookies?.[SESSION_COOKIE];
-  return typeof value === "string" ? value : "";
+/**
+ * POST /api/auth/refresh — "my badge expired, here's my locker key".
+ * Angular will call this automatically when an admin request gets 401 (Milestone 6).
+ *   200 { user } + new badge + new key     401 → log in again
+ */
+export async function refresh(req: Request, res: Response) {
+  const key = readCookie(req, REFRESH_COOKIE);
+  const result = key ? await refreshService(key) : null;
+
+  if (!result) {
+    clearAuthCookies(res); // a key that doesn't work: throw both cookies away
+    res.status(401).json({ error: "Please log in again." });
+    return;
+  }
+  setAuthCookies(res, result.tokens);
+  res.status(200).json({ user: result.user });
 }
 
 /**
- * GET /api/auth/me — "Who am I?"
- * Angular asks this when the admin page opens: am I still logged in?
- *   200 { user }  → yes          401 → no (no card, unknown card, or expired)
+ * GET /api/auth/me — "Who am I?" Checks the BADGE only (no database).
+ *   200 { user } → valid badge      401 → no badge, fake, or expired (then try /refresh)
  */
 export async function me(req: Request, res: Response) {
-  const token = sessionToken(req);
-  const user = token ? await findSessionUser(token) : null;
+  const badge = readCookie(req, ACCESS_COOKIE);
+  const user = badge ? await verifyAccessToken(badge) : null;
 
   if (!user) {
-    // A card that no longer works: tell the browser to throw it away.
-    if (token) res.clearCookie(SESSION_COOKIE, sessionCookieOptions());
     res.status(401).json({ error: "Not logged in." });
     return;
   }
@@ -92,14 +126,13 @@ export async function me(req: Request, res: Response) {
 
 /**
  * POST /api/auth/logout
- * Deletes the session row (the card stops working everywhere) and tells the
- * browser to delete the cookie. Always 204 "done, nothing to send back",
- * even if you weren't logged in: the end result is the same.
+ * Crosses the locker key out of the book and throws both cookies away.
+ * Always 204 "done", even if you weren't logged in: the end result is the same.
  */
 export async function logout(req: Request, res: Response) {
-  const token = sessionToken(req);
-  if (token) await deleteSession(token);
+  const key = readCookie(req, REFRESH_COOKIE);
+  if (key) await logoutService(key);
 
-  res.clearCookie(SESSION_COOKIE, sessionCookieOptions());
+  clearAuthCookies(res);
   res.status(204).end();
 }

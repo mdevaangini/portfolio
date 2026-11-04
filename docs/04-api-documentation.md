@@ -36,7 +36,8 @@ api/
     ├── db/prisma.ts     the one shared Prisma Client
     ├── lib/
     │   ├── password.ts      scrypt fingerprint of a password + check
-    │   └── session-token.ts random login token + its SHA-256 fingerprint
+    │   ├── jwt.ts           signs + verifies the access token (JWT, library jose)
+    │   └── refresh-token.ts random refresh token + its SHA-256 fingerprint
     ├── middleware/
     │   ├── not-found.ts     404 for unknown URLs
     │   ├── error-handler.ts 500 for anything that throws
@@ -114,27 +115,43 @@ The URL is assembled in pieces: `app.ts` mounts `/api`, `routes.ts` mounts `/pro
 - **404**: unknown id (controller) or unknown route / wrong method (`not-found.ts`).
 - **500**: any thrown error. Express 5 forwards rejected `async` handlers to `error-handler.ts`, which **logs the full error in the terminal** and sends only a generic message, so internal details never reach the browser.
 
-### Authentication (Blog milestone 3)
+### Authentication (Blog milestone 3, JWT since 4 Nov 2026)
 
 Reading endpoints and `POST /api/contact` stay **public**. Everything under **`/api/admin`** requires a login.
 
-**How it works, in short** (more pictures in [12 — FAQ](12-my-questions-faq.md)):
-1. **Login** (`POST /api/auth/login`): the password is checked against `users.password_hash` (scrypt). If it's right, a random **token** is made, its **fingerprint** (SHA-256) is stored in `sessions.token_hash`, and the token goes to the browser in the **`Set-Cookie`** response header (cookie `session`). The JSON body never contains the token.
-2. **Every later request:** the **browser** attaches `Cookie: session=<token>` by itself. `cookieParser()` reads it into `req.cookies`. Angular does nothing (it can't even read the cookie).
-3. **Admin requests:** `requireAdmin` fingerprints the cookie, looks it up in `sessions` (not expired), checks `role = ADMIN`. All good → `res.locals.user` + `next()`. Otherwise **401**, and the route's code never runs.
-4. **Logout** (`POST /api/auth/logout`): deletes the `sessions` row and the cookie.
+**Two tokens, two jobs** (the "office building" picture is in [12 — FAQ](12-my-questions-faq.md)):
+
+| | **Access token** = the badge | **Refresh token** = the locker key |
+|---|---|---|
+| What | a **JWT**: signed with `JWT_SECRET`, contains `sub` (user id), `email`, `role`, `exp` | a random string (32 bytes) |
+| Lives | **15 minutes** | **7 days** |
+| Stored on the server | **nowhere** | only its SHA-256 fingerprint, in `refresh_tokens` |
+| Checked by | its **signature** (`lib/jwt.ts`, library `jose`). **No database** | looking up its fingerprint in `refresh_tokens` |
+| Cookie | `access_token`, `path=/api` → sent to **every** `/api` request | `refresh_token`, `path=/api/auth` → sent **only** to `/api/auth/...` |
+| Used for | every admin request, `/me` | only `/refresh` (get a new pair) and `/logout` |
+
+**The flows:**
+1. **Login** (`POST /api/auth/login`): password checked against `users.password_hash` (scrypt) → `issueTokens()` signs a new access token and writes a new refresh-token row → both go to the browser as **`Set-Cookie`** response headers. The JSON body only has `{ user }`; tokens are never in the body.
+2. **Every later request:** the **browser** attaches the cookies itself (each only to its `path`). `cookieParser()` reads them into `req.cookies`.
+3. **Admin requests:** `requireAdmin` verifies the access token (signature, `exp`, issuer/audience, `role = ADMIN`). OK → `res.locals.user` + `next()`; otherwise **401** and the route's code never runs.
+4. **Refresh** (`POST /api/auth/refresh`): when the access token has expired. The refresh token's row is **deleted** and a **new pair** is issued (**rotation**: each refresh token works once). Unknown or expired → 401, and both cookies are cleared → log in again. In Milestone 6, an **Angular interceptor** will call this automatically on a 401 and retry.
+5. **Logout** (`POST /api/auth/logout`): deletes the refresh-token row and both cookies. The access token can't be cancelled; it just expires within 15 minutes.
 
 | Who | Does |
 |---|---|
-| Backend | Checks the password, **gives** the cookie (`res.cookie`), **reads** it (`cookieParser`), **guards** admin routes (`requireAdmin`), deletes it at logout |
-| Browser | **Stores** the cookie and **attaches** it to every `/api` request |
-| Angular | Nothing special: normal `HttpClient` calls (no interceptor, no `withCredentials`, thanks to the same address) |
+| Backend | Checks the password, **issues** both tokens (`res.cookie`), **reads** them (`cookieParser`), **verifies** the JWT in `requireAdmin`, **rotates** refresh tokens, deletes at logout |
+| Browser | **Stores** both cookies and **attaches** each one to the addresses of its `path` |
+| Angular | Today nothing special. Milestone 6: an interceptor that calls `/refresh` on a 401 and retries |
 
-**Cookie settings** (`sessionCookieOptions()` in `auth.controller.ts`): `httpOnly` (page scripts can't read it), `secure` live (https only), `sameSite: "strict"` (only sent on requests started from my own site), `path: "/api"`, expires after **7 days**.
+**Cookie settings** (both cookies, `cookieOptions()` in `auth.controller.ts`): `httpOnly` (page scripts can't read it), `secure` live (https only), `sameSite: "strict"` (only sent on requests started from my own site), `maxAge` 15 min / 7 days.
 
-**Rules** (`AUTH_RULES` in `auth.service.ts`): 5 wrong passwords in a row → locked 15 minutes (429). Unknown email and wrong password get the **same** 401 message, and an unknown email still runs a password check so the timing is the same. Re-running `npm run create-admin` resets the password, unlocks and logs out every browser.
+**JWT details** (`lib/jwt.ts`): algorithm pinned to `HS256` (blocks the "alg: none" trick), `iss = devaangini-portfolio-api`, `aud = devaangini-portfolio-admin`. The payload is **readable by anyone** (only encoded, not encrypted), so it holds no secrets; nobody can *change* it without breaking the signature. `JWT_SECRET` is required (≥ 32 characters) or the API won't start.
+
+**Rules** (`AUTH_RULES` in `auth.service.ts`): 5 wrong passwords in a row → locked 15 minutes (429). Unknown email and wrong password get the **same** 401 message, and an unknown email still runs a password check so the timing is the same. Re-running `npm run create-admin` resets the password, unlocks, and deletes every refresh token (every browser must log in again).
 
 **Origin check** (`check-origin.ts`): POST/PATCH/DELETE to `/api/auth` or `/api/admin` whose `Origin` header is another website → **403**. Allowed: `CORS_ORIGIN` (the live site) and `http://localhost:4200`. No Origin (Postman) is allowed; GET is never blocked. ⚠️ So **`CORS_ORIGIN` must equal the live website address exactly**, or live logins get 403.
+
+*History:* until 4 Nov 2026 the login used one random **session** token checked in a `sessions` table on every request. It was replaced by JWT + refresh tokens (my decision in Session B; reasons in the FAQ).
 
 ## B. Endpoint reference
 
@@ -148,9 +165,10 @@ All responses are JSON. Base URL in development: `http://localhost:3000`.
 | `GET /api/experience` | All jobs, newest first | 200 |
 | `GET /api/skills` | All skill groups, each with its skills | 200 |
 | `POST /api/contact` | Save a contact message | **201** |
-| `POST /api/auth/login` | Log in; sets the `session` cookie | 200 |
-| `GET /api/auth/me` | Who am I? (is my cookie valid?) | 200 / 401 |
-| `POST /api/auth/logout` | Delete my session and cookie | **204** |
+| `POST /api/auth/login` | Log in; sets the `access_token` + `refresh_token` cookies | 200 |
+| `POST /api/auth/refresh` | Refresh token → new access + refresh token (rotation) | 200 / 401 |
+| `GET /api/auth/me` | Who am I? (is my access token valid?) | 200 / 401 |
+| `POST /api/auth/logout` | Delete my refresh token and both cookies | **204** |
 | `GET /api/admin/check` | Test endpoint behind the guard | 200 only when logged in as admin |
 
 ### `GET /api/projects` — list projects
@@ -299,24 +317,35 @@ Body (JSON): `{ "email": "…", "password": "…" }`. The email is trimmed and l
 
 | Status | When | Body |
 |---|---|---|
-| **200** | Right email + password | `{ "user": { "id": 1, "email": "…" } }` + header **`Set-Cookie: session=<token>; Path=/api; HttpOnly; SameSite=Strict; …`** |
+| **200** | Right email + password | `{ "user": { "id": 1, "email": "…", "role": "ADMIN" } }` + **two headers**: `Set-Cookie: access_token=<JWT>; Path=/api; HttpOnly; SameSite=Strict; Max-Age=900` and `Set-Cookie: refresh_token=<random>; Path=/api/auth; HttpOnly; SameSite=Strict; Max-Age=604800` |
 | 400 | Email or password missing, not text, or too long (254 / 200) | `{ "error": "Please enter your email and password." }` |
 | 401 | Wrong email **or** wrong password (same message on purpose) | `{ "error": "Wrong email or password." }` |
 | 429 | 5 wrong passwords in a row → locked 15 min | `{ "error": "Too many failed attempts. Please try again in 15 minutes." }` + `Retry-After` |
 | 403 | Sent from another website (`Origin` check) | `{ "error": "This request must come from the website." }` |
 
-### `GET /api/auth/me` — who am I?
+### `POST /api/auth/refresh` — new tokens with the refresh token
+
+No body; the browser sends the `refresh_token` cookie.
 
 | Status | When | Body |
 |---|---|---|
-| 200 | The `session` cookie matches a session that hasn't expired | `{ "user": { "id": 1, "email": "…", "role": "ADMIN" } }` |
-| 401 | No cookie, unknown cookie or expired (an unknown cookie is also cleared) | `{ "error": "Not logged in." }` |
+| 200 | The refresh token's fingerprint is in `refresh_tokens` and hasn't expired → that row is deleted, a **new pair** is issued | `{ "user": { … } }` + two new `Set-Cookie` headers |
+| 401 | No cookie, unknown (already used, logged out) or expired | `{ "error": "Please log in again." }` + both cookies cleared |
+
+### `GET /api/auth/me` — who am I?
+
+Checks **only the access token** (no database).
+
+| Status | When | Body |
+|---|---|---|
+| 200 | The `access_token` cookie is a valid, unexpired JWT | `{ "user": { "id": 1, "email": "…", "role": "ADMIN" } }` |
+| 401 | No cookie, fake or expired (then call `/refresh`) | `{ "error": "Not logged in." }` |
 
 Angular will call this when the admin page opens (milestone 6).
 
 ### `POST /api/auth/logout`
 
-Always **204** (no body): deletes the session row if there is one and tells the browser to delete the cookie (`Set-Cookie: session=; Expires=1970…`).
+Always **204** (no body): deletes the refresh-token row if there is one and tells the browser to delete **both** cookies (`Set-Cookie: access_token=; Expires=1970…`, same for `refresh_token`).
 
 ### `GET /api/admin/check` — test the guard
 

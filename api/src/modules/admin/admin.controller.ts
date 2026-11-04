@@ -6,7 +6,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import type { Request, Response } from "express";
-import type { SessionUser } from "../auth/auth.service.js";
+import type { AccessTokenUser } from "../../lib/jwt.js";
 
 /**
  * GET /api/admin/check
@@ -14,6 +14,6 @@ import type { SessionUser } from "../auth/auth.service.js";
  * you passed requireAdmin.
  */
 export function check(_req: Request, res: Response) {
-  const user = res.locals.user as SessionUser; // left by requireAdmin
+  const user = res.locals.user as AccessTokenUser; // left by requireAdmin
   res.status(200).json({ ok: true, message: `You are the admin: ${user.email}` });
 }

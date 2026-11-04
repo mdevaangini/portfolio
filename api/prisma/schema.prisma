@@ -86,7 +86,7 @@ model Message {
 }
 
 // ══ BLOG (milestone 2) ══════════════════════════════════════════════════
-// Five tables: users + sessions (login), posts (the writing), tags + post_tags
+// Five tables: users + refresh_tokens (login), posts (the writing), tags + post_tags
 // (labels). Column limits match the API checks, like Message above.
 
 // Enums = a column that may only hold one of a fixed list of values.
@@ -117,14 +117,17 @@ model User {
   failedLogins Int       @default(0) @map("failed_logins")
   lockedUntil  DateTime? @map("locked_until")
   createdAt    DateTime  @default(now()) @map("created_at")
-  sessions     Session[]
+  refreshTokens RefreshToken[]
   posts        Post[]
 
   @@map("users")
 }
 
-// One row per logged-in browser (the "wristband"). Logging out deletes the row.
-model Session {
+// Reception's BOOK: one row per refresh token (the 7-day "locker key").
+// (Until Blog step B2 this table was "sessions", for the old login.)
+// Logout or using the key to refresh deletes the row; a key not in the book
+// doesn't work. The short-lived access token (JWT) is NOT stored anywhere.
+model RefreshToken {
   id        Int      @id @default(autoincrement())
   /// Only a hash of the cookie's token: a stolen database can't be used to log in.
   tokenHash String   @unique @map("token_hash")
@@ -134,7 +137,7 @@ model Session {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
-  @@map("sessions")
+  @@map("refresh_tokens")
 }
 
 // One blog post. Drafts may be half-empty; the API checks more before publishing.

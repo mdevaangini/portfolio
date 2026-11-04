@@ -150,7 +150,19 @@ Why two things: the badge is **fast** (everything is printed on it) but can't be
 
 **My answer to "why can the guard decide alone, but reception needs its book?" (checked ✓):** the guard can decide because everything it needs is written on the badge itself. Reception needs its book to check whether that locker key is still on its list; only then does it give a new badge (with a new stamp) and a new key.
 
-*(The login flow summary below describes the first version, with sessions. It will be updated when JWT is built.)*
+**My B2 flow, checked ✓ (4 Nov 2026):**
+1. Login (`POST /api/auth/login`) with email + password → the response sets **two cookies** in its **headers** (`Set-Cookie: access_token=…` and `Set-Cookie: refresh_token=…`). The JSON body only says `{ user }`; the tokens are never in the body.
+2. **Which cookie goes where** (decided by each cookie's `path`):
+
+   | Cookie | path | The browser attaches it to |
+   |---|---|---|
+   | `access_token` (badge) | `/api` | **every** `/api/...` call: admin doors, `/api/auth/me`, and also public ones like `/api/skills` (harmless: they ignore it) |
+   | `refresh_token` (locker key) | `/api/auth` | **only** `/api/auth/...`: refresh, logout (and login, me, which ignore it) |
+
+   The powerful 7-day key travels as little as possible; the badge goes everywhere, but it dies in 15 min.
+3. **Who calls `/api/auth/refresh`?** Right now nobody automatically: I call it by hand in Postman. In **Milestone 6** an **Angular interceptor** will do it: when an admin request gets **401** → call `/refresh` once → retry the request; if refresh also fails → go to the login page.
+
+*(The login flow summary below describes the **first version, with sessions** (until 4 Nov 2026). It's kept because the comparison is useful in interviews. Today: see "My B2 flow" above.)*
 
 ### My own summary of the login flow (checked ✓)
 1. I enter email + password on the login page; Angular sends them to the **login API** (`POST /api/auth/login`).

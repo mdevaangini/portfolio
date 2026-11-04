@@ -62,8 +62,9 @@ async function main() {
 
   if (existing) {
     // A new password should log out every browser that used the old one.
-    const { count } = await prisma.session.deleteMany({ where: { userId: user.id } });
-    console.log(`\n✔ Password reset for ${user.email} (id ${user.id}); ${count} session(s) logged out.`);
+    // Cross out all my locker keys: every browser must log in again with the new password.
+    const { count } = await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+    console.log(`\n✔ Password reset for ${user.email} (id ${user.id}); ${count} login(s) ended.`);
   } else {
     console.log(`\n✔ Admin created: ${user.email} (id ${user.id}).`);
   }

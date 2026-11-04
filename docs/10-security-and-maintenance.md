@@ -26,10 +26,11 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Generic 500 message; full error only in the server log | Leaking SQL, file paths or stack traces to visitors | `middleware/error-handler.ts` | ✅ |
 | CORS restricted to one origin | Other websites reading the API from a visitor's browser | `app.ts` | ✅ |
 | Public write endpoint can only **add** messages; every other change lives under `/api/admin` | Visitors changing or deleting content | `POST /api/contact`; `/api/admin` | ✅ |
-| **Admin guard** `requireAdmin` in front of every `/api/admin` route (valid session + `ADMIN`, else 401; the route code never runs) | Anyone calling admin endpoints directly (Postman, scripts), not just hidden buttons | `middleware/require-admin.ts`, `admin.routes.ts` | ✅ Blog M3 |
+| **Admin guard** `requireAdmin` in front of every `/api/admin` route (valid access token (JWT) + `ADMIN`, else 401; the route code never runs) | Anyone calling admin endpoints directly (Postman, scripts), not just hidden buttons | `middleware/require-admin.ts`, `admin.routes.ts` | ✅ Blog M3 |
 | Passwords stored only as **scrypt** fingerprints (random salt); compared with `timingSafeEqual` | A database leak revealing passwords | `lib/password.ts` | ✅ |
-| Session tokens: 32 random bytes; only the **SHA-256 fingerprint** stored; 7-day expiry | A database leak giving working logins | `lib/session-token.ts`, `sessions` table | ✅ |
-| Login cookie `httpOnly`, `secure` (live), `sameSite=strict`, `path=/api` | Scripts stealing it; sniffing; other sites using my login (CSRF) | `auth.controller.ts` | ✅ |
+| **Access token = JWT** (15 min), signed `HS256` with `JWT_SECRET` (≥ 32 chars, required); algorithm, issuer and audience pinned; no secrets in the payload | Forged or edited tokens; a stolen token being useful for long | `lib/jwt.ts` (library `jose`) | ✅ Session B |
+| **Refresh token**: 32 random bytes, only its **SHA-256 fingerprint** stored, 7 days, **rotated** on every use, cookie path limited to `/api/auth` | A database leak giving working logins; a stolen refresh token being reused | `lib/refresh-token.ts`, `refresh_tokens` table | ✅ Session B |
+| Both login cookies `httpOnly`, `secure` (live), `sameSite=strict` (`access_token` path `/api`, `refresh_token` path `/api/auth`) | Scripts stealing them; sniffing; other sites using my login (CSRF) | `auth.controller.ts` | ✅ |
 | **Origin check** on POST/PATCH/DELETE to `/auth` and `/admin` → 403 from other websites | CSRF (second lock next to `sameSite`) | `middleware/check-origin.ts` | ✅ |
 | Lockout: 5 wrong passwords → 15 minutes (429); same 401 message for unknown email and wrong password; equal timing | Password guessing; finding out which emails have an account | `auth.service.ts` | ✅ |
 | No sign-up page: users only via `npm run create-admin` | Strangers creating accounts | `scripts/create-admin.ts` | ✅ |
@@ -46,6 +47,7 @@ Each item is marked as a ✅ **verified protection**, a ⚠️ **risk or gap**, 
 | Rate limiting, layer 2: **code** — max 3 per email and 20 in total per hour → 429 | Floods that change email or come from many IPs; protects the inbox and Resend's 100/day | `contact.controller.ts` | ✅ |
 | Messages are stored with the sender's email | Personal data the owner is responsible for | ⚠️ — keep the DB private; delete old messages |
 | No security headers (e.g. via Helmet) | Missing hardening headers | ⚠️ |
+| An access token can't be cancelled: after logout (or if stolen) it still works until it expires | At most 15 minutes; that's why it's short. Refresh tokens *can* be cancelled (deleted) | ⚠️ accepted (standard JWT trade-off) |
 | Lockout can be triggered by someone else (5 wrong guesses lock **me** out for 15 min) | Annoying, not dangerous; wait, or re-run `create-admin` to unlock | ⚠️ accepted |
 | `CORS_ORIGIN` doubles as the allowed Origin for logins | If the live website address changes and `CORS_ORIGIN` isn't updated, live logins get 403 | ⚠️ check at Blog go-live |
 | Backups | Neon keeps restore history on its free plan (check current limits); the seed can rebuild all content except `messages` | ⚠️ |

@@ -9,6 +9,10 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
+import { signAccessToken } from "../src/lib/jwt.js";
+
+/** The admin, as printed on a test badge. */
+const me = { id: 1, email: "me@example.com", role: "ADMIN" as const };
 
 describe("Unknown routes", () => {
   it("answers 404 with a JSON message", async () => {
@@ -73,29 +77,69 @@ describe("POST /api/auth/login: checks before the database", () => {
   });
 });
 
-describe("GET /api/auth/me and POST /api/auth/logout without a key card", () => {
-  it("me: no cookie → 401 'Not logged in.'", async () => {
+describe("me, refresh and logout without cookies", () => {
+  it("me: no badge → 401 'Not logged in.'", async () => {
     const res = await request(app).get("/api/auth/me");
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe("Not logged in.");
   });
 
-  it("logout: no cookie → 204, and the browser is told to delete the cookie", async () => {
+  it("me: a valid badge → 200 with the user printed on it (no database needed)", async () => {
+    const badge = await signAccessToken(me);
+    const res = await request(app).get("/api/auth/me").set("Cookie", `access_token=${badge}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toEqual(me);
+  });
+
+  it("refresh: no locker key → 401, and both cookies are cleared", async () => {
+    const res = await request(app).post("/api/auth/refresh");
+
+    expect(res.status).toBe(401);
+    const cookies = String(res.headers["set-cookie"]);
+    expect(cookies).toContain("access_token=;");
+    expect(cookies).toContain("refresh_token=;");
+  });
+
+  it("logout: no cookies → 204, and the browser is told to delete both cookies", async () => {
     const res = await request(app).post("/api/auth/logout");
 
     expect(res.status).toBe(204);
-    expect(String(res.headers["set-cookie"])).toContain("session=;");
+    const cookies = String(res.headers["set-cookie"]);
+    expect(cookies).toContain("access_token=;");
+    expect(cookies).toContain("refresh_token=;");
   });
 });
 
-describe("The admin door (requireAdmin guard)", () => {
-  it("no key card → 401, and the admin code never runs", async () => {
+describe("The admin door (requireAdmin guard checks the badge)", () => {
+  it("no badge → 401, and the admin code never runs", async () => {
     const res = await request(app).get("/api/admin/check");
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe("Not logged in.");
     expect(res.body.ok).toBeUndefined(); // the admin answer was never sent
+  });
+
+  it("a valid badge → 200 'You are the admin'", async () => {
+    const badge = await signAccessToken(me);
+    const res = await request(app).get("/api/admin/check").set("Cookie", `access_token=${badge}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("You are the admin: me@example.com");
+  });
+
+  it("an expired badge → 401", async () => {
+    const badge = await signAccessToken(me, -10);
+    const res = await request(app).get("/api/admin/check").set("Cookie", `access_token=${badge}`);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("a made-up badge → 401", async () => {
+    const res = await request(app).get("/api/admin/check").set("Cookie", "access_token=made.up.badge");
+
+    expect(res.status).toBe(401);
   });
 });
 

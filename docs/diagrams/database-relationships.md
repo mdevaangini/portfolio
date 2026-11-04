@@ -55,7 +55,7 @@ Portfolio: **one skill group has many skills**. `skills.group_id` points at `ski
 
 ```mermaid
 erDiagram
-    users ||--o{ sessions : "logs in with"
+    users ||--o{ refresh_tokens : "has"
     users ||--o{ posts : "writes"
     posts ||--o{ post_tags : "has"
     tags ||--o{ post_tags : "labels"
@@ -67,7 +67,7 @@ erDiagram
         int failed_logins "default 0"
         timestamp locked_until "nullable"
     }
-    sessions {
+    refresh_tokens {
         int id PK
         text token_hash UK
         int user_id FK
@@ -95,9 +95,9 @@ erDiagram
     }
 ```
 
-- One user (me) has many **sessions** (logged-in browsers) and writes many **posts**.
+- One user (me) has many **refresh tokens** (one per logged-in browser; was `sessions` until 4 Nov 2026) and writes many **posts**.
 - **Many-to-many:** posts ↔ tags, through the join table `post_tags` (one row per pair; the pair is the key).
-- Deleting a user deletes their sessions; deleting a post or tag deletes its `post_tags` rows (cascade).
+- Deleting a user deletes their refresh tokens; deleting a post or tag deletes its `post_tags` rows (cascade).
 
 ## 📝 Possible next (postponed)
 

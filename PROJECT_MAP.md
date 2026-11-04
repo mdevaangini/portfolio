@@ -139,7 +139,7 @@ In one file, Vercel and the tests would also try to open port 3000, which they c
 | `middleware/not-found.ts` | No route matched → 404 JSON |
 | `middleware/error-handler.ts` | Something crashed → logs it, sends a safe 500 message (no internal details leak) |
 | `middleware/check-origin.ts` 🆕 | Changes to `/auth` and `/admin` must come from my website, else 403 |
-| `middleware/require-admin.ts` 🆕 | The guard at the admin door: valid login cookie + admin role, else 401. Admin code never runs without it |
+| `middleware/require-admin.ts` 🆕 | The guard at the admin door: checks the badge (access token, a JWT): real stamp, not expired, admin role. Else 401. No database. Admin code never runs without it |
 
 #### Middleware = the server's interceptors and guards
 
@@ -160,7 +160,7 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/projects` | Read projects: paging, title search, category filter, one by id |
 | `modules/experience` · `skills` | Read jobs (newest first) and skill groups with their skills |
 | `modules/contact` | Save a message: validate → rate limit → save → email me (`contact.email.ts`, via Resend) |
-| `modules/auth` 🆕 | Login (check password, create session, give cookie), `/me` (who am I?), logout |
+| `modules/auth` 🆕 | Login (check password, give the badge + locker key as two cookies), `/refresh` (key → new badge + new key), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
 
 #### Inside one feature: routes, controller, service
@@ -189,7 +189,8 @@ Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `
 | File | What it does and why |
 |---|---|
 | `lib/password.ts` 🆕 | Turns a password into a fingerprint (scrypt) and checks one. Passwords are never stored |
-| `lib/session-token.ts` 🆕 | Makes the random login token (cookie) and its fingerprint (stored in `sessions`) |
+| `lib/jwt.ts` 🆕 | The badge machine: signs the access token (JWT, 15 min, stamped with `JWT_SECRET`) and checks it. Library `jose` |
+| `lib/refresh-token.ts` 🆕 | Makes the locker key (refresh token, a random string) and its fingerprint (stored in `refresh_tokens`) |
 | `scripts/create-admin.ts` 🆕 💻 | Creates or resets my admin login. The only way to make a user; there's no sign-up page |
 | `tests/` · `vitest.config.ts` | API tests with Vitest + Supertest (fake requests, no real database). `npm test` in `api/` |
 
@@ -253,7 +254,7 @@ export function findSkillGroups() {
 | `skill_groups` → `skills` | a group, and its skills (one-to-many) | seed |
 | `messages` | a contact-form message | visitors |
 | `users` 🆕 | someone who can log in (me) | create-admin script |
-| `sessions` 🆕 | one logged-in browser (token fingerprint) | login |
+| `refresh_tokens` 🆕 | one locker key (refresh-token fingerprint): reception's book | login, refresh |
 | `posts` 🆕 | a blog post (DRAFT or PUBLISHED) | admin (milestone 4) |
 | `tags` · `post_tags` 🆕 | a label, and "this post has this tag" (many-to-many) | admin (milestone 4) |
 
@@ -288,11 +289,12 @@ export function findSkillGroups() {
 ### Logging in, then an admin request 🆕
 1. **Browser / Postman:** sends email + password to `POST /api/auth/login`.
 2. **API · auth:** fingerprints the password and compares it with `users`. Wrong → 401. Checked **once**.
-3. **API → `sessions`:** right → makes a random token and saves only its fingerprint in `sessions`.
-4. **API → browser:** sends the token in the `Set-Cookie` **response** header. The browser stores it.
-5. **Browser, every later request:** attaches `Cookie: session=…` by itself. Angular does nothing.
-6. **API · `require-admin`:** fingerprints the cookie and looks in `sessions`: found + admin → allowed. Otherwise 401.
-7. **Logout:** deletes the session row and the cookie.
+3. **API · auth:** right → prints a **badge** (access token, JWT, 15 min) and a **locker key** (refresh token, 7 days); only the key's fingerprint goes into `refresh_tokens`.
+4. **API → browser:** both go in `Set-Cookie` **response** headers (not in the body). The browser stores them.
+5. **Browser, every later request:** attaches the badge to every `/api` call, the key only to `/api/auth/…`. Angular does nothing.
+6. **API · `require-admin`:** checks the badge's stamp, expiry and role. Valid → allowed. Otherwise 401. **No database.**
+7. **Badge expired → `/refresh`:** the key is found in the book, crossed out, and a new key + new badge are issued. Later, Angular's interceptor does this automatically.
+8. **Logout:** crosses the key out of the book and deletes both cookies.
 
 ---
 

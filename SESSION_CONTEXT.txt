@@ -549,7 +549,31 @@ Exact stopping point (2026-10-25):
   Backup of 4a in Claude's scratchpad backup-4a/ (may be lost with the
   session; rewrite in M4 if needed). Project map + PROJECT_MAP.md updated.
   npm test now expects 22 (17 + 5 jwt). User is adding JWT_SECRET on Vercel.
-  NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
+  B2 WRITTEN 2026-11-04 (B2+B3 code merged: guard can't stay on the old
+  way) [schema validated; tsc only fails until prisma generate; app tests
+  not runnable in Claude's sandbox; UNCONFIRMED]:
+  schema Session→RefreshToken (@@map refresh_tokens, User.refreshTokens);
+  lib/session-token.ts deleted → lib/refresh-token.ts (createRefreshToken,
+  hashRefreshToken); auth.service (AUTH_RULES.refreshDays 7, issueTokens,
+  login → {user, tokens}, refresh() with rotation via deleteMany count,
+  logout()); auth.controller (cookies access_token path /api maxAge 15m,
+  refresh_token path /api/auth maxAge 7d; readCookie; login, refresh, me
+  (JWT only), logout clears both); routes + POST /refresh; requireAdmin
+  verifies JWT (no DB); admin.controller uses AccessTokenUser;
+  create-admin deletes refreshTokens. Tests: app.test.ts updated (+5) →
+  npm test expects 27.
+  User must: npx prisma migrate dev --name jwt_refresh_tokens (drops old
+  sessions table: confirm y), npx prisma generate, npm test, Postman.
+  B2 CONFIRMED by user 2026-11-04 (migration 20261104082801_jwt_refresh_tokens
+  run, Postman login → check → refresh → logout OK). B1 was committed by her.
+  B3 DONE: docs 04 (Authentication rewritten for JWT, refresh endpoint),
+  05 + diagram (refresh_tokens), 06 Flow 8 (new sequence), 07/09
+  (JWT_SECRET), 08 (27 tests), 10 (JWT + refresh rows, accepted risk),
+  11 glossary (JWT, access/refresh token, rotation), README, FAQ; project
+  map (HTML + PROJECT_MAP.md) updated. SESSION B COMPLETE.
+  NEXT: commit B2+B3 (needs JWT_SECRET on Vercel — user added it?), then
+  MILESTONE 4 with the new process (problem → options → she decides).
+  (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
   /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,

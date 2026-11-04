@@ -327,33 +327,40 @@ sequenceDiagram
     B->>API: POST /api/auth/login {email, password}
     API->>DB: users WHERE email
     API->>API: scrypt(password) = password_hash?
-    API->>DB: INSERT sessions (token_hash = SHA-256 of a new random token)
-    API-->>B: 200 {user} + Set-Cookie: session=token
-    Note over B: browser stores the cookie
+    API->>API: sign access token (JWT, 15 min, JWT_SECRET)
+    API->>DB: INSERT refresh_tokens (fingerprint of a new random refresh token, 7 days)
+    API-->>B: 200 {user} + Set-Cookie access_token + Set-Cookie refresh_token
+    Note over B: browser stores both cookies
 
-    Note over B,DB: 2. Every admin request (cookie checked EVERY time)
-    B->>API: GET /api/admin/check + Cookie: session=token (added by the browser)
-    API->>API: checkOrigin, then requireAdmin: SHA-256(token)
-    API->>DB: sessions WHERE token_hash, not expired, user is ADMIN
-    alt found
+    Note over B,DB: 2. Every admin request (NO database)
+    B->>API: GET /api/admin/check + Cookie access_token (added by the browser)
+    API->>API: checkOrigin, then requireAdmin verifies the JWT (signature, expiry, ADMIN)
+    alt valid
         API-->>B: 200 "You are the admin"
-    else not found / expired
+    else missing / fake / expired
         API-->>B: 401 "Not logged in." (admin code never runs)
     end
 
-    Note over B,DB: 3. Logout
-    B->>API: POST /api/auth/logout + Cookie
-    API->>DB: DELETE sessions WHERE token_hash
-    API-->>B: 204 + Set-Cookie that deletes the cookie
+    Note over B,DB: 3. Access token expired → refresh (Angular interceptor, Milestone 6)
+    B->>API: POST /api/auth/refresh + Cookie refresh_token
+    API->>DB: find + DELETE refresh_tokens WHERE token_hash (rotation)
+    API->>DB: INSERT a new refresh token
+    API-->>B: 200 + new access_token + new refresh_token
+
+    Note over B,DB: 4. Logout
+    B->>API: POST /api/auth/logout + Cookie refresh_token
+    API->>DB: DELETE refresh_tokens WHERE token_hash
+    API-->>B: 204 + both cookies deleted
 ```
 
 | Step | Status | What I see in Postman |
 |---|---|---|
-| Login right | 200 | Response **Headers** → `Set-Cookie: session=…` |
+| Login right | 200 | Response **Headers** → two `Set-Cookie` lines: `access_token` and `refresh_token` |
 | Login wrong | 401 | "Wrong email or password." |
 | 5× wrong | 429 | "Too many failed attempts…" |
 | `/api/admin/check` logged in | 200 | "You are the admin: …" |
-| `/api/admin/check` logged out | 401 | "Not logged in." |
+| `/api/auth/refresh` | 200 | new cookies; in pgAdmin `refresh_tokens` has a **different** row |
+| logout, then `/api/admin/check` | 401 | "Not logged in." (once the access token has expired, or if Postman dropped the cookie) |
 
 ---
 
@@ -371,4 +378,4 @@ sequenceDiagram
 | Chat on WhatsApp | `Contact.whatsappLink()` builds a `wa.me` link | — | — |
 | Too many messages | `Contact` shows the "several messages" box on 429 | Vercel Firewall (per IP) + `RATE_LIMIT` in the controller | `messages` (counted, not written) |
 | Project by id | not used | `GET /api/projects/:id` | `projects` (read) |
-| Admin login / guard | not yet (milestone 6) | `/api/auth/login`, `/me`, `/logout`; `requireAdmin` on `/api/admin` | `users`, `sessions` |
+| Admin login / guard | not yet (milestone 6) | `/api/auth/login`, `/refresh`, `/me`, `/logout`; `requireAdmin` verifies the JWT on `/api/admin` | `users`, `refresh_tokens` |

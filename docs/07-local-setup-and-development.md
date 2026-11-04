@@ -27,11 +27,14 @@ npm install
 cp .env.example .env        # then edit .env and put in your real password
 ```
 
-`.env` needs one required line:
+`.env` needs two required lines:
 
 ```
 DATABASE_URL=postgres://postgres:YOUR_PASSWORD@localhost:5432/portfolio
+JWT_SECRET=<a long random secret, at least 32 characters>
 ```
+
+Make the `JWT_SECRET` with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. It signs the login tokens; without it the API refuses to start.
 
 Optional lines (defaults shown): `PORT=3000`, `CORS_ORIGIN=http://localhost:4200`.
 

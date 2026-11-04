@@ -1,15 +1,17 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: require-admin.ts
-// The GUARD at the admin door. Runs before EVERY /api/admin/... route:
-// no valid key card (cookie), or not an admin → 401, and the admin code
-// never runs. This is what really protects the posts: hiding buttons in
-// Angular doesn't stop someone calling the API with Postman; this does.
+// The GUARD at the admin door. Runs before EVERY /api/admin/... route.
+// It checks the BADGE (access token, a JWT) that the browser attached:
+// real stamp? not expired? role ADMIN? If not → 401, and the admin code
+// never runs. No database: everything needed is printed on the badge.
+// This is what really protects the posts: hiding buttons in Angular doesn't
+// stop someone calling the API with Postman; this does.
 // Flow: request → requireAdmin (THIS) → admin routes → controller → service
 // ──────────────────────────────────────────────────────────────────────
 
 import type { NextFunction, Request, Response } from "express";
-import { sessionToken } from "../modules/auth/auth.controller.js";
-import { findSessionUser } from "../modules/auth/auth.service.js";
+import { verifyAccessToken } from "../lib/jwt.js";
+import { ACCESS_COOKIE, readCookie } from "../modules/auth/auth.controller.js";
 
 /**
  * Express "middleware": a function that runs BEFORE the route's own code.
@@ -17,15 +19,16 @@ import { findSessionUser } from "../modules/auth/auth.service.js";
  * Like an Angular route guard returning true/false, but inside the API.
  */
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  // 1. The key card the browser attached (read by cookie-parser).
-  const token = sessionToken(req);
+  // 1. The badge the browser attached (read by cookie-parser).
+  const badge = readCookie(req, ACCESS_COOKIE);
 
-  // 2. Logged in? Its fingerprint must be in `sessions` and not expired.
-  const user = token ? await findSessionUser(token) : null;
+  // 2. Real stamp + not expired? (lib/jwt.ts checks it with JWT_SECRET)
+  const user = badge ? await verifyAccessToken(badge) : null;
 
   // 3. Admin? Today every user is an admin; the check keeps it safe if
   //    other kinds of users are ever added.
   if (!user || user.role !== "ADMIN") {
+    // Angular will react to this 401 by trying POST /api/auth/refresh once (Milestone 6).
     res.status(401).json({ error: "Not logged in." });
     return; // stop here: next() is NOT called, so the admin code never runs
   }

@@ -5,11 +5,12 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import { Router } from "express";
-import { login, logout, me } from "./auth.controller.js";
+import { login, logout, me, refresh } from "./auth.controller.js";
 
 /** URL map for the auth feature, mounted at "/api/auth". */
 export const authRouter = Router();
 
-authRouter.post("/login", login); // POST /api/auth/login  → sets the session cookie
+authRouter.post("/login", login); // POST /api/auth/login  → sets the badge + locker-key cookies
+authRouter.post("/refresh", refresh); // POST /api/auth/refresh → locker key → new badge + new key
 authRouter.get("/me", me); //         GET  /api/auth/me     → who am I? (200 or 401)
-authRouter.post("/logout", logout); // POST /api/auth/logout → deletes session + cookie (204)
+authRouter.post("/logout", logout); // POST /api/auth/logout → crosses the key out + deletes both cookies (204)

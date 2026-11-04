@@ -17,6 +17,10 @@ Each term has a plain definition, an everyday comparison where it helps, and whe
 | **Route parameter** | A value inside the path | A room number in an address | the `3` in `/api/projects/3` |
 | **Status code** | A number saying how the request went | A stamp: "done", "wrong form", "not found" | 200 OK, **201 Created**, 400, 404, 500 |
 | **JSON** | A text format for structured data | A neatly filled-in form | `{ "data": [...], "total": 3 }` |
+| **JWT** (JSON Web Token) | A signed token that *contains* data (user id, role, expiry). Anyone can read it; only the server can make a valid one | A visitor badge with your details printed on it and the company's secret stamp | our **access token**, cookie `access_token` |
+| **Access token** | The short-lived token sent with every request to prove who you are | The day badge (15 min) | a JWT, checked by `requireAdmin` |
+| **Refresh token** | A long-lived token used only to get a new access token | The locker key kept on reception's list (7 days) | cookie `refresh_token`, table `refresh_tokens` |
+| **Token rotation** | Each refresh token works once; using it gives a new one | Handing in the old key for a new key | `refresh()` in `auth.service.ts` |
 | **Component** | A self-contained piece of UI (template + logic + styles) | A Lego brick | `Projects`, `Hero`, `Header` |
 | **Service (Angular)** | A class that holds shared logic, often API calls | A shared assistant | `ProjectsService`, `SkillsService`, `ContactService` |
 | **Reactive Form** | Angular's way of describing a form and its rules in TypeScript | A form template with rules printed on it | The contact form |

@@ -121,6 +121,37 @@ Request     → port 3000 → app.ts pipeline → routes.ts → controller → �
 None of them. It's an **npm package that runs tests in the terminal** (`npm test`). The web project already used it: Angular calls Vitest behind the scenes, which is how the "3 passed" appeared. The API has no Angular in between, so it calls Vitest directly. **Supertest** is a helper that acts like Postman inside a test: it sends a request into the Express app and checks the answer.
 → [08 — Testing](08-testing-and-debugging.md)
 
+### Sessions or JWT? My decision (Session B, 3 Nov 2026)
+Both are real industry practice. **Sessions:** a random ticket, looked up in a table on every request; logout is instant. **JWT:** a signed token that *contains* who I am (`userId`, `role`, expiry); the server checks the signature, with no database lookup; harder to cancel before it expires.
+
+**I chose JWT** because I want the practice companies follow in real-world SPAs, and I've never implemented it myself.
+
+Inside JWT I picked:
+- **1a, an httpOnly cookie** (not localStorage), so page scripts can't steal it;
+- **2b, access + refresh tokens:** a short access JWT (15 min) for every request, plus a long refresh token (7 days, stored in the database) only used to get a new access JWT. A stolen access token dies within 15 minutes; logout deletes the refresh token;
+- **3a, a well-known library (`jose`):** signing is security code you don't write yourself.
+
+**The JWT flow as an office building (the picture that made it click):**
+1. **Login = reception.** Show ID + password once. You get a **visitor badge** (name, "ADMIN", "valid until 3:15", with the company's secret stamp; valid for **15 min**) and a **locker key** (written in reception's **book**, valid for **7 days**).
+2. **Every admin action = a door.** The **guard** checks the badge: real stamp? not expired? ADMIN? → go in. No phone call to reception.
+3. **Badge expired** → go back to reception with the locker key → reception checks its book → takes the old key, gives a **new key + new badge**. (Angular will do this trip automatically.)
+4. **Logout** → reception crosses the key out of its book; the badge is thrown away.
+
+Why two things: the badge is **fast** (everything is printed on it) but can't be cancelled, so it's short-lived. The key **can be cancelled** (it's in the book), so it can live longer.
+
+| Picture | Project |
+|---|---|
+| visitor badge | access token (JWT), in a cookie |
+| secret stamp | signature made with `JWT_SECRET` |
+| guard | `requireAdmin` |
+| locker key | refresh token, in a second cookie |
+| reception's book | `refresh_tokens` table |
+| going back to reception | `POST /api/auth/refresh` |
+
+**My answer to "why can the guard decide alone, but reception needs its book?" (checked ✓):** the guard can decide because everything it needs is written on the badge itself. Reception needs its book to check whether that locker key is still on its list; only then does it give a new badge (with a new stamp) and a new key.
+
+*(The login flow summary below describes the first version, with sessions. It will be updated when JWT is built.)*
+
 ### My own summary of the login flow (checked ✓)
 1. I enter email + password on the login page; Angular sends them to the **login API** (`POST /api/auth/login`).
 2. The **backend** fingerprints the password and compares it with `users.password_hash`. No match → 401, nothing else happens.

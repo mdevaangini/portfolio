@@ -523,7 +523,34 @@ Exact stopping point (2026-10-25):
   2026-10-31: proxy.conf.json renamed to web/proxy.conf.mjs (JS so it can
   hold comments; angular.json proxyConfig updated; all docs updated).
   vercel.json can't hold comments → explained in web/vercel.json.md.
-  NEXT: Session A (in progress), then Session B.
+  Session A done through her many questions (Express, app.ts vs server.ts,
+  middleware, controller/service, Prisma; all in FAQ + project map).
+  SESSION B DECISION (2026-11-03): switch auth to JWT. Her reason: "the
+  practice companies follow in the real world; never implemented it".
+  Picks (my lean, accepted): 1a access JWT in httpOnly cookie, 2b short
+  access token (15 min) + refresh token (7 days, hashed in DB, rotated),
+  3a library `jose`. JWT_SECRET env var (local + Vercel).
+  Explained with the "office building" picture (badge = access JWT, stamp =
+  JWT_SECRET, guard = requireAdmin, locker key = refresh token, reception's
+  book = refresh_tokens table); she answered the check correctly (FAQ).
+  B1 WRITTEN [tests pass in Claude's sandbox with jose 6.2.15; UNCONFIRMED]:
+  env.ts requiredSecret("JWT_SECRET", 32) → env.jwtSecret (⚠ REQUIRED: API
+  won't start without it, locally AND on Vercel); .env.example JWT_SECRET
+  line; vitest.config fake JWT_SECRET; src/lib/jwt.ts (signAccessToken(user,
+  expiresInSeconds=900): HS256, sub=id, email, role, iss
+  devaangini-portfolio-api, aud devaangini-portfolio-admin; verifyAccessToken
+  → {id,email,role} | null; algorithms pinned); tests/jwt.test.ts 5 tests.
+  User must: npm install jose (api/), add JWT_SECRET to api/.env, add a
+  DIFFERENT JWT_SECRET to Vercel "portfolio" BEFORE pushing, npm test.
+  Commit B1 files only (4a still parked).
+  2026-11-04: 4a REVERTED at user's request (confusing): deleted
+  modules/admin-posts/, lib/slug.ts, tests/posts.test.ts; admin.routes.ts
+  restored; app.ts json limit line restored (her own notes in app.ts kept!).
+  Backup of 4a in Claude's scratchpad backup-4a/ (may be lost with the
+  session; rewrite in M4 if needed). Project map + PROJECT_MAP.md updated.
+  npm test now expects 22 (17 + 5 jwt). User is adding JWT_SECRET on Vercel.
+  NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
+  /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,
   Session, Post, Tag, PostTag + enums Role/PostStatus, one migration,
   npm run create-admin script). Docs for 1a go into

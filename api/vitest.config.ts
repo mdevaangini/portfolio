@@ -17,6 +17,8 @@ export default defineConfig({
       DATABASE_URL: "postgresql://test:test@localhost:5432/not_used_in_tests",
       RESEND_API_KEY: "",
       NOTIFY_EMAIL: "",
+      // A fake signing key, only for tests (the real one lives in .env / Vercel).
+      JWT_SECRET: "test-only-secret-that-is-at-least-32-characters-long",
     },
   },
 });

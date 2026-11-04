@@ -3,7 +3,7 @@
 Every layer and every file, with **one line** on what it does and **why** it exists. No code.
 Read it top to bottom once, then use it to find your way. *(State: 31 Oct 2026.)*
 
-**Legend:** 🆕 added for the Blog (milestones 1–3, done) · ⏸️ step 4a, written but parked (not committed) · 💻 only used on my laptop
+**Legend:** 🆕 added for the Blog (milestones 1–3, done) · 💻 only used on my laptop
 
 Full details live in [`docs/`](docs/README.md). My questions and answers: [`docs/12-my-questions-faq.md`](docs/12-my-questions-faq.md).
 
@@ -162,7 +162,6 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/contact` | Save a message: validate → rate limit → save → email me (`contact.email.ts`, via Resend) |
 | `modules/auth` 🆕 | Login (check password, create session, give cookie), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
-| `modules/admin-posts` ⏸️ | Create, list and open my blog posts (+ a validation file with the field rules) |
 
 #### Inside one feature: routes, controller, service
 
@@ -191,7 +190,6 @@ Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `
 |---|---|
 | `lib/password.ts` 🆕 | Turns a password into a fingerprint (scrypt) and checks one. Passwords are never stored |
 | `lib/session-token.ts` 🆕 | Makes the random login token (cookie) and its fingerprint (stored in `sessions`) |
-| `lib/slug.ts` ⏸️ | "Signals vs RxJS" → `signals-vs-rxjs`, for post addresses |
 | `scripts/create-admin.ts` 🆕 💻 | Creates or resets my admin login. The only way to make a user; there's no sign-up page |
 | `tests/` · `vitest.config.ts` | API tests with Vitest + Supertest (fake requests, no real database). `npm test` in `api/` |
 

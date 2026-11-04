@@ -20,6 +20,15 @@ function required(name: string): string {
   return value;
 }
 
+/** A required secret that must also be long enough to be safe (e.g. the JWT signing key). */
+function requiredSecret(name: string, minLength: number): string {
+  const value = required(name);
+  if (value.length < minLength) {
+    throw new Error(`${name} must be at least ${minLength} characters (check your .env file)`);
+  }
+  return value;
+}
+
 function optional(name: string, fallback: string): string {
   return process.env[name] || fallback;
 }
@@ -47,4 +56,11 @@ export const env = {
    * live it must be "Secure" (sent over https only); on the laptop we use plain http.
    */
   isProduction: process.env["VERCEL"] === "1",
+
+  /**
+   * The secret "stamp" used to sign login tokens (JWTs). Anyone who knows it
+   * could make fake admin tokens, so: long, random, only in .env and Vercel.
+   * Make one with:  node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+   */
+  jwtSecret: requiredSecret("JWT_SECRET", 32),
 };

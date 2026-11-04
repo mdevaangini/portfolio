@@ -5,7 +5,7 @@ Read it top to bottom once, then use it to find your way. *(State: 31 Oct 2026.)
 
 **Legend:** 🆕 added for the Blog (milestones 1–3, done) · 💻 only used on my laptop
 
-Full details live in [`docs/`](docs/README.md). My questions and answers: [`docs/12-my-questions-faq.md`](docs/12-my-questions-faq.md).
+Full details live in [`docs/`](docs/README.md). The login flow for interviews: [`docs/13-jwt-login-notes.md`](docs/13-jwt-login-notes.md). My questions and answers: [`docs/12-my-questions-faq.md`](docs/12-my-questions-faq.md).
 
 ---
 

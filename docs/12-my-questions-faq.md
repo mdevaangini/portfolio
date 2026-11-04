@@ -121,6 +121,8 @@ Request     → port 3000 → app.ts pipeline → routes.ts → controller → �
 None of them. It's an **npm package that runs tests in the terminal** (`npm test`). The web project already used it: Angular calls Vitest behind the scenes, which is how the "3 passed" appeared. The API has no Angular in between, so it calls Vitest directly. **Supertest** is a helper that acts like Postman inside a test: it sends a request into the Express app and checks the answer.
 → [08 — Testing](08-testing-and-debugging.md)
 
+> 📌 **The whole JWT login on one page, for interviews:** [13 — JWT login: my interview notes](13-jwt-login-notes.md)
+
 ### Sessions or JWT? My decision (Session B, 3 Nov 2026)
 Both are real industry practice. **Sessions:** a random ticket, looked up in a table on every request; logout is instant. **JWT:** a signed token that *contains* who I am (`userId`, `role`, expiry); the server checks the signature, with no database lookup; harder to cancel before it expires.
 

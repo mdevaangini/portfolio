@@ -37,7 +37,8 @@ api/
     ├── lib/
     │   ├── password.ts      scrypt fingerprint of a password + check
     │   ├── jwt.ts           signs + verifies the access token (JWT, library jose)
-    │   └── refresh-token.ts random refresh token + its SHA-256 fingerprint
+    │   ├── refresh-token.ts random refresh token + its SHA-256 fingerprint
+    │   └── slug.ts          "Signals vs RxJS" → signals-vs-rxjs (post + tag addresses)
     ├── middleware/
     │   ├── not-found.ts     404 for unknown URLs
     │   ├── error-handler.ts 500 for anything that throws
@@ -49,7 +50,8 @@ api/
         ├── skills/      skills.routes.ts · skills.controller.ts · skills.service.ts
         ├── contact/     contact.routes.ts · contact.controller.ts · contact.service.ts · contact.email.ts
         ├── auth/        auth.routes.ts · auth.controller.ts · auth.service.ts   (login, me, logout)
-        └── admin/       admin.routes.ts · admin.controller.ts   (everything behind the guard)
+        ├── admin/       admin.routes.ts · admin.controller.ts   (everything behind the guard)
+        └── admin-posts/ routes · controller · service · schema (Zod rules)   (my posts: CRUD, publish, soft delete)
 ```
 
 Also present: `readme.txt` (the owner's learning notes) and `_prisma-backup/` (an earlier, parked Prisma attempt; git-ignored, not used by the app).
@@ -170,6 +172,13 @@ All responses are JSON. Base URL in development: `http://localhost:3000`.
 | `GET /api/auth/me` | Who am I? (is my access token valid?) | 200 / 401 |
 | `POST /api/auth/logout` | Delete my refresh token and both cookies | **204** |
 | `GET /api/admin/check` | Test endpoint behind the guard | 200 only when logged in as admin |
+| `GET /api/admin/posts` | All my posts (drafts + published, not deleted), no `content` | 200 |
+| `GET /api/admin/posts/:id` | One post with everything (for the editor) | 200 / 404 |
+| `POST /api/admin/posts` | Create a post (always a **draft**) | **201** |
+| `PATCH /api/admin/posts/:id` | Change some fields | 200 |
+| `POST /api/admin/posts/:id/publish` | Make it public (needs excerpt + content) | 200 |
+| `POST /api/admin/posts/:id/unpublish` | Back to draft | 200 |
+| `DELETE /api/admin/posts/:id` | **Soft** delete | **204** |
 
 ### `GET /api/projects` — list projects
 
@@ -349,7 +358,41 @@ Always **204** (no body): deletes the refresh-token row if there is one and tell
 
 ### `GET /api/admin/check` — test the guard
 
-**200** `{ "ok": true, "message": "You are the admin: …" }` only after passing `requireAdmin`; otherwise **401** `{ "error": "Not logged in." }`. Milestone 4 adds the blog-post actions under `/api/admin`, protected the same way.
+**200** `{ "ok": true, "message": "You are the admin: …" }` only after passing `requireAdmin`; otherwise **401** `{ "error": "Not logged in." }`.
+
+### Admin posts: `/api/admin/posts` (Blog milestone 4)
+
+All behind `checkOrigin` + `requireAdmin` (no access token → 401). Module `modules/admin-posts/`. Decisions: **PATCH** for editing, **soft delete**, **Zod** for input rules.
+
+**The rules** (`admin-posts.schema.ts`, Zod; the API's version of Angular Validators). One schema gives both the check and the TypeScript type:
+
+| Field | Rule |
+|---|---|
+| `title` | required on create, trimmed, 3–150 characters |
+| `slug` | optional; lowercase letters, numbers and `-`, 3–80. Missing → made from the title by the controller (`toSlug`). Must be unique → **409** |
+| `excerpt` | optional for drafts, ≤ 300 |
+| `content` | Markdown, optional for drafts, ≤ 100,000 (JSON body limit raised to 300kb in `app.ts`) |
+| `coverImageUrl` | empty/`null` = no image, otherwise an `https://` address ≤ 500 |
+| `tags` | list of names, ≤ 8, each 2–30, lowercased; duplicates removed; each tag is found-or-created (`connectOrCreate`) |
+| `status` | **ignored** in the body: only publish/unpublish change it |
+
+`updatePostSchema = createPostSchema.partial()`: the PATCH version, same rules but every field optional. Bad input → **400** `{ "error": "Please check the post.", "fields": { "title": "Title must be 3–150 characters." } }`, before the database is touched.
+
+**The actions:**
+
+| Request | Body | Answers |
+|---|---|---|
+| `GET /api/admin/posts` | — | 200 `{ data: [...] }`: drafts + published, last edited first, without `content` |
+| `GET /api/admin/posts/:id` | — | 200 the post · 400 id not a number · 404 not found / deleted |
+| `POST /api/admin/posts` | `{ title, slug?, excerpt?, content?, coverImageUrl?, tags? }` | **201** the post (`status: "DRAFT"`) · 400 · 409 slug taken |
+| `PATCH /api/admin/posts/:id` | only the fields that change, e.g. `{ "title": "…" }` | 200 · 400 (bad field, or empty body: "Nothing to change") · 404 · 409 · 400 if it would empty a **published** post's excerpt/content. Tags sent → the list is **replaced** |
+| `POST /api/admin/posts/:id/publish` | — | 200 (`status: "PUBLISHED"`; `publishedAt` set the **first** time only) · 400 "isn't ready" with `fields.excerpt` / `fields.content` · 404 |
+| `POST /api/admin/posts/:id/unpublish` | — | 200 (`status: "DRAFT"`, `publishedAt` kept) · 404 |
+| `DELETE /api/admin/posts/:id` | — | **204** · 404. **Soft delete:** `deleted_at = now`, status → DRAFT, slug → `<slug>-deleted-<id>` (frees the address). The row stays |
+
+**Response shape** (`postSelect`, the columns sent back): `id, title, slug, excerpt, content, coverImageUrl, status, publishedAt, createdAt, updatedAt, tags: [{ name, slug }]`. Never sent: `authorId`, `deletedAt`.
+
+**Soft delete in one place:** the service's `notDeleted` filter (`deletedAt: null`) is used by every query, so deleted posts can't appear by accident.
 
 ### Any other URL
 

@@ -9,8 +9,8 @@
 import type { Request, Response } from "express";
 import type { AccessTokenUser } from "../../lib/jwt.js";
 import { toSlug } from "../../lib/slug.js";
-import { checkBody, createPostSchema, toTagList } from "./admin-posts.schema.js";
-import { createPost, getPost, listPosts } from "./admin-posts.service.js";
+import { checkBody, createPostSchema, toTagList, updatePostSchema } from "./admin-posts.schema.js";
+import { createPost, getPost, listPosts, publishPost, softDeletePost, unpublishPost, updatePost } from "./admin-posts.service.js";
 
 /** The :id from the URL as a positive whole number, or null if it isn't one. */
 function readId(req: Request): number | null {
@@ -74,4 +74,81 @@ export async function create(req: Request, res: Response) {
 
   // 5. 201 "Created" + the saved post (with its id, status DRAFT and tags).
   res.status(201).json(result.post);
+}
+
+/** Shared answers, so every action says the same thing for the same problem. */
+function badId(res: Response) {
+  res.status(400).json({ error: "id must be a positive whole number" });
+}
+function notFound(res: Response) {
+  res.status(404).json({ error: "Post not found." });
+}
+
+/**
+ * PATCH /api/admin/posts/:id — change SOME fields, e.g. { "title": "New title" }.
+ * Same Zod rules as creating, but every field is optional. `status` can't be changed here.
+ */
+export async function update(req: Request, res: Response) {
+  const id = readId(req);
+  if (id === null) return badId(res);
+
+  // 1. Zod checks whatever was sent.
+  const check = checkBody(updatePostSchema, req.body);
+  if (!check.ok) {
+    res.status(400).json({ error: "Please check the post.", fields: check.fields });
+    return;
+  }
+  const changes = check.data;
+  if (Object.keys(changes).length === 0) {
+    res.status(400).json({ error: "Nothing to change: send at least one field." });
+    return;
+  }
+
+  // 2. Save only those fields.
+  const result = await updatePost(id, { ...changes, tags: changes.tags ? toTagList(changes.tags) : undefined });
+
+  if (result.kind === "not-found") return notFound(res);
+  if (result.kind === "slug-taken") {
+    res.status(409).json({ error: "That slug is already used by another post.", fields: { slug: "Choose a different slug." } });
+    return;
+  }
+  if (result.kind === "incomplete") {
+    res.status(400).json({ error: "A published post needs an excerpt and content.", fields: result.fields });
+    return;
+  }
+  res.status(200).json(result.post);
+}
+
+/** POST /api/admin/posts/:id/publish — make it public (only if excerpt + content are filled in). */
+export async function publish(req: Request, res: Response) {
+  const id = readId(req);
+  if (id === null) return badId(res);
+
+  const result = await publishPost(id);
+  if (result.kind === "not-found") return notFound(res);
+  if (result.kind === "incomplete") {
+    res.status(400).json({ error: "This post isn't ready to publish.", fields: result.fields });
+    return;
+  }
+  res.status(200).json(result.post);
+}
+
+/** POST /api/admin/posts/:id/unpublish — back to draft (hidden from visitors). */
+export async function unpublish(req: Request, res: Response) {
+  const id = readId(req);
+  if (id === null) return badId(res);
+
+  const result = await unpublishPost(id);
+  if (result.kind === "not-found") return notFound(res);
+  res.status(200).json(result.post);
+}
+
+/** DELETE /api/admin/posts/:id — soft delete. 204 = "done, nothing to send back". */
+export async function remove(req: Request, res: Response) {
+  const id = readId(req);
+  if (id === null) return badId(res);
+
+  const result = await softDeletePost(id);
+  if (result.kind === "not-found") return notFound(res);
+  res.status(204).end();
 }

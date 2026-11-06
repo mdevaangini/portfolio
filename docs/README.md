@@ -96,6 +96,6 @@ Full details: [07 — Local setup](07-local-setup-and-development.md).
 | Rate limiting on the contact form | ✅ code limit (per email + total) and a Vercel Firewall rule (per IP), on the website project since 2026-10-28 |
 | Projects in the seed script | ✅ (2026-10-25) |
 | "Chat on WhatsApp" button next to Send (opens WhatsApp with a pre-filled message) | 🟡 added 2026-10-26, check pending |
-| Blog (admin login + posts) | 🚧 plan approved 2026-10-27. **Milestone 1 ✅** (routes + Home page, one address for website and API, API tests). **Milestone 2 ✅** (5 Blog tables, `create-admin` script, password hashing). **Milestone 3 ✅** (login, `requireAdmin` guard, Origin check), **switched to JWT on 4 Nov 2026** (access token 15 min + rotated refresh token 7 days, both in httpOnly cookies; 27 API tests). Next: milestone 4, admin blog API |
+| Blog (admin login + posts) | 🚧 plan approved 2026-10-27. **Milestone 1 ✅** (routes + Home page, one address for website and API, API tests). **Milestone 2 ✅** (5 Blog tables, `create-admin` script, password hashing). **Milestone 3 ✅** (login, `requireAdmin` guard, Origin check), **switched to JWT on 4 Nov 2026** (access token 15 min + rotated refresh token 7 days, both in httpOnly cookies). **Milestone 4 ✅** (admin posts API: create, list, get, PATCH, publish/unpublish, soft delete; Zod rules; 43 API tests). Next: milestone 4, admin blog API |
 
 The working context for ongoing development lives in `../SESSION_CONTEXT.txt`.

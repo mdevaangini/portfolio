@@ -89,3 +89,36 @@ describe("The posts door", () => {
     expect(res.body.fields.title).toBe("Title must be 3–150 characters.");
   });
 });
+
+describe("Editing, publishing and deleting: checks before the database", () => {
+  const withBadge = async () => `access_token=${await signAccessToken(me)}`;
+
+  it("PATCH without a badge → 401", async () => {
+    const res = await request(app).patch("/api/admin/posts/1").send({ title: "New title" });
+    expect(res.status).toBe(401);
+  });
+
+  it("PATCH with nothing to change → 400", async () => {
+    const res = await request(app).patch("/api/admin/posts/1").set("Cookie", await withBadge()).send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Nothing to change: send at least one field.");
+  });
+
+  it("PATCH with a bad field → 400 with its message", async () => {
+    const res = await request(app).patch("/api/admin/posts/1").set("Cookie", await withBadge()).send({ title: "Hi" });
+    expect(res.status).toBe(400);
+    expect(res.body.fields.title).toBe("Title must be 3–150 characters.");
+  });
+
+  it("publish / unpublish / delete with an id that isn't a number → 400", async () => {
+    const cookie = await withBadge();
+    expect((await request(app).post("/api/admin/posts/abc/publish").set("Cookie", cookie)).status).toBe(400);
+    expect((await request(app).post("/api/admin/posts/abc/unpublish").set("Cookie", cookie)).status).toBe(400);
+    expect((await request(app).delete("/api/admin/posts/abc").set("Cookie", cookie)).status).toBe(400);
+  });
+
+  it("DELETE without a badge → 401 (nothing is deleted)", async () => {
+    const res = await request(app).delete("/api/admin/posts/1");
+    expect(res.status).toBe(401);
+  });
+});

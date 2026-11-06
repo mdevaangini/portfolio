@@ -138,7 +138,7 @@ Five tables, added by the migration `add_blog`. Two new ideas appear here:
 |---|---|---|
 | `users` | `email` (unique, max 254), `password_hash`, `role` (default `ADMIN`), `failed_logins` (default 0), `locked_until` (nullable), `created_at` | One row: me. `password_hash` is a **scrypt fingerprint** (`scrypt$16384$8$1$<salt>$<hash>`), never the password. The two lock columns stop password guessing (milestone 3) |
 | `refresh_tokens` (was `sessions` until 4 Nov 2026) | `token_hash` (unique), `user_id` → `users`, `expires_at`, `created_at` | Reception's **book**: one row per refresh token. Only its SHA-256 fingerprint is stored. A refresh deletes the row and writes a new one (rotation); logout deletes it. The access token (JWT) is stored **nowhere**. Deleting a user deletes their rows (cascade) |
-| `posts` | `title` (150), `slug` (unique, 80), `excerpt` (300, default `''`), `content` (Markdown, default `''`), `cover_image_url` (500, nullable), `status` (default `DRAFT`), `published_at` (nullable), `created_at`, `updated_at`, `author_id` → `users` | `updated_at` is set by Prisma on every change (`@updatedAt`). `published_at` is set on the first publish and kept. Index on (`status`, `published_at`) for "published, newest first" |
+| `posts` | `title` (150), `slug` (unique, 80), `excerpt` (300, default `''`), `content` (Markdown, default `''`), `cover_image_url` (500, nullable), `status` (default `DRAFT`), `published_at` (nullable), `created_at`, `updated_at`, `author_id` → `users` | `updated_at` is set by Prisma on every change (`@updatedAt`). `published_at` is set on the first publish and kept. **`deleted_at`** (nullable, Blog milestone 4): **soft delete**: a date = deleted, hidden everywhere, row kept; on delete the slug becomes `<slug>-deleted-<id>` so the address is free again. Index on (`status`, `published_at`) for "published, newest first" |
 | `tags` | `name` (unique, 30), `slug` (unique, 40) | Created on the fly from the post editor |
 | `post_tags` | `post_id` + `tag_id` (together the primary key) | Deleting a post or a tag removes its pairs (cascade) |
 
@@ -229,6 +229,7 @@ A **migration** is a saved SQL file for one structure change, like a Git commit 
 | `20261022104122_add_messages/` | Creates `messages` | `npx prisma migrate dev --name add_messages` |
 | `20261028131436_add_blog/` | Creates the enums `user_role`, `post_status` and the tables `users`, `sessions`, `posts`, `tags`, `post_tags` (+ unique keys, indexes, foreign keys) | `npx prisma migrate dev --name add_blog` (Blog milestone 2) |
 | `20261104082801_jwt_refresh_tokens/` | Replaces `sessions` with `refresh_tokens` (same columns) for the JWT login | `npx prisma migrate dev --name jwt_refresh_tokens` (Session B) |
+| `20261106101051_post_soft_delete/` | Adds `posts.deleted_at` (soft delete) | `npx prisma migrate dev --name post_soft_delete` (Blog milestone 4) |
 
 ⚠️ **Known discrepancy:** the live `projects` table uses `id … GENERATED ALWAYS AS IDENTITY`, but `0_init` creates `id SERIAL`. Both auto-number. A fresh database built from the migrations (e.g. when deploying) will use `SERIAL`. This doesn't affect the app.
 

@@ -71,6 +71,11 @@ Why this project uses Express and not NestJS: Express shows the request flow pla
 
 In our project, Express is: `express()` in `app.ts` (the app), `Router()` in every `*.routes.ts`, `req`/`res` in every controller, and middleware like `requireAdmin`. Services and Prisma don't use Express at all.
 
+### Controller and service: my summary (checked ✓, 6 Nov 2026)
+**Service** = the data work: the Prisma queries (read/write the database) and the data rules (e.g. "only publish a finished post", "soft delete frees the slug"). **Controller** = the request/response work: reads the request, checks the input (Zod), calls the service, and turns what the service returns into a status code + JSON.
+
+The full path of a request: Angular → `app.ts` pipeline (CORS, JSON body, cookies) → `routes.ts` → for admin routes `checkOrigin` + `requireAdmin` → **controller** (checks input; bad → 400 here, the service never runs) → **service** → Prisma → Postgres → back: service returns data or a result like "not-found" → **controller** picks the status (200 / 201 / 404 / 409 …) → Angular.
+
 ### Is middleware like an Angular interceptor?
 **Yes, the same idea:** a chain of steps a request passes through, where each step can **look at or change** it, **pass it on**, or **stop it**. Even the code shape matches: an interceptor calls `next.handle(req)`; Express middleware calls `next()`.
 

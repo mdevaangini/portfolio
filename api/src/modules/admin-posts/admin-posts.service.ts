@@ -1,7 +1,8 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: admin-posts.service.ts
 // Database layer for MY posts (admin only): list all (drafts too), get one,
-// create one with its tags. The ONLY place in this feature that talks to Postgres.
+// create, edit, publish / unpublish, and (soft) delete.
+// The ONLY place in this feature that talks to Postgres.
 // Soft delete: rows with a deleted_at date are skipped everywhere (notDeleted).
 // Flow: routes → requireAdmin → controller → service (THIS) → Prisma → Postgres
 // ──────────────────────────────────────────────────────────────────────
@@ -100,4 +101,116 @@ export async function createPost(input: NewPost, authorId: number) {
     if (isDuplicateError(error)) return { kind: "slug-taken" as const };
     throw error; // anything else → error handler → 500
   }
+}
+
+/** What updatePost may change (already checked by the controller). Missing = leave as is. */
+export interface PostChanges {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  coverImageUrl?: string | null;
+  tags?: { name: string; slug: string }[];
+}
+
+/** The fields a post must have before it can be public. Returns their messages, or null if complete. */
+function missingForPublish(post: { excerpt: string; content: string }): Record<string, string> | null {
+  const fields: Record<string, string> = {};
+  if (!post.excerpt.trim()) fields.excerpt = "Add an excerpt before publishing.";
+  if (!post.content.trim()) fields.content = "Add some content before publishing.";
+  return Object.keys(fields).length > 0 ? fields : null;
+}
+
+/** The post as it is now (not deleted), with just what the rules below need. */
+function findExisting(id: number) {
+  return prisma.post.findFirst({
+    where: { id, ...notDeleted },
+    select: { id: true, slug: true, excerpt: true, content: true, status: true, publishedAt: true },
+  });
+}
+
+/**
+ * EDIT (PATCH): changes ONLY the fields that were sent.
+ * Tags sent → the post's tag list is REPLACED: all its post_tags rows are
+ * removed, then the new ones are added (in one statement).
+ * A published post can't be emptied (its excerpt/content must stay filled).
+ */
+export async function updatePost(id: number, changes: PostChanges) {
+  const existing = await findExisting(id);
+  if (!existing) return { kind: "not-found" as const };
+
+  if (existing.status === "PUBLISHED") {
+    const missing = missingForPublish({
+      excerpt: changes.excerpt ?? existing.excerpt,
+      content: changes.content ?? existing.content,
+    });
+    if (missing) return { kind: "incomplete" as const, fields: missing };
+  }
+
+  try {
+    const post = await prisma.post.update({
+      where: { id },
+      data: {
+        // `undefined` = "not sent" → Prisma leaves that column unchanged.
+        title: changes.title,
+        slug: changes.slug,
+        excerpt: changes.excerpt,
+        content: changes.content,
+        coverImageUrl: changes.coverImageUrl,
+        tags: changes.tags ? { deleteMany: {}, create: tagRows(changes.tags) } : undefined,
+      },
+      select: postSelect,
+    });
+    return { kind: "ok" as const, post: withFlatTags(post) };
+  } catch (error) {
+    if (isDuplicateError(error)) return { kind: "slug-taken" as const };
+    throw error;
+  }
+}
+
+/**
+ * PUBLISH: the post becomes public. Only a finished post (excerpt + content).
+ * publishedAt is set the FIRST time only; republishing keeps the original date.
+ */
+export async function publishPost(id: number) {
+  const existing = await findExisting(id);
+  if (!existing) return { kind: "not-found" as const };
+
+  const missing = missingForPublish(existing);
+  if (missing) return { kind: "incomplete" as const, fields: missing };
+
+  const post = await prisma.post.update({
+    where: { id },
+    data: { status: "PUBLISHED", publishedAt: existing.publishedAt ?? new Date() },
+    select: postSelect,
+  });
+  return { kind: "ok" as const, post: withFlatTags(post) };
+}
+
+/** UNPUBLISH: back to draft (hidden from visitors). publishedAt is kept. */
+export async function unpublishPost(id: number) {
+  const existing = await findExisting(id);
+  if (!existing) return { kind: "not-found" as const };
+
+  const post = await prisma.post.update({ where: { id }, data: { status: "DRAFT" }, select: postSelect });
+  return { kind: "ok" as const, post: withFlatTags(post) };
+}
+
+/**
+ * SOFT DELETE: the row stays, but it's marked deleted and hidden everywhere.
+ *  - deletedAt = now     → every query with `notDeleted` skips it
+ *  - status = DRAFT      → it can never show up publicly by mistake
+ *  - slug gets "-deleted-<id>" → the address is free for a new post
+ *    (cut so it still fits the 80-character column)
+ */
+export async function softDeletePost(id: number) {
+  const existing = await findExisting(id);
+  if (!existing) return { kind: "not-found" as const };
+
+  const suffix = `-deleted-${id}`;
+  await prisma.post.update({
+    where: { id },
+    data: { deletedAt: new Date(), status: "DRAFT", slug: existing.slug.slice(0, 80 - suffix.length) + suffix },
+  });
+  return { kind: "ok" as const };
 }

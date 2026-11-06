@@ -588,7 +588,22 @@ Exact stopping point (2026-10-25):
   tests/posts.test.ts 11 tests → npm test expects 38.
   User must: npm install zod; npx prisma migrate dev --name post_soft_delete;
   npx prisma generate; npm test; Postman.
-  NEXT: 4b = PATCH, publish/unpublish, soft DELETE.
+  4a CONFIRMED + committed (ca21778). (She ran npm/npx from the portfolio
+  root once: stray root package.json/node_modules removed; RULE: npm/npx in
+  api/, git at root.)
+  4b decisions: publish needs excerpt + content (400 otherwise); soft delete
+  frees the slug ("<slug>-deleted-<id>", cut to 80) and sets status DRAFT.
+  4b WRITTEN [tsc OK; UNCONFIRMED]: service updatePost (only sent fields;
+  tags sent → deleteMany + create; published post can't be emptied →
+  incomplete), publishPost (publishedAt set first time only), unpublishPost,
+  softDeletePost; controller update (Zod partial, empty body 400, 404/409/
+  400/200), publish, unpublish, remove (204); routes PATCH /:id, POST
+  /:id/publish, POST /:id/unpublish, DELETE /:id. +5 tests → expect 43.
+  4b CONFIRMED by user 2026-11-06. MILESTONE 4 COMPLETE. Docs: 04 (admin
+  posts section + endpoint rows), 05 (deleted_at + migration), 08 (43 tests),
+  11 glossary (slug, soft delete, PATCH vs PUT, Zod), README, FAQ
+  (controller/service summary), project map.
+  NEXT: Milestone 5 = public blog API (visitors: published + not deleted only).
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
   /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,

@@ -20,6 +20,10 @@ Each term has a plain definition, an everyday comparison where it helps, and whe
 | **JWT** (JSON Web Token) | A signed token that *contains* data (user id, role, expiry). Anyone can read it; only the server can make a valid one | A visitor badge with your details printed on it and the company's secret stamp | our **access token**, cookie `access_token` |
 | **Access token** | The short-lived token sent with every request to prove who you are | The day badge (15 min) | a JWT, checked by `requireAdmin` |
 | **Refresh token** | A long-lived token used only to get a new access token | The locker key kept on reception's list (7 days) | cookie `refresh_token`, table `refresh_tokens` |
+| **Slug** | The readable last part of an address, made from a title | A street name instead of a house number | `/blog/signals-vs-rxjs` |
+| **Soft delete** | "Deleting" by marking a row as deleted (a date in `deleted_at`) instead of erasing it | Putting a file in the recycle bin | `DELETE /api/admin/posts/:id` |
+| **PATCH vs PUT** | PATCH changes only the fields you send; PUT replaces the whole thing | Correcting one line vs rewriting the whole form | `PATCH /api/admin/posts/:id` |
+| **Zod** | A library to describe input rules once; gives the check and the TypeScript type | Angular Validators, but for the server | `admin-posts.schema.ts` |
 | **Token rotation** | Each refresh token works once; using it gives a new one | Handing in the old key for a new key | `refresh()` in `auth.service.ts` |
 | **Component** | A self-contained piece of UI (template + logic + styles) | A Lego brick | `Projects`, `Hero`, `Header` |
 | **Service (Angular)** | A class that holds shared logic, often API calls | A shared assistant | `ProjectsService`, `SkillsService`, `ContactService` |

@@ -162,6 +162,7 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/contact` | Save a message: validate → rate limit → save → email me (`contact.email.ts`, via Resend) |
 | `modules/auth` 🆕 | Login (check password, give the badge + locker key as two cookies), `/refresh` (key → new badge + new key), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
+| `modules/admin-posts` 🆕 | My blog posts (admin only): create, list, open, edit (PATCH), publish/unpublish, soft delete. `admin-posts.schema.ts` = the Zod rules |
 
 #### How we build an API endpoint (the recipe)
 
@@ -229,6 +230,7 @@ Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `
 | `lib/password.ts` 🆕 | Turns a password into a fingerprint (scrypt) and checks one. Passwords are never stored |
 | `lib/jwt.ts` 🆕 | The badge machine: signs the access token (JWT, 15 min, stamped with `JWT_SECRET`) and checks it. Library `jose` |
 | `lib/refresh-token.ts` 🆕 | Makes the locker key (refresh token, a random string) and its fingerprint (stored in `refresh_tokens`) |
+| `lib/slug.ts` 🆕 | "Signals vs RxJS" → `signals-vs-rxjs`: a post's web address, made from its title |
 | `scripts/create-admin.ts` 🆕 💻 | Creates or resets my admin login. The only way to make a user; there's no sign-up page |
 | `tests/` · `vitest.config.ts` | API tests with Vitest + Supertest (fake requests, no real database). `npm test` in `api/` |
 
@@ -293,8 +295,8 @@ export function findSkillGroups() {
 | `messages` | a contact-form message | visitors |
 | `users` 🆕 | someone who can log in (me) | create-admin script |
 | `refresh_tokens` 🆕 | one locker key (refresh-token fingerprint): reception's book | login, refresh |
-| `posts` 🆕 | a blog post (DRAFT or PUBLISHED) | admin (milestone 4) |
-| `tags` · `post_tags` 🆕 | a label, and "this post has this tag" (many-to-many) | admin (milestone 4) |
+| `posts` 🆕 | a blog post (DRAFT or PUBLISHED; `deleted_at` = soft-deleted) | admin (milestone 4) |
+| `tags` · `post_tags` 🆕 | a label, and "this post has this tag" (many-to-many) | admin, when saving a post's tags |
 
 **Two databases, same code:** local PostgreSQL (pgAdmin) on my laptop, and Neon in the cloud for the live site.
 

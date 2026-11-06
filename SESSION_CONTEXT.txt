@@ -571,8 +571,24 @@ Exact stopping point (2026-10-25):
   (JWT_SECRET), 08 (27 tests), 10 (JWT + refresh rows, accepted risk),
   11 glossary (JWT, access/refresh token, rotation), README, FAQ; project
   map (HTML + PROJECT_MAP.md) updated. SESSION B COMPLETE.
-  NEXT: commit B2+B3 (needs JWT_SECRET on Vercel — user added it?), then
-  MILESTONE 4 with the new process (problem → options → she decides).
+  B2+B3 committed (507a153) + notes page docs/13-jwt-login-notes.md + project
+  map "recipe for building an endpoint". Plan agreed: finish the blog in ~4 days
+  (D1 M4 admin API, D2 M5 public API + M6a Angular login/interceptor/guard,
+  D3 M6b admin table + editor, D4 M7 blog pages + go live). Test DB skipped.
+  M4 DECISIONS (2026-11-05, my suggestion accepted): PATCH, SOFT delete
+  (posts.deleted_at), Zod (zod 4.x) for validation.
+  4a WRITTEN [Zod rule tests + schema checked in sandbox; UNCONFIRMED]:
+  schema Post.deletedAt; lib/slug.ts; modules/admin-posts/{admin-posts.schema.ts
+  (createPostSchema, updatePostSchema = .partial(), checkBody → {ok,data}|
+  {ok:false,fields}, toTagList), admin-posts.service.ts (notDeleted filter,
+  listPosts, getPost via findFirst, createPost nested write + connectOrCreate,
+  P2002 → slug-taken), admin-posts.controller.ts (list, getOne, create:
+  Zod 400 / slug from title / 409 / 201), admin-posts.routes.ts};
+  admin.routes /posts; app.ts json limit 300kb (her notes kept).
+  tests/posts.test.ts 11 tests → npm test expects 38.
+  User must: npm install zod; npx prisma migrate dev --name post_soft_delete;
+  npx prisma generate; npm test; Postman.
+  NEXT: 4b = PATCH, publish/unpublish, soft DELETE.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
   /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,

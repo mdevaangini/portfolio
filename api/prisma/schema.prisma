@@ -156,6 +156,9 @@ model Post {
   createdAt     DateTime   @default(now()) @map("created_at")
   /// Prisma updates this itself on every change.
   updatedAt     DateTime   @updatedAt @map("updated_at")
+  /// SOFT DELETE: empty = the post exists; a date = "deleted" (hidden everywhere,
+  /// but the row is kept, so it could be restored). Added in Blog milestone 4.
+  deletedAt     DateTime?  @map("deleted_at")
   authorId      Int        @map("author_id")
   author        User       @relation(fields: [authorId], references: [id])
   tags          PostTag[]

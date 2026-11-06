@@ -8,6 +8,7 @@
 
 import { Router } from "express";
 import { requireAdmin } from "../../middleware/require-admin.js";
+import { adminPostsRouter } from "../admin-posts/admin-posts.routes.js";
 import { check } from "./admin.controller.js";
 
 /** URL map for the admin area, mounted at "/api/admin". */
@@ -17,3 +18,4 @@ export const adminRouter = Router();
 adminRouter.use(requireAdmin);
 
 adminRouter.get("/check", check); // GET /api/admin/check → 200 only for the admin
+adminRouter.use("/posts", adminPostsRouter); // /api/admin/posts/... (Blog milestone 4)

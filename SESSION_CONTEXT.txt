@@ -617,6 +617,11 @@ Exact stopping point (2026-10-25):
   tests/public-posts.test.ts 5 → expect 48.
   M5 tested by user (48) + committed 2026-11-09; docs 04 (public section +
   admin vs public), 08, README, project map. ALL BLOG APIs DONE.
+  2026-11-09: docs/14-backend-api-handbook.md written at her request (every
+  API with JSON examples, public vs admin + RBAC, Postman guide, lifecycle,
+  DB mapping, known gaps (error handler always 500 → bad JSON = 500; no
+  Helmet; admin not on Neon …), interview Q&A). Linked from docs README +
+  PROJECT_MAP.md. Keep it updated when APIs change.
   NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
   posts table, editor) — problem → options → she decides.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,

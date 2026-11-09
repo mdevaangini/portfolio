@@ -603,7 +603,22 @@ Exact stopping point (2026-10-25):
   posts section + endpoint rows), 05 (deleted_at + migration), 08 (43 tests),
   11 glossary (slug, soft delete, PATCH vs PUT, Zod), README, FAQ
   (controller/service summary), project map.
-  NEXT: Milestone 5 = public blog API (visitors: published + not deleted only).
+  M4 committed (1400c68). Explained soft delete with the Excel-sheet picture.
+  M5 decisions: limit + offset paging; drafts/deleted/unknown → 404 (no leak).
+  M5 WRITTEN [tsc OK; query rules checked in sandbox; UNCONFIRMED]:
+  lib/validation.ts (checkBody moved here; admin-posts.schema re-exports it);
+  modules/posts/{posts.service.ts (visible = PUBLISHED + deletedAt null;
+  cardSelect no id/status/content; listPublishedPosts $transaction page +
+  count, tag filter tags.some.tag.slug; getPublishedPost(slug) +
+  readingMinutes ~200 wpm), posts.controller.ts (Zod query: limit 1–50
+  default 10, offset ≥0, tag slug; getOne bad slug → 404), posts.routes.ts};
+  modules/tags/{service listTagsInUse (tags with a visible post, A→Z),
+  controller, routes}; routes.ts /posts, /tags (no guard).
+  tests/public-posts.test.ts 5 → expect 48.
+  M5 tested by user (48) + committed 2026-11-09; docs 04 (public section +
+  admin vs public), 08, README, project map. ALL BLOG APIs DONE.
+  NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
+  posts table, editor) — problem → options → she decides.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
   /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
   (old) NEXT: user commits + pushes docs; then MILESTONE 2 (database: User,

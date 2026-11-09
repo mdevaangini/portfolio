@@ -78,22 +78,8 @@ export const updatePostSchema = createPostSchema.partial();
 /** The clean data's TypeScript type, made FROM the schema (they can never disagree). */
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 
-/**
- * Runs a schema on a request body and returns either the clean data, or one
- * message per field, e.g. { title: "Title must be 3–150 characters." }:
- * the same shape as the contact form's 400 answer.
- */
-export function checkBody<T>(schema: z.ZodType<T>, body: unknown): { ok: true; data: T } | { ok: false; fields: Record<string, string> } {
-  const result = schema.safeParse(body ?? {});
-  if (result.success) return { ok: true, data: result.data };
-
-  const fields: Record<string, string> = {};
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? "body");
-    fields[field] ??= issue.message; // keep the first message per field
-  }
-  return { ok: false, fields };
-}
+/** The Zod helper now lives in lib/validation.ts (shared with the public posts API). */
+export { checkBody } from "../../lib/validation.js";
 
 /** Tag names → [{ name, slug }], with duplicates ("Angular", "angular") kept once. */
 export function toTagList(names: string[] = []): { name: string; slug: string }[] {

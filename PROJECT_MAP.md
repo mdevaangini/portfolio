@@ -163,6 +163,8 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/auth` 🆕 | Login (check password, give the badge + locker key as two cookies), `/refresh` (key → new badge + new key), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
 | `modules/admin-posts` 🆕 | My blog posts (admin only): create, list, open, edit (PATCH), publish/unpublish, soft delete. `admin-posts.schema.ts` = the Zod rules |
+| `modules/posts` 🆕 | **Public** blog (no login): a page of published posts (`?limit&offset&tag`), one post by slug. Drafts → 404 |
+| `modules/tags` 🆕 | **Public**: the tags used by published posts, for the filter chips |
 
 #### How we build an API endpoint (the recipe)
 
@@ -231,6 +233,7 @@ Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `
 | `lib/jwt.ts` 🆕 | The badge machine: signs the access token (JWT, 15 min, stamped with `JWT_SECRET`) and checks it. Library `jose` |
 | `lib/refresh-token.ts` 🆕 | Makes the locker key (refresh token, a random string) and its fingerprint (stored in `refresh_tokens`) |
 | `lib/slug.ts` 🆕 | "Signals vs RxJS" → `signals-vs-rxjs`: a post's web address, made from its title |
+| `lib/validation.ts` 🆕 | `checkBody()`: runs a Zod schema → clean data, or one message per field (400) |
 | `scripts/create-admin.ts` 🆕 💻 | Creates or resets my admin login. The only way to make a user; there's no sign-up page |
 | `tests/` · `vitest.config.ts` | API tests with Vitest + Supertest (fake requests, no real database). `npm test` in `api/` |
 

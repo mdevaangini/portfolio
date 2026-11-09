@@ -38,7 +38,8 @@ api/
     │   ├── password.ts      scrypt fingerprint of a password + check
     │   ├── jwt.ts           signs + verifies the access token (JWT, library jose)
     │   ├── refresh-token.ts random refresh token + its SHA-256 fingerprint
-    │   └── slug.ts          "Signals vs RxJS" → signals-vs-rxjs (post + tag addresses)
+    │   ├── slug.ts          "Signals vs RxJS" → signals-vs-rxjs (post + tag addresses)
+    │   └── validation.ts    checkBody(): runs a Zod schema → clean data or one message per field
     ├── middleware/
     │   ├── not-found.ts     404 for unknown URLs
     │   ├── error-handler.ts 500 for anything that throws
@@ -51,7 +52,9 @@ api/
         ├── contact/     contact.routes.ts · contact.controller.ts · contact.service.ts · contact.email.ts
         ├── auth/        auth.routes.ts · auth.controller.ts · auth.service.ts   (login, me, logout)
         ├── admin/       admin.routes.ts · admin.controller.ts   (everything behind the guard)
-        └── admin-posts/ routes · controller · service · schema (Zod rules)   (my posts: CRUD, publish, soft delete)
+        ├── admin-posts/ routes · controller · service · schema (Zod rules)   (my posts: CRUD, publish, soft delete)
+        ├── posts/       routes · controller · service   (PUBLIC blog: published posts only)
+        └── tags/        routes · controller · service   (PUBLIC: tags used by published posts)
 ```
 
 Also present: `readme.txt` (the owner's learning notes) and `_prisma-backup/` (an earlier, parked Prisma attempt; git-ignored, not used by the app).
@@ -179,6 +182,9 @@ All responses are JSON. Base URL in development: `http://localhost:3000`.
 | `POST /api/admin/posts/:id/publish` | Make it public (needs excerpt + content) | 200 |
 | `POST /api/admin/posts/:id/unpublish` | Back to draft | 200 |
 | `DELETE /api/admin/posts/:id` | **Soft** delete | **204** |
+| `GET /api/posts?limit&offset&tag` | **Public:** a page of published posts, newest first | 200 |
+| `GET /api/posts/:slug` | **Public:** one published post (+ content, reading time) | 200 / 404 |
+| `GET /api/tags` | **Public:** tags used by published posts | 200 |
 
 ### `GET /api/projects` — list projects
 
@@ -393,6 +399,31 @@ All behind `checkOrigin` + `requireAdmin` (no access token → 401). Module `mod
 **Response shape** (`postSelect`, the columns sent back): `id, title, slug, excerpt, content, coverImageUrl, status, publishedAt, createdAt, updatedAt, tags: [{ name, slug }]`. Never sent: `authorId`, `deletedAt`.
 
 **Soft delete in one place:** the service's `notDeleted` filter (`deletedAt: null`) is used by every query, so deleted posts can't appear by accident.
+
+### Public blog: `/api/posts` and `/api/tags` (Blog milestone 5)
+
+**No login, no guard: read-only.** Same `posts` table as the admin API, but a separate module with stricter rules. Decisions: **limit + offset** paging; drafts answer **404** (not 403) so nobody can tell they exist.
+
+**The golden rule** (`visible` in `posts.service.ts`, written once, used by every query): `status = PUBLISHED` **and** `deleted_at` empty. Drafts, deleted posts and unknown slugs all look the same: 404.
+
+| Request | Answers |
+|---|---|
+| `GET /api/posts?limit=10&offset=0&tag=angular` | 200 `{ data: [cards], total, limit, offset }`, newest first. Query checked with Zod: `limit` 1–50 (default 10), `offset` ≥ 0 (default 0), `tag` a slug (optional) → else **400** with `fields` |
+| `GET /api/posts/:slug` | 200 the post + `content` + `readingMinutes` (≈ 200 words/min) · **404** "Post not found." for drafts, deleted, unknown or malformed slugs |
+| `GET /api/tags` | 200 `[{ name, slug }]`: only tags on at least one visible post, A→Z (for the filter chips) |
+
+**What visitors get:** `slug, title, excerpt, coverImageUrl, publishedAt, tags` (+ `content`, `updatedAt`, `readingMinutes` for one post). **Never:** `id`, `status`, `authorId`, `deletedAt`.
+
+**Admin vs public, side by side:**
+
+| | Admin (`/api/admin/posts`) | Public (`/api/posts`) |
+|---|---|---|
+| Who | only me (guard) | anyone |
+| Can | create, edit, publish, delete | read |
+| Sees | drafts + published | published only |
+| Finds a post by | `id` | `slug` |
+
+How the blog page will use them: open `/blog` → `GET /api/tags` (chips) + `GET /api/posts` (list); click a chip → `GET /api/posts?tag=angular`; open a post → `GET /api/posts/<slug>`. Same idea as projects: `/categories` for chips, `?category=` for the list.
 
 ### Any other URL
 

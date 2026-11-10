@@ -16,7 +16,15 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    /* Path aliases: import from "@core/...", "@shared/...", "@layouts/...", "@features/..." instead of "../../../".
+       @layouts: the page frames (public + admin). */
+    "paths": {
+      "@core/*": ["./src/app/core/*"],
+      "@shared/*": ["./src/app/shared/*"],
+      "@layouts/*": ["./src/app/layouts/*"],
+      "@features/*": ["./src/app/features/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -47,7 +47,7 @@ The `build` / `start` / `start:local` scripts and `tsconfig.build.json` let the 
 |---|---|
 | `src/environments/*.ts` → `apiBaseUrl: '/api'` (both) | The site always calls its own address; the forwarding is done by `proxy.conf.mjs` / `vercel.json` (see "One address" above). Before Blog milestone 1 these held the full API URLs. |
 | `angular.json` → development config `fileReplacements` | `npm start` swaps in the development file; `npm run build` keeps the live one. |
-| `core/api.config.ts` → `factory: () => environment.apiBaseUrl` | Every service still reads one `API_BASE_URL`. |
+| `core/api/api.config.ts` → `factory: () => environment.apiBaseUrl` | Every service still reads one `API_BASE_URL`. |
 | `web/vercel.json` → `outputDirectory: "dist/web/browser"` | Angular puts the built site in a `browser` sub-folder; without this Vercel served a 404 page. |
 
 ### One address for website and API

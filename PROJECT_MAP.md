@@ -43,40 +43,72 @@ Each piece has **one job**, for the same reason Angular separates routes, compon
 
 Shows the page, reacts to clicks, asks the API for data. **Never talks to the database directly.**
 
+**How the folders are organised (since 9 Nov 2026):** by **feature**, the way the Angular style guide and most company projects do it. Everything one feature needs (component, service, data types) lives together. `core/` holds app-wide things used once, `shared/` reusable pieces. Imports use **path aliases**: `@core/…`, `@shared/…`, `@layouts/…`, `@features/…` (set in `web/tsconfig.json`), instead of `../../../`.
+
+```text
+web/src/app/
+├── app.ts · app.html · app.config.ts · app.routes.ts · app.spec.ts   the root (app.html = only <router-outlet>)
+├── core/        app-wide infrastructure, no UI:  api/ (API address) · auth/ (login state, guard, interceptor)
+├── layouts/     page frames, picked by the router: public-layout/ (+ header, footer) · admin-layout/
+├── shared/      reusable, no data:     ui/section-heading/ · styles/forms.scss
+└── features/    one folder per feature: home/ (+ its sections) · admin/ (lazy) · blog/ (milestone 7)
+```
+**Where does a new file go?** One feature → `features/<feature>/` (most files). A frame → `layouts/`. Reusable with no data, used by 2+ features → `shared/`. App-wide infrastructure → `core/`. Not sure → start in the feature. Full guide: [`docs/03` → Folder-by-folder](docs/03-frontend-documentation.md#b-folder-by-folder).
+
 ### Start-up and the frame
 | File | What it does and why |
 |---|---|
 | `src/index.html` | The first file the browser loads: fonts, favicon, and the empty `<app-root>` Angular fills |
 | `src/main.ts` | Starts Angular: boots `App` with the settings from `app.config.ts` |
-| `app/app.config.ts` | App-wide tools: the router and `HttpClient` |
-| `app/app.routes.ts` 🆕 | Which page for which address: `/` → Home. `/blog` and `/admin` come later |
-| `app/app.ts` · `app.html` 🆕 | The frame on every page: header, `<router-outlet>` (the current page goes here), footer |
+| `app/app.config.ts` | App-wide tools: the router, and `HttpClient` with the auth interceptor |
+| `app/app.routes.ts` 🆕 | Which frame + page for which address: `/` → `PublicLayout` → Home, `/admin/…` → the admin area (**lazy-loaded**, `AdminLayout`). `/blog` comes later |
+| `app/app.ts` · `app.html` 🆕 | Only `<router-outlet>`: the router picks the frame (`PublicLayout` or `AdminLayout`) |
 | `src/styles.scss` | Colours, fonts and shared helpers (`.btn`, scroll animations) used by every component |
 
-### Pages and sections (what you see)
+### `core/`: app-wide, used once
 | File | What it does and why |
 |---|---|
-| `pages/home/` 🆕 | The Home page: lists the sections in order. Projects waits behind `@defer` until you scroll near it |
-| `sections/hero` · `impact-strip` · `expertise` | Static content written in the code. No API call |
-| `sections/projects` | Project cards and category chips. Data from `GET /api/projects` |
-| `sections/experience` · `skills` | Timeline and skill chips. Data from `GET /api/experience` and `/api/skills` |
-| `sections/contact` | The form: **sends** a message with `POST /api/contact`. Also the WhatsApp link (no API) |
-| `layout/header` · `footer` | Navigation bar and footer, shown on every page |
-| `shared/section-heading` | The numbered heading reused by every section |
+| `core/api/api.config.ts` | The API address, written once: `/api` |
+| `core/auth/auth.service.ts` 🆕 | Remembers **who's logged in** (a signal); `login`, `restore` (asks `/me`), `refreshTokens`, `logout`. Never touches tokens: the browser handles the cookies |
+| `core/auth/auth.interceptor.ts` 🆕 | On a **401** from an admin call: refresh **once**, repeat the call; if refresh fails → login page |
+| `core/auth/admin.guard.ts` 🆕 | `canMatch` guard: `/admin` pages only when logged in, else → `/admin/login?returnUrl=…` |
+| `core/auth/auth.model.ts` 🆕 | Types: `AdminUser`, `AuthResponse` |
 
-### Talking to the API
+### `layouts/` 🆕: page frames, picked by the router
 | File | What it does and why |
 |---|---|
-| `core/api.config.ts` | The API address, written once: `/api` |
-| `core/projects` · `experience` · `skills` `.service.ts` | One service per feature. They **read** with `httpResource` (data arrives as a signal) |
-| `core/contact.service.ts` | **Sends** the form with `HttpClient.post`: a one-off action, so not `httpResource` |
-| `project.ts` · `experience.ts` · `skill.ts` · `contact.ts` | TypeScript shapes of the data the API sends back |
-| `environments/*.ts` | `apiBaseUrl: '/api'` for both laptop and live |
+| `layouts/public-layout/` | Skip link + **header** + `<main>` with `<router-outlet>` + **footer**, around every public page (Home, later the Blog). Its spec checks the nav links |
+| `layouts/public-layout/header` · `footer` | The site's navigation bar and footer |
+| `layouts/admin-layout/` | The admin top bar (Posts · View site · my email · Log out) + `<router-outlet>`. Loaded lazily with `/admin` |
+
+### `shared/`: reusable building blocks
+| File | What it does and why |
+|---|---|
+| `shared/ui/section-heading` | The numbered heading ("01. Title ────") reused by the sections |
+| `shared/styles/forms.scss` 🆕 | Field, input and error styles, pulled in with `@use` (admin login) |
+
+### `features/home/`: the portfolio page
+| File | What it does and why |
+|---|---|
+| `features/home/home.ts` · `.html` | The Home page: lists the sections in order. Projects waits behind `@defer` until you scroll near it |
+| `sections/hero` · `impact-strip` · `expertise` | Static content written in the code. No API call |
+| `sections/projects/` | Cards + category chips · `projects.service.ts` (**reads** `GET /api/projects` with `httpResource`) · `project.model.ts` (types) |
+| `sections/experience/` | Timeline · `experience.service.ts` (`GET /api/experience`) · `experience.model.ts` |
+| `sections/skills/` | Skill chips · `skills.service.ts` (`GET /api/skills`) · `skill.model.ts` |
+| `sections/contact/` | The form · `contact.service.ts` (**sends** `POST /api/contact` with `HttpClient.post`: a one-off action, so not `httpResource`) · `contact.model.ts` · WhatsApp link (no API) |
+| `environments/*.ts` (in `src/`) | `apiBaseUrl: '/api'` for both laptop and live |
+
+### `features/admin/` 🆕: my admin area (lazy-loaded)
+| File | What it does and why |
+|---|---|
+| `admin.routes.ts` | The admin pages, downloaded only when `/admin` opens: `login`, and the rest (inside `AdminLayout`) behind `adminGuard` |
+| `login-page/` | Email + password form; shows the API's messages; returns to the wanted `/admin/…` page |
+| `posts-page/` | Placeholder for now; the posts table comes in step 6b |
 
 ### Tests
 | File | What it does and why |
 |---|---|
-| `app.spec.ts` · `pages/home/home.spec.ts` | 3 tests: the app starts, the headline shows, the nav links are right. `npm test` in `web/` |
+| `app.spec.ts` · `layouts/public-layout/public-layout.spec.ts` · `features/home/home.spec.ts` | 3 tests: the app starts, the nav links are right, the headline shows. `npm test` in `web/` |
 
 ---
 
@@ -322,7 +354,7 @@ export function findSkillGroups() {
 
 ### Loading the Skills section (reading)
 1. **Angular:** the Skills component asks `SkillsService` for the groups.
-2. **Angular:** `httpResource` sends `GET /api/skills` to the website's own address.
+2. **Angular:** `httpResource` (in `features/home/sections/skills/skills.service.ts`) sends `GET /api/skills` to the website's own address.
 3. **Front desk:** forwards it to the Express API.
 4. **API · `app.ts` → `routes.ts`:** the pipeline runs, then the switchboard picks `skills.routes`.
 5. **API · controller:** nothing to check; asks the service for the data.

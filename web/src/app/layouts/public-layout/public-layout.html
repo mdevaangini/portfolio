@@ -1,0 +1,14 @@
+<!--
+  ABOUT THIS FILE: public-layout.html
+  The public frame: header on top, footer at the bottom, and <router-outlet>
+  in the middle, where the router puts the current public page ("/" → Home).
+-->
+<a class="skip-link" href="#main">Skip to content</a>
+
+<app-header />
+
+<main id="main">
+  <router-outlet />
+</main>
+
+<app-footer />

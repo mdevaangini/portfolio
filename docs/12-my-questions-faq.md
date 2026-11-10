@@ -76,6 +76,16 @@ In our project, Express is: `express()` in `app.ts` (the app), `Router()` in eve
 
 The full path of a request: Angular → `app.ts` pipeline (CORS, JSON body, cookies) → `routes.ts` → for admin routes `checkOrigin` + `requireAdmin` → **controller** (checks input; bad → 400 here, the service never runs) → **service** → Prisma → Postgres → back: service returns data or a result like "not-found" → **controller** picks the status (200 / 201 / 404 / 409 …) → Angular.
 
+### Admin login on the website (milestone 6a): my three questions (10 Nov 2026)
+**1. Who makes the tokens, and who sends them?** The **login API** (backend) creates both tokens and sends them in `Set-Cookie` response headers; the **browser** stores them and attaches them by itself: `access_token` to every `/api/...` call, `refresh_token` only to `/api/auth/...`. The login *page* only sends email + password; Angular never touches the tokens.
+
+**2. New users / non-admins / a posts page for visitors?** Logging in never creates a user: there's no sign-up; the only user (me) is made with `npm run create-admin`. Visitors don't log in at all; `/admin/...` sends them to the login page, and the API refuses `/api/admin` anyway. Visitors read posts on a **different** page: the public blog `/blog` (milestone 7, `features/blog/`, using `/api/posts`), not the admin's `/admin/posts` (milestone 6b, all my posts + edit buttons, using `/api/admin/posts`).
+
+**3. Why am I still logged in after a reload, even after deleting `access_token`?** A reload wipes Angular's memory (the `currentUser` signal) but **cookies survive**. The guard asks `GET /api/auth/me`: with a valid `access_token` → 200 → logged in. Without it → 401 → the **interceptor** calls `POST /api/auth/refresh` (the browser sends `refresh_token`) → new cookies → it repeats `/me` → 200. Network tab: `me` 401 → `refresh` 200 → `me` 200. Delete **both** cookies → refresh fails too → login page.
+
+### httpResource vs HttpClient: where are my API services?
+Every endpoint group has its own service, next to the component that uses it (`projects.service.ts`, `skills.service.ts`, `contact.service.ts`, `core/auth/auth.service.ts`). **Reads** use `httpResource` (Angular 19.2+): signals for `value()`, `isLoading()`, `error()`, no subscribe, reloads when its signals change. **Actions** (POST/PATCH/DELETE) use classic `HttpClient` observables. Both go through the same interceptors.
+
 ### Is middleware like an Angular interceptor?
 **Yes, the same idea:** a chain of steps a request passes through, where each step can **look at or change** it, **pass it on**, or **stop it**. Even the code shape matches: an interceptor calls `next.handle(req)`; Express middleware calls `next()`.
 

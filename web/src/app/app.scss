@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: app.scss
-// Styles for the shared frame only (header + page + footer). Empty for now:
-// page layouts live with their page (e.g. pages/home/home.scss).
+// Styles for the root component only. Empty: the frames have their own
+// styles (layouts/), and each page lives with its own (e.g. features/home/home.scss).
 // ──────────────────────────────────────────────────────────────────────

@@ -13,9 +13,9 @@ The web app is the part people see. It is one page split into sections: header, 
 | Framework | Angular 22, standalone components, TypeScript ~6.0 | `web/package.json` |
 | Entry point | `bootstrapApplication(App, appConfig)` | `web/src/main.ts` |
 | App-wide providers | `provideBrowserGlobalErrorListeners()`, `provideRouter(routes)`, `provideHttpClient()` | `web/src/app/app.config.ts` |
-| Routing | `''` → `Home` (all sections, loaded directly); anything else → back to `/`. `/blog` and `/admin` come with the Blog. Inside Home, the header still uses `#anchor` links | `web/src/app/app.routes.ts` |
-| Root layout | The frame every page shares: skip link → header → `<main>` with `<router-outlet>` (the current page goes here) → footer | `web/src/app/app.html` |
-| Home page | The sections in order, with Projects inside `@defer` | `web/src/app/pages/home/` |
+| Routing | `''` → `Home` (all sections, loaded directly); `admin` → the admin area (**lazy-loaded**); anything else → back to `/`. `/blog` comes with the Blog. Inside Home, the header still uses `#anchor` links | `web/src/app/app.routes.ts` |
+| Root layout | `app.html` is only `<router-outlet>`; the **router** picks the frame: `PublicLayout` (skip link → header → `<main>` + outlet → footer) or `AdminLayout` | `web/src/app/layouts/` |
+| Home page | The sections in order, with Projects inside `@defer` | `web/src/app/features/home/` |
 | Change detection | `ChangeDetectionStrategy.OnPush` on every component | each `*.ts` |
 | State | Signals: `signal`, `computed`, `linkedSignal`; reading via `httpResource`; the form via Reactive Forms | sections |
 | Styling | SCSS; colour/font/size **tokens** as CSS variables plus shared helper classes in `styles.scss`; each component has its own `.scss` | `web/src/styles.scss` |
@@ -25,7 +25,7 @@ The web app is the part people see. It is one page split into sections: header, 
 | Hosting | Vercel project **devaangini**; `web/vercel.json` points Vercel at `dist/web/browser` and holds the two `rewrites` (`/api/…` → API, everything else → `index.html`) | `web/vercel.json` |
 | Static files | Everything in `web/public/` is served from the site root: CV, `headshot.jpg`, favicons | `angular.json` → `assets` |
 | Favicon | A code-style `</>` icon: `favicon.svg` (sharp at any size), `favicon.ico` (older browsers), `apple-touch-icon.png` (home screens) | `web/public/`, linked in `index.html` |
-| Lazy loading | Projects section wrapped in `@defer (on viewport; prefetch on idle)` | `pages/home/home.html` |
+| Lazy loading | Projects section wrapped in `@defer (on viewport; prefetch on idle)`; the whole admin area via `loadChildren` | `features/home/home.html`, `app.routes.ts` |
 | Accessibility | Skip link, visible focus ring, `aria-labelledby` on sections, real `<button>`s with `aria-pressed` for chips, `role="status"`/`role="alert"` for loading/error, labelled form fields with `aria-invalid` + `aria-describedby`, decorative pieces `aria-hidden` | various |
 | Motion | CSS-only animations, all inside `@media (prefers-reduced-motion: no-preference)` (see section E) | `styles.scss` + component styles |
 
@@ -34,64 +34,119 @@ The web app is the part people see. It is one page split into sections: header, 
 1. The browser loads `index.html`, which contains `<app-root>`.
 2. `main.ts` calls `bootstrapApplication(App, appConfig)`.
 3. `appConfig` registers `HttpClient` (needed by `httpResource` and the contact form).
-4. `App` renders `app.html` (header, footer, `<router-outlet>`). The router sees the address `/` and puts `Home` into the outlet. Experience and Skills start their API requests straight away; Projects waits behind a **placeholder**.
+4. `App` renders `app.html`, which is only `<router-outlet>`. The router sees `/`, puts `PublicLayout` (header, `<main>`, footer) into it, and `Home` into the layout's own outlet. Experience and Skills start their API requests straight away; Projects waits behind a **placeholder**.
 5. When the placeholder scrolls near the viewport, Angular downloads the Projects code and renders it. "Prefetch on idle" downloads that code in the background earlier, as soon as the browser is free.
 
 ## B. Folder-by-folder
 
+### The architecture in one picture
+**Feature-based, standalone Angular** (no NgModules), reorganised on 9 Nov 2026 after a review of the whole `web/` folder. Four areas, each with one clear job:
+
 ```text
 web/src/
-├── index.html            page shell, <title>, fonts, favicon links
-├── main.ts               bootstraps the app
-├── styles.scss           tokens + shared helpers (.btn, .lift, .arrow, .reveal, .pop, .stagger …)
+├── index.html · main.ts · styles.scss
+├── environments/          apiBaseUrl '/api' (dev + prod), swapped by angular.json fileReplacements
 └── app/
-    ├── app.ts / .html / .scss     root component: the frame (header, <router-outlet>, footer)
-    ├── app.config.ts              providers (HttpClient, router)
-    ├── app.routes.ts              pages: '' → Home, '**' → ''
-    ├── app.spec.ts                unit tests for the frame (2)
-    ├── pages/home/                Home page: the sections in order (+ home.spec.ts: headline test)
-    ├── project.ts                 interfaces for /projects JSON
-    ├── experience.ts              interface for /experience JSON
-    ├── skill.ts                   interface for /skills JSON
-    ├── contact.ts                 what the form sends + the 400 reply
-    ├── core/
-    │   ├── api.config.ts          API_BASE_URL injection token
-    │   ├── projects.service.ts    GET projects + categories
-    │   ├── experience.service.ts  GET experience
-    │   ├── skills.service.ts      GET skills
-    │   └── contact.service.ts     POST contact
-    ├── layout/
-    │   ├── header/                sticky header, numbered nav, scroll progress bar
-    │   └── footer/                copyright + tech line
-    ├── shared/
-    │   └── section-heading/       "01. Title ────" heading used by sections
-    └── sections/
-        ├── hero/                  "Hi, my name is", typing headline, photo, Download CV
-        ├── impact-strip/          four headline numbers
-        ├── expertise/             "What I do" cards
-        ├── projects/              projects list + category chips
-        ├── experience/            timeline + recognition/education cards
-        ├── skills/                skill groups as "folders" with chips
-        └── contact/               "Let's talk." + contact form
+    ├── app.ts · app.html          ROOT: only <router-outlet>. The router picks the frame
+    ├── app.config.ts              providers: router, HttpClient + authInterceptor
+    ├── app.routes.ts              '' → PublicLayout → Home · 'admin' → lazy admin routes · '**' → ''
+    ├── app.spec.ts                1 test: the app is created
+    │
+    ├── core/                      APP-WIDE INFRASTRUCTURE: no UI, used once, injectable everywhere
+    │   ├── api/api.config.ts        API_BASE_URL token ('/api')
+    │   └── auth/                    auth.service.ts · auth.interceptor.ts · admin.guard.ts · auth.model.ts
+    │
+    ├── layouts/                   PAGE FRAMES, chosen by the router
+    │   ├── public-layout/           skip link + header + <main><router-outlet/></main> + footer (+ spec: nav links)
+    │   │   ├── header/                sticky header, numbered nav, scroll progress bar
+    │   │   └── footer/                copyright + tech line
+    │   └── admin-layout/            admin top bar (Posts · View site · email · Log out) + <router-outlet/>
+    │
+    ├── shared/                    REUSABLE BUILDING BLOCKS: no data, no app logic
+    │   ├── ui/section-heading/      "01. Title ────" heading used by sections
+    │   └── styles/forms.scss        field / input / error styles (@use)
+    │
+    └── features/                  ONE FOLDER PER FEATURE: component + service + model together
+        ├── home/                    home.ts/.html/.scss/.spec.ts (headline test) — the sections in order
+        │   └── sections/
+        │       ├── hero/ · impact-strip/ · expertise/      static content
+        │       ├── projects/       list + chips · projects.service.ts · project.model.ts
+        │       ├── experience/     timeline · experience.service.ts · experience.model.ts
+        │       ├── skills/         skill "folders" · skills.service.ts · skill.model.ts
+        │       └── contact/        form + WhatsApp · contact.service.ts · contact.model.ts
+        └── admin/                 LAZY (loadChildren): admin.routes.ts · login-page/ · posts-page/
 ```
+
+**Routing with layouts:** instead of one frame that hides its header on some pages, each group of pages has its own frame:
+```ts
+{ path: '', component: PublicLayout, children: [ { path: '', component: Home } ] },          // + /blog later
+{ path: 'admin', loadChildren: () => import('@features/admin/admin.routes') },               // uses AdminLayout
+```
+
+**Path aliases** (`web/tsconfig.json` → `paths`): `@core/*`, `@shared/*`, `@layouts/*`, `@features/*`. Imports **across** areas use them (`import { AuthService } from '@core/auth/auth.service'`); imports **inside** one feature or layout stay relative (`./projects.service`).
+
+### What each area is for
+
+| Area | Put here | Never put here | Examples |
+|---|---|---|---|
+| `core/` | services and infrastructure the **whole app** needs **once**: config, auth state, interceptors, guards | components, feature data | `api.config.ts`, `auth.service.ts`, `auth.interceptor.ts`, `admin.guard.ts` |
+| `layouts/` | **frames** around pages: header, footer, nav bars, a `<router-outlet>` | page content, data services | `public-layout/` (+ header, footer), `admin-layout/` |
+| `shared/` | **reusable** pieces with no data and no app logic, used by 2+ features | anything that calls the API or knows a feature | `section-heading`, `forms.scss`, later a Markdown pipe |
+| `features/<name>/` | everything **one feature** needs: pages, sections, its service, its models, its routes | things other features reuse (→ `shared/`) | `home/` (+ sections), `admin/` |
+
+### Where does a new file go? (decision guide)
+1. **Is it about one feature** (a page, a section, that feature's API calls or types)? → `features/<feature>/`, next to the component that uses it. *Most new files land here.*
+2. **Is it a frame around pages** (header, sidebar, top bar)? → `layouts/`.
+3. **Is it reusable UI or a helper with no data**, used (or clearly about to be used) by **two or more** features? → `shared/` (`ui/`, `styles/`, and `pipes/` / `directives/` / `utils/` **when the first one exists**).
+4. **Is it app-wide infrastructure**, created once and used everywhere (config, auth, a global interceptor)? → `core/<concern>/`.
+5. **Not sure?** Start in the feature. Move it to `shared/` the day a second feature needs it.
+
+| New file | Goes to |
+|---|---|
+| the admin posts table (6b) | `features/admin/posts-page/` |
+| the post editor (6c) | `features/admin/post-editor-page/` |
+| the admin's `admin-posts.service.ts` + `post.model.ts` | `features/admin/` (shared by its pages) |
+| a Markdown → HTML pipe (editor preview + public blog) | `shared/pipes/markdown.pipe.ts` |
+| the public `/blog` pages (Milestone 7) | `features/blog/` (lazy, inside `PublicLayout`) |
+| a global "server error" interceptor | `core/http/` (created then) |
+
+### Conventions
+- **Standalone components** only; `ChangeDetectionStrategy.OnPush`; signals for state; `inject()` for dependencies.
+- **File names** say the type: `*.service.ts`, `*.model.ts`, `*.guard.ts`, `*.interceptor.ts`, `*.routes.ts`, `*.spec.ts`. Components: `name.ts / .html / .scss`. Routed pages in the admin end in `-page` (`login-page`, `posts-page`).
+- **No folders by file type** (`services/`, `guards/`, `components/`): the Angular style guide groups by feature; the file name already says the type.
+- **No empty folders for later:** a folder is created with its first file.
+- **Lazy loading:** whole areas that most visitors don't need (`admin/`, later `blog/`) are `loadChildren`; inside them, pages are `loadComponent`.
+- Every file starts with an "ABOUT THIS FILE" header.
+
+### Why this structure (and not more folders)
+- **Find by feature:** "everything about projects" is one folder; deleting or moving a feature is one folder.
+- **Clear boundaries:** `core` = infrastructure, `layouts` = frames, `shared` = reusable, `features` = business. A review question like "where's the login logic?" has one answer (`core/auth`).
+- **Scales to Admin and Blog** without changes: each is one more `features/` folder, lazy-loaded.
+- **Not over-engineered:** suggestions like `core/auth/guards/` + `core/auth/services/` (one file each), `core/services/` (a dumping ground) or empty `shared/directives|pipes|utils/` were reviewed and **not** adopted; projects and contact stay sections of Home until they get their own pages.
 
 ### Key files
 
 | File | Responsibility | Used by |
 |---|---|---|
-| `core/api.config.ts` | `API_BASE_URL` token = `environment.apiBaseUrl` = `'/api'` (forwarded to the API by `proxy.conf.mjs` locally and `vercel.json` live) | every service |
-| `core/projects.service.ts` | `loadProjects(category)` and `loadCategories()`, each an `httpResource` | Projects |
-| `core/experience.service.ts` | `loadExperiences()` → `httpResource<Experience[]>` | Experience |
-| `core/skills.service.ts` | `loadSkillGroups()` → `httpResource<SkillGroup[]>` | Skills |
-| `core/contact.service.ts` | `send(body)` → `HttpClient.post` (a one-off action, so not `httpResource`) | Contact |
-| `shared/section-heading/section-heading.ts` | Inputs `index`, `title`, `headingId` (all required); draws "01. Title" plus a line | Expertise, Projects, Experience, Skills |
-| `layout/header/header.ts` | `allNavItems` with a `ready` flag; numbers them "01".."04"; `scrolled` signal adds a shadow | `App` |
-| `sections/hero/hero.ts` | `cv` object (path, download name) | `App` |
-| `sections/impact-strip/impact-strip.ts` | `stats` with an `outlined` flag | `App` |
-| `sections/expertise/expertise.ts` | `areas` with a `tag` (shown as `// tag`), title and description | `App` |
-| `sections/experience/experience.ts` | `roles` from the API; `highlights` (recognition, education) static | `App` |
-| `sections/skills/skills.ts` | `groups` from the API; `folders` = the same groups plus a label like `state-and-reactivity/` | `App` |
-| `sections/contact/contact.ts` | Reactive form, `status` signal, server field errors | `App` |
+| `core/api/api.config.ts` | `API_BASE_URL` token = `environment.apiBaseUrl` = `'/api'` (forwarded to the API by `proxy.conf.mjs` locally and `vercel.json` live) | every service |
+| `core/auth/auth.service.ts` | `currentUser` signal; `login`, `restore` (GET `/me`), `refreshTokens`, `logout`, `clearUser`. Never reads tokens (httpOnly cookies) | login page, guard, interceptor, admin layout |
+| `core/auth/auth.interceptor.ts` | functional interceptor: 401 on `/api/admin` or `/api/auth/me` → one shared `POST /api/auth/refresh` → retry; refresh fails → clear user (+ go to `/admin/login` for admin calls) | `app.config.ts` (`withInterceptors`) |
+| `core/auth/admin.guard.ts` | functional `CanMatch`: `restore()` → true, or a redirect to `/admin/login?returnUrl=…` | `features/admin/admin.routes.ts` |
+| `features/home/sections/projects/projects.service.ts` | `loadProjects(category)` and `loadCategories()`, each an `httpResource` | Projects |
+| `features/home/sections/experience/experience.service.ts` | `loadExperiences()` → `httpResource<Experience[]>` | Experience |
+| `features/home/sections/skills/skills.service.ts` | `loadSkillGroups()` → `httpResource<SkillGroup[]>` | Skills |
+| `features/home/sections/contact/contact.service.ts` | `send(body)` → `HttpClient.post` (a one-off action, so not `httpResource`) | Contact |
+| `shared/ui/section-heading/section-heading.ts` | Inputs `index`, `title`, `headingId` (all required); draws "01. Title" plus a line | Expertise, Projects, Experience, Skills |
+| `layouts/public-layout/header/header.ts` | `allNavItems` with a `ready` flag; numbers them "01".."04"; `scrolled` signal adds a shadow | `App` |
+| `features/home/sections/hero/hero.ts` | `cv` object (path, download name) | `Home` |
+| `features/home/sections/impact-strip/impact-strip.ts` | `stats` with an `outlined` flag | `Home` |
+| `features/home/sections/expertise/expertise.ts` | `areas` with a `tag` (shown as `// tag`), title and description | `Home` |
+| `features/home/sections/experience/experience.ts` | `roles` from the API; `highlights` (recognition, education) static | `Home` |
+| `features/home/sections/skills/skills.ts` | `groups` from the API; `folders` = the same groups plus a label like `state-and-reactivity/` | `Home` |
+| `features/home/sections/contact/contact.ts` | Reactive form, `status` signal, server field errors | `Home` |
+| `features/admin/login-page/login-page.ts` | Reactive form; `auth.login()`; API message on 401/429; returns only to `/admin/…` (no open redirect) | `admin.routes.ts` |
+| `layouts/admin-layout/admin-layout.ts` | Top bar + `<router-outlet>`; Log out → `/admin/login` | `features/admin/admin.routes.ts` (lazy) |
+| `layouts/public-layout/public-layout.ts` | Skip link + header + `<main>` + `<router-outlet>` + footer | `app.routes.ts` |
 
 ## C. Features
 
@@ -173,7 +228,7 @@ Dates arrive as text such as `"2024-05-01T00:00:00.000Z"` (JSON has no date type
 
 ## D. A frontend request, end to end
 
-`web/src/app/core/projects.service.ts`:
+`web/src/app/features/home/sections/projects/projects.service.ts`:
 
 ```ts
 loadProjects(category: () => string | null) {

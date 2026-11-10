@@ -1,0 +1,17 @@
+<!--
+  ABOUT THIS FILE: admin-layout.html
+  Admin top bar + the current admin page.
+-->
+<header class="bar">
+  <span class="bar__brand mono-label">// admin</span>
+  <nav class="bar__nav" aria-label="Admin">
+    <a routerLink="/admin/posts" routerLinkActive="is-active">Posts</a>
+    <a routerLink="/">View site</a>
+  </nav>
+  <span class="bar__user">{{ auth.currentUser()?.email }}</span>
+  <button class="btn btn--outline bar__logout" type="button" (click)="logout()">Log out</button>
+</header>
+
+<main class="page" id="main">
+  <router-outlet />
+</main>

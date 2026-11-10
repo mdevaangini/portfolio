@@ -29,10 +29,10 @@ No API, no database. Failure points: none at runtime (mistakes surface at build 
 ### Step by step
 
 1. **Visitor scrolls**; the `@defer (on viewport)` placeholder in `web/src/app/app.html` enters the viewport.
-2. **Angular renders `Projects`** (`web/src/app/sections/projects/projects.ts`). Its field initializers call the service:
+2. **Angular renders `Projects`** (`web/src/app/features/home/sections/projects/projects.ts`). Its field initializers call the service:
    - `loadCategories()` → request A
    - `loadProjects(this.selectedCategory)` with `null` → request B
-3. **The service builds the request** (`web/src/app/core/projects.service.ts`): `GET /api/projects` with no params (the website's own address; the dev server or Vercel passes it on to the API).
+3. **The service builds the request** (`web/src/app/features/home/sections/projects/projects.service.ts`): `GET /api/projects` with no params (the website's own address; the dev server or Vercel passes it on to the API).
 4. **The browser sends it.** Different port, so the browser applies **CORS**.
 5. **API receives it** (`api/src/app.ts`): `cors` adds the allow header for `http://localhost:4200` → `express.json()` → `/api` → `routes.ts` → `/projects` → `projects.routes.ts` `GET "/"` → `listProjects`.
 6. **Controller validates** (`projects.controller.ts`): `limit` = 10, `offset` = 0 (defaults), no `title`, no `category`.
@@ -175,7 +175,7 @@ sequenceDiagram
 **In plain English:** this is the opposite direction. The visitor types a message; the site sends it to the server; the server checks it and saves a new row; the page says thanks.
 
 1. The visitor fills in **Name**, **Email**, **Message** and clicks **Send message**.
-2. `Contact.submit()` (`web/src/app/sections/contact/contact.ts`): if the form is invalid, every field shows its error and **nothing is sent**.
+2. `Contact.submit()` (`web/src/app/features/home/sections/contact/contact.ts`): if the form is invalid, every field shows its error and **nothing is sent**.
 3. Otherwise `status` becomes `'sending'` (button disabled, "Sending…") and `ContactService.send(...)` calls `HttpClient.post('/api/contact', body)`.
 4. API: `cors` → `express.json()` turns the JSON text into `req.body` → `/api/contact` → `contactRouter.post("/")` → `sendMessage`.
 5. Controller: trims each field; if the hidden `website` field is filled (a bot), answers 201 without saving; otherwise checks every rule and collects all problems.

@@ -1,0 +1,53 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: forms.scss
+// Shared form styles (fields, inputs, error messages), same look as the contact form.
+// Pulled into a component's .scss with @use, e.g. the admin login page.
+// ──────────────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+input,
+textarea {
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-line-strong);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 16px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent-text);
+    box-shadow: 0 0 0 3px rgba(180, 83, 26, 0.15);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-error);
+  }
+}
+
+.field__error {
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+.form-error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+}

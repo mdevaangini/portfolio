@@ -57,7 +57,7 @@ Reading the diagram, top to bottom:
 | API ↔ database | PostgreSQL wire protocol via `pg`, wrapped by `@prisma/adapter-pg` |
 | Data format | JSON; field names in **camelCase** (`displayOrder`), DB columns in **snake_case** (`display_order`); Prisma maps between them |
 | Dates | Stored as real `DATE` / `TIMESTAMP` columns; sent as ISO text (`"2024-05-01T00:00:00.000Z"`); formatted by Angular's `date` pipe |
-| Configuration | `api/.env` → `api/src/config/env.ts`; web API address in `web/src/app/core/api.config.ts` |
+| Configuration | `api/.env` → `api/src/config/env.ts`; web API address in `web/src/app/core/api/api.config.ts` |
 
 ## Where validation, logic and persistence happen
 

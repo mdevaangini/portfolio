@@ -1,17 +1,15 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: app.ts
-// Root component: the frame every page shares (header, footer) plus the
-// <router-outlet> where the current page appears. Pages are listed in app.routes.ts.
+// Root component: just a <router-outlet>. Which frame (layout) a page gets
+// is decided by the routes in app.routes.ts, not here.
 // ──────────────────────────────────────────────────────────────────────
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Header } from './layout/header/header';
-import { Footer } from './layout/footer/footer';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Header, Footer],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

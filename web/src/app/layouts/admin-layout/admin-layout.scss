@@ -1,0 +1,42 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: admin-layout.scss
+// The admin top bar and page width.
+// ──────────────────────────────────────────────────────────────────────
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 14px max(16px, 4vw);
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-surface);
+}
+
+.bar__nav {
+  display: flex;
+  gap: 16px;
+
+  a {
+    color: var(--color-text);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  a.is-active,
+  a:hover {
+    color: var(--color-accent-text);
+  }
+}
+
+.bar__user {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}

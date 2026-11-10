@@ -622,7 +622,45 @@ Exact stopping point (2026-10-25):
   DB mapping, known gaps (error handler always 500 → bad JSON = 500; no
   Helmet; admin not on Neon …), interview Q&A). Linked from docs README +
   PROJECT_MAP.md. Keep it updated when APIs change.
-  NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
+  M6 decisions (2026-11-09, mine accepted): AuthService with a signal (no
+  NgRx); interceptor reacts to 401 → refresh once → retry (shared refresh);
+  lazy admin routes + CanMatch guard. Editor preview: marked + sanitizer.
+  6a WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: web/src/app/admin.ts
+  (AdminUser, AuthResponse); core/auth.service.ts (currentUser signal, login,
+  restore via /me, refreshTokens, logout, clearUser); core/auth.interceptor.ts
+  (401 on /api/admin or /api/auth/me → shared refresh → retry; refresh fails
+  → clearUser, admin calls → /admin/login?returnUrl); core/admin.guard.ts
+  (CanMatch, restore → true | UrlTree login); admin/admin.routes.ts (login,
+  '' layout canMatch guard → posts); admin/admin-forms.scss (shared form
+  styles via @use); admin/login-page (form, returnUrl only /admin/*,
+  API message for 401/429, status 0 msg); admin/admin-layout (top bar:
+  Posts, View site, email, Log out); admin/posts-page (placeholder);
+  app.config withInterceptors; app.routes 'admin' loadChildren; app.ts/html:
+  isAdminArea signal hides site header/footer on /admin.
+  2026-11-09 REFACTOR (her request: real-company structure): web/src/app is
+  now FEATURE-BASED: core/{api/api.config.ts, auth/{auth.service,
+  auth.interceptor, admin.guard, auth.model}, layout/{header,footer}};
+  shared/{ui/section-heading, styles/forms.scss}; features/{home (+
+  sections/*, each with its .service.ts + .model.ts), admin (lazy:
+  admin.routes, login-page, admin-layout, posts-page)}. Path aliases in
+  web/tsconfig.json: @core/*, @shared/*, @features/* (cross-area imports
+  use aliases; inside a feature imports stay relative). ngc app+spec OK.
+  Docs 02/03/06/08/09, PROJECT_MAP.md and the published map updated.
+  RULE: new blog files go in features/blog/; shared things in shared/.
+  2026-11-09 ARCHITECTURE REVIEW (her brief; approved): added layouts/
+  (public-layout with header/footer + spec for nav links; admin-layout moved
+  from features/admin) → app.html is only <router-outlet>, isAdminArea
+  removed; routes: '' → PublicLayout children [Home]; admin lazy uses
+  @layouts/admin-layout. Alias @layouts/*. Rejected (with reasons, in docs
+  03): core/auth/guards|services subfolders, core/http/ (until a 2nd
+  interceptor), core/services/, empty shared/pipes|directives|utils,
+  features/projects|contact (stay Home sections), admin dashboard/projects.
+  Kept login-page/posts-page names (folder = file = LoginPage class).
+  Docs 03 "B. Folder-by-folder" rewritten: areas table, "where does a new
+  file go?" guide, conventions, why. ngc app+spec OK.
+  NEXT: user tests 6a + refactor in the browser → commit → 6b posts table
+  → 6c editor.
+  (old) NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
   posts table, editor) — problem → options → she decides.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
   /refresh with rotation, logout), then B3 (requireAdmin + /me via JWT).
@@ -687,6 +725,17 @@ E. USER REQUIREMENTS AND PREFERENCES (follow strictly)
     then a file-by-file walkthrough with the real lines; then the test.
     Never assume she knows backend/browser behaviour (e.g. that the backend
     sets cookies via Set-Cookie and the browser sends them automatically).
+  - FUTURE DELIVERABLE (requested 2026-11-10): a FRONTEND handbook like
+    docs/14-backend-api-handbook.md, e.g. docs/15-frontend-handbook.md,
+    written in the same plain style as the chat explanations (flow first,
+    who does what, one line per file, Angular analogies, real code
+    snippets), so an OUTSIDE reader understands the whole Angular app:
+    architecture (core/layouts/shared/features + decision guide), routing +
+    layouts + lazy loading, auth on the frontend (AuthService signal,
+    guard, interceptor, cookies, reload/refresh flows), data access
+    (httpResource for reads vs HttpClient for actions, one service per
+    endpoint group), each feature/page, forms + validation, styling, tests,
+    interview Q&A. Write it after Milestone 6 (or 7), and keep it updated.
   - EVERY question the user asks (doubts, "why", "what is") must be added
     with a short answer to docs/12-my-questions-faq.md (created 2026-10-28
     at her request) and, where it fits, to the detailed doc page too.

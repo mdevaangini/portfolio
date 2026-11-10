@@ -1,0 +1,42 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: experience.ts
+// Experience section (03): logic + data for this part of the page.
+// Jobs come from the API (GET /api/experience); recognition + education are static.
+// ──────────────────────────────────────────────────────────────────────
+
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ExperienceService } from './experience.service';
+import { SectionHeading } from '@shared/ui/section-heading/section-heading';
+
+interface Highlight {
+  label: string;
+  title: string;
+  text: string;
+}
+
+@Component({
+  selector: 'app-experience',
+  imports: [SectionHeading, DatePipe],
+  templateUrl: './experience.html',
+  styleUrl: './experience.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Experience {
+  /** Jobs come from the API (GET /api/experience), newest first. */
+  protected readonly roles = inject(ExperienceService).loadExperiences();
+
+  /** Recognition and education stay here for now: two small, fixed cards. */
+  protected readonly highlights: Highlight[] = [
+    {
+      label: 'Recognition',
+      title: 'Employee of the Month, 4 times',
+      text: 'For performance, attention to detail and delivery excellence at PureSoftware / Happiest Minds.',
+    },
+    {
+      label: 'Education',
+      title: 'B.Tech, Electronics & Communication Engineering',
+      text: 'Thapar University, Patiala · 2018 – 2022',
+    },
+  ];
+}

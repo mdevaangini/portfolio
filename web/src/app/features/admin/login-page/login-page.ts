@@ -5,11 +5,11 @@
 // this page only shows the result.
 // ──────────────────────────────────────────────────────────────────────
 
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '@core/auth/auth.service';
+import { apiErrorMessage } from '../api-error';
 
 @Component({
   selector: 'app-login-page',
@@ -55,7 +55,7 @@ export class LoginPage {
       next: () => void this.router.navigateByUrl(this.returnUrl()),
       error: (error: unknown) => {
         this.sending.set(false);
-        this.errorMessage.set(this.messageFor(error));
+        this.errorMessage.set(apiErrorMessage(error));
       },
     });
   }
@@ -64,14 +64,5 @@ export class LoginPage {
   private returnUrl(): string {
     const wanted = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
     return wanted.startsWith('/admin/') && !wanted.startsWith('/admin/login') ? wanted : '/admin/posts';
-  }
-
-  /** API answer → a message for the box. 401 and 429 already come with a good text from the API. */
-  private messageFor(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      if (error.status === 0) return "Can't reach the server. Is the API running?";
-      if (typeof error.error?.error === 'string' && error.status < 500) return error.error.error;
-    }
-    return 'Something went wrong. Please try again.';
   }
 }

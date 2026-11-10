@@ -658,8 +658,18 @@ Exact stopping point (2026-10-25):
   Kept login-page/posts-page names (folder = file = LoginPage class).
   Docs 03 "B. Folder-by-folder" rewritten: areas table, "where does a new
   file go?" guide, conventions, why. ngc app+spec OK.
-  NEXT: user tests 6a + refactor in the browser → commit → 6b posts table
-  → 6c editor.
+  6a + architecture TESTED + committed (2a4ce49).
+  6b decisions: project convention (httpResource reads, HttpClient actions);
+  I write it, she learns from it.
+  6b WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: features/admin/
+  post.model.ts (PostStatus, PostTag, AdminPostSummary, AdminPost,
+  AdminPostList); admin-posts.service.ts (loadPosts httpResource; publish,
+  unpublish, delete via HttpClient); api-error.ts (apiErrorMessage: status 0
+  → can't reach; <500 → error + field messages; login page now uses it);
+  posts-page (table: title+slug, status pill, tags, last edited, actions
+  Publish/Unpublish + Delete with in-row confirm; busyId, notice signals;
+  posts.reload() after each action). Edit/New post come with 6c.
+  NEXT: user tests 6b → commit → 6c editor (Markdown preview with marked).
   (old) NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
   posts table, editor) — problem → options → she decides.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,

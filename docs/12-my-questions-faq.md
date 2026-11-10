@@ -83,6 +83,12 @@ The full path of a request: Angular → `app.ts` pipeline (CORS, JSON body, cook
 
 **3. Why am I still logged in after a reload, even after deleting `access_token`?** A reload wipes Angular's memory (the `currentUser` signal) but **cookies survive**. The guard asks `GET /api/auth/me`: with a valid `access_token` → 200 → logged in. Without it → 401 → the **interceptor** calls `POST /api/auth/refresh` (the browser sends `refresh_token`) → new cookies → it repeats `/me` → 200. Network tab: `me` 401 → `refresh` 200 → `me` 200. Delete **both** cookies → refresh fails too → login page.
 
+### The posts table (6b): `run()`, `busyId` and `exhaustMap`
+- **`run()`** writes the five steps every row action shares **once** (lock the row → clear the message → call the API → success: unlock + message + `posts.reload()` / error: unlock + message). Each action passes only what differs: the prepared request (an Observable, sent only when `run()` subscribes) and the success text. DRY: one place to change.
+- **The id travels in the URL:** `POST /api/admin/posts/5/publish`. The API finds row 5, checks the rules, and updates **the same row** (`status = PUBLISHED`, `published_at` the first time). The public API shows it because it only returns PUBLISHED, not-deleted rows.
+- **`busyId`** = the row whose request is **in progress** (set when an action starts, cleared when the API answers): its buttons are disabled and it dims, so a double click can't send two requests. **`confirmDeleteId`** = the row asking "Delete this post?".
+- **Like RxJS `exhaustMap`:** both make "the first click wins, extra clicks are ignored until it finishes". `busyId` also **shows** it (disabled button) and works per row; `exhaustMap` silently drops clicks in a stream. Real projects often use both.
+
 ### httpResource vs HttpClient: where are my API services?
 Every endpoint group has its own service, next to the component that uses it (`projects.service.ts`, `skills.service.ts`, `contact.service.ts`, `core/auth/auth.service.ts`). **Reads** use `httpResource` (Angular 19.2+): signals for `value()`, `isLoading()`, `error()`, no subscribe, reloads when its signals change. **Actions** (POST/PATCH/DELETE) use classic `HttpClient` observables. Both go through the same interceptors.
 

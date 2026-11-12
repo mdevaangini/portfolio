@@ -50,7 +50,7 @@ web/src/app/
 ├── app.ts · app.html · app.config.ts · app.routes.ts · app.spec.ts   the root (app.html = only <router-outlet>)
 ├── core/        app-wide infrastructure, no UI:  api/ (API address) · auth/ (login state, guard, interceptor)
 ├── layouts/     page frames, picked by the router: public-layout/ (+ header, footer) · admin-layout/
-├── shared/      reusable, no data:     ui/section-heading/ · styles/forms.scss
+├── shared/      reusable, no data:     ui/section-heading/ · ui/dialog/ · styles/forms.scss
 └── features/    one folder per feature: home/ (+ its sections) · admin/ (lazy) · blog/ (milestone 7)
 ```
 **Where does a new file go?** One feature → `features/<feature>/` (most files). A frame → `layouts/`. Reusable with no data, used by 2+ features → `shared/`. App-wide infrastructure → `core/`. Not sure → start in the feature. Full guide: [`docs/03` → Folder-by-folder](docs/03-frontend-documentation.md#b-folder-by-folder).
@@ -85,6 +85,7 @@ web/src/app/
 | File | What it does and why |
 |---|---|
 | `shared/ui/section-heading` | The numbered heading ("01. Title ────") reused by the sections |
+| `shared/ui/dialog/` 🆕 | The app's own **"Are you sure?" dialog** (HTML `<dialog>` + `DialogService`). `dialog.confirm({...})` returns a Promise<boolean>; `<app-dialog-host>` sits once in `app.html` and draws it. Used for "Leave without saving?" and "Delete this post?" |
 | `shared/styles/forms.scss` 🆕 | Field, input and error styles, pulled in with `@use` (admin login) |
 
 ### `features/home/`: the portfolio page

@@ -1,15 +1,16 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: app.ts
-// Root component: just a <router-outlet>. Which frame (layout) a page gets
-// is decided by the routes in app.routes.ts, not here.
+// Root component: a <router-outlet> + the shared dialog host. Which frame
+// (layout) a page gets is decided by the routes in app.routes.ts, not here.
 // ──────────────────────────────────────────────────────────────────────
 
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { DialogHost } from '@shared/ui/dialog/dialog-host';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, DialogHost],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

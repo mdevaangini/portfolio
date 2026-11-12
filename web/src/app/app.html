@@ -3,5 +3,8 @@
   The root: only a <router-outlet>. The router picks the FRAME for each page
   (app.routes.ts): PublicLayout for "/" (and the blog later), AdminLayout for
   "/admin/...". Each layout has its own header and its own <router-outlet>.
+  <app-dialog-host> is the ONE shared "Are you sure?" dialog for the whole
+  app (closed until DialogService asks something).
 -->
 <router-outlet />
+<app-dialog-host />

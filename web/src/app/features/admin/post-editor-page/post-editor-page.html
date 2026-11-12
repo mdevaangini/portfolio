@@ -1,0 +1,85 @@
+<!--
+  ABOUT THIS FILE: post-editor-page.html
+  The post editor: a top row (back link, title, status, Save), then two
+  columns: the form on the left, the live preview on the right (stacked on phones).
+-->
+<div class="top">
+  <a class="back" routerLink="/admin/posts">← All posts</a>
+  <h1>{{ isNew() ? 'New post' : 'Edit post' }}</h1>
+  @if (status(); as s) {
+    <span class="pill" [class.pill--published]="s === 'PUBLISHED'">{{ s === 'PUBLISHED' ? 'Published' : 'Draft' }}</span>
+  }
+  <button class="btn btn--navy save" type="button" (click)="save()" [disabled]="saving() || post.isLoading()">
+    {{ saving() ? 'Saving…' : isNew() ? 'Create draft' : 'Save' }}
+  </button>
+</div>
+
+@if (notice(); as n) {
+  <p [class]="n.kind === 'error' ? 'form-error' : 'notice-ok'" [attr.role]="n.kind === 'error' ? 'alert' : 'status'">
+    {{ n.text }}
+  </p>
+}
+
+@if (!isNew() && post.isLoading() && !post.hasValue()) {
+  <p class="muted" role="status">Loading the post…</p>
+} @else if (!isNew() && post.error()) {
+  <p class="form-error" role="alert">This post couldn't be loaded (it may have been deleted). <a routerLink="/admin/posts">Back to all posts</a></p>
+} @else {
+  <div class="editor">
+    <form class="fields" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <label class="field">
+        <span class="field__label">Title</span>
+        <input formControlName="title" [attr.aria-invalid]="errorFor('title') ? 'true' : null" aria-describedby="title-error" />
+        <span class="field__error" id="title-error">{{ errorFor('title') }}</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Slug <span class="hint">the post's address: /blog/&lt;slug&gt;</span></span>
+        <input formControlName="slug" [placeholder]="suggestedSlug() || 'made from the title'"
+               [attr.aria-invalid]="errorFor('slug') ? 'true' : null" aria-describedby="slug-error" />
+        <span class="field__error" id="slug-error">
+          {{ errorFor('slug') || (isNew() && !form.controls.slug.value ? 'Leave empty to use: ' + (suggestedSlug() || '…') : '') }}
+        </span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Excerpt <span class="hint">{{ excerptText().length }} / {{ max.excerpt }} · needed to publish</span></span>
+        <textarea rows="3" formControlName="excerpt" [attr.aria-invalid]="errorFor('excerpt') ? 'true' : null" aria-describedby="excerpt-error"></textarea>
+        <span class="field__error" id="excerpt-error">{{ errorFor('excerpt') }}</span>
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span class="field__label">Tags <span class="hint">comma-separated, max 8</span></span>
+          <input formControlName="tags" placeholder="angular, signals" [attr.aria-invalid]="errorFor('tags') ? 'true' : null" aria-describedby="tags-error" />
+          <span class="field__error" id="tags-error">{{ errorFor('tags') }}</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Cover image <span class="hint">optional https:// link</span></span>
+          <input formControlName="coverImageUrl" placeholder="https://…" [attr.aria-invalid]="errorFor('coverImageUrl') ? 'true' : null" aria-describedby="cover-error" />
+          <span class="field__error" id="cover-error">{{ errorFor('coverImageUrl') }}</span>
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field__label">Content <span class="hint">Markdown · needed to publish</span></span>
+        <textarea class="content" rows="20" formControlName="content" spellcheck="true"
+                  placeholder="## A heading&#10;&#10;Some **bold** text, a `code` word, a [link](https://angular.dev)."
+                  [attr.aria-invalid]="errorFor('content') ? 'true' : null" aria-describedby="content-error"></textarea>
+        <span class="field__error" id="content-error">{{ errorFor('content') }}</span>
+      </label>
+    </form>
+
+    <section class="preview" aria-label="Preview">
+      <p class="mono-label">// preview</p>
+      <h2 class="preview__title">{{ title() || 'Untitled post' }}</h2>
+      @if (content()) {
+        <!-- MarkdownPipe → HTML; [innerHTML] sanitizes it (no scripts can run) -->
+        <div class="prose" [innerHTML]="content() | markdown"></div>
+      } @else {
+        <p class="muted">Start writing in "Content" to see the post here.</p>
+      }
+    </section>
+  </div>
+}

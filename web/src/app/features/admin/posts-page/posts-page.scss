@@ -79,6 +79,15 @@ tr.is-busy {
   display: block;
   font-weight: 700;
   color: var(--color-ink);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-accent-text);
+  }
+}
+
+.new {
+  margin-left: auto;
 }
 
 .slug {
@@ -126,12 +135,5 @@ tr.is-busy {
 }
 
 .danger {
-  color: var(--color-error);
-}
-
-.confirm {
-  margin-right: 8px;
-  font-size: 13px;
-  font-weight: 700;
   color: var(--color-error);
 }

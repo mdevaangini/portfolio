@@ -36,3 +36,16 @@ export interface AdminPost extends AdminPostSummary {
 export interface AdminPostList {
   data: AdminPostSummary[];
 }
+
+/**
+ * What the editor sends to create (POST) or change (PATCH) a post.
+ * PATCH sends only the fields that changed. Tags are plain names: ["angular", "signals"].
+ */
+export interface PostInput {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  coverImageUrl?: string | null;
+  tags?: string[];
+}

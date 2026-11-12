@@ -669,7 +669,34 @@ Exact stopping point (2026-10-25):
   posts-page (table: title+slug, status pill, tags, last edited, actions
   Publish/Unpublish + Delete with in-row confirm; busyId, notice signals;
   posts.reload() after each action). Edit/New post come with 6c.
-  NEXT: user tests 6b → commit → 6c editor (Markdown preview with marked).
+  6b committed (a439b20).
+  6c decisions (mine): side-by-side preview; Save button + unsaved-changes
+  guard; marked in a shared pipe (+ Angular sanitizer via [innerHTML]).
+  She ran npm install marked (18.2.0) in web/.
+  6c WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]:
+  shared/pipes/markdown.pipe.ts (+ spec, 2 tests → web npm test expects 5);
+  shared/styles/prose.scss (global .prose, @use at top of src/styles.scss);
+  features/admin/post.model.ts + PostInput; admin-posts.service.ts + loadPost
+  (httpResource on an id signal, undefined for new), create (POST), update
+  (PATCH); unsaved-changes.guard.ts (CanDeactivateFn + HasUnsavedChanges,
+  window.confirm); post-editor-page (/admin/posts/new + /admin/posts/:id;
+  Reactive form with client checks mirroring Zod; effect fills form from
+  loaded post; toSignal previews; suggested slug; create → navigate to
+  /admin/posts/:id (replaceUrl, state.notice); update sends only dirty
+  fields; 400/409 fields shown under inputs; beforeunload); admin.routes
+  posts/new before posts/:id with canDeactivate; posts-page: New post
+  button, title links + Edit buttons.
+  6d (2026-11-12, her decision: option A, Delete moves to the dialog)
+  WRITTEN [ngc strict templates OK, sass OK; UNCONFIRMED]:
+  shared/ui/dialog/ (dialog.service.ts: confirm() → Promise<boolean>,
+  request signal, answer(); dialog-host.ts/.html/.scss: native <dialog>,
+  showModal in afterRenderEffect, Esc/backdrop = no, autofocus on "no";
+  dialog.service.spec.ts 2 tests → web npm test expects 7). app.html has
+  <app-dialog-host />. unsaved-changes.guard returns dialog.confirm(...)
+  (beforeunload stays browser-native). posts-page: deletePost() awaits the
+  dialog; confirmDeleteId/cancelDelete/confirmDelete removed.
+  NEXT: user tests 6c + 6d → commit → M6 recap + FRONTEND HANDBOOK
+  (docs/15) → Milestone 7 (public blog pages).
   (old) NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
   posts table, editor) — problem → options → she decides.
   (old) NEXT: B2 (rename sessions → refresh_tokens, login issues both tokens,
@@ -817,6 +844,9 @@ G. IMMEDIATE NEXT STEPS (prioritised)
   G5. Later / postponed: "My role" + metrics (ProjectMetric one-to-many),
       admin view for messages (needs auth, V2), more tests (Supertest for
       the API, HttpTestingController for services).
+  G6. Optional, after go-live: migrate the login form to Signal Forms
+      (Angular 22 `form()`) as a learning exercise; the rest stays Reactive
+      Forms for consistency (decision 2026-11-12, FAQ in docs/12).
 
 ==============================================================================
 H. IMPORTANT CONTEXT AND REFERENCES

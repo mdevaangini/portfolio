@@ -1,0 +1,87 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: prose.scss
+// How rendered Markdown looks: headings, paragraphs, lists, code, quotes,
+// images inside an element with class="prose". GLOBAL on purpose: HTML
+// inserted with [innerHTML] isn't reached by a component's own (scoped)
+// styles. Loaded once from src/styles.scss.
+// Shared: the editor preview now, the public blog post page later.
+// ──────────────────────────────────────────────────────────────────────
+
+.prose {
+  color: var(--color-text);
+  line-height: 1.7;
+  overflow-wrap: break-word;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 1.6em 0 0.5em;
+    font-family: var(--font-display);
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.45rem; }
+  h3 { font-size: 1.15rem; }
+
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre {
+    margin: 0 0 1em;
+  }
+
+  a {
+    color: var(--color-accent-text);
+  }
+
+  code {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: var(--color-peach);
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+  }
+
+  pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    border-radius: 12px;
+    background: var(--color-ink);
+    color: #f8f4ef;
+
+    code {
+      padding: 0;
+      background: none;
+      color: inherit;
+    }
+  }
+
+  blockquote {
+    padding-left: 14px;
+    border-left: 3px solid var(--color-accent);
+    color: var(--color-muted);
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+
+  th,
+  td {
+    padding: 6px 10px;
+    border: 1px solid var(--color-line-strong);
+  }
+}

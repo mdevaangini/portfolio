@@ -6,6 +6,10 @@
 // Look: "Light & Calm" (design board J): warm off-white, navy text, apricot accent.
 // ──────────────────────────────────────────────────────────────────────
 
+// How rendered Markdown looks (class="prose"): editor preview + blog posts.
+// (@use must come before any other rule in a Sass file.)
+@use 'app/shared/styles/prose';
+
 :root {
   /* Colours */
   --color-bg: #fffbf7; /* page background: warm off-white */

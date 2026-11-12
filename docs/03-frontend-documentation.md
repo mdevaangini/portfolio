@@ -64,6 +64,7 @@ web/src/
     │
     ├── shared/                    REUSABLE BUILDING BLOCKS: no data, no app logic
     │   ├── ui/section-heading/      "01. Title ────" heading used by sections
+    │   ├── ui/dialog/               shared "Are you sure?" dialog: DialogService + <app-dialog-host> (in app.html)
     │   └── styles/forms.scss        field / input / error styles (@use)
     │
     └── features/                  ONE FOLDER PER FEATURE: component + service + model together
@@ -137,6 +138,8 @@ web/src/
 | `features/home/sections/skills/skills.service.ts` | `loadSkillGroups()` → `httpResource<SkillGroup[]>` | Skills |
 | `features/home/sections/contact/contact.service.ts` | `send(body)` → `HttpClient.post` (a one-off action, so not `httpResource`) | Contact |
 | `shared/ui/section-heading/section-heading.ts` | Inputs `index`, `title`, `headingId` (all required); draws "01. Title" plus a line | Expertise, Projects, Experience, Skills |
+| `shared/ui/dialog/dialog.service.ts` | `confirm({title, message, confirmText, cancelText, danger})` → `Promise<boolean>`; the question lives in a signal; `answer(ok)` resolves it. One dialog at a time (an older question → "no") | `unsaved-changes.guard`, `posts-page` |
+| `shared/ui/dialog/dialog-host.ts` | The HTML `<dialog>`, opened with `showModal()` in an `afterRenderEffect`: backdrop, focus kept inside, Esc / click outside = "no", the "no" button is focused first | `app.html` (once) |
 | `layouts/public-layout/header/header.ts` | `allNavItems` with a `ready` flag; numbers them "01".."04"; `scrolled` signal adds a shadow | `App` |
 | `features/home/sections/hero/hero.ts` | `cv` object (path, download name) | `Home` |
 | `features/home/sections/impact-strip/impact-strip.ts` | `stats` with an `outlined` flag | `Home` |

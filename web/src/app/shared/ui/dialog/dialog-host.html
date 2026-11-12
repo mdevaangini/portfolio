@@ -1,0 +1,24 @@
+<!--
+  ABOUT THIS FILE: dialog-host.html
+  The <dialog> element is always in the page but closed (invisible) until
+  DialogService asks a question. The "no" button gets the focus first
+  (autofocus): pressing Enter by accident never deletes anything.
+-->
+<dialog #dialogEl class="dialog" aria-labelledby="dialog-title" aria-describedby="dialog-message"
+        (close)="onClose()" (click)="onDialogClick($event)">
+  @if (dialog.request(); as request) {
+    <div class="dialog__card">
+      <h2 id="dialog-title" class="dialog__title">{{ request.title }}</h2>
+      <p id="dialog-message" class="dialog__message">{{ request.message }}</p>
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--outline" autofocus (click)="dialog.answer(false)">
+          {{ request.cancelText }}
+        </button>
+        <button type="button" class="btn" [class.btn--navy]="!request.danger" [class.btn--danger]="request.danger"
+                (click)="dialog.answer(true)">
+          {{ request.confirmText }}
+        </button>
+      </div>
+    </div>
+  }
+</dialog>

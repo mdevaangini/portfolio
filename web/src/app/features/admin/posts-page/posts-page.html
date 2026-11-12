@@ -1,11 +1,12 @@
 <!--
   ABOUT THIS FILE: posts-page.html
   The admin posts table: loading / error / empty / list states, and per-row
-  actions. Delete asks for confirmation inside the row (no browser popup).
+  actions. Delete asks first in the shared dialog (DialogService).
 -->
 <div class="head">
   <h1>Posts</h1>
   <span class="count">{{ rows().length }} {{ rows().length === 1 ? 'post' : 'posts' }}</span>
+  <a class="btn btn--navy new" routerLink="/admin/posts/new">New post</a>
 </div>
 
 @if (notice(); as n) {
@@ -19,7 +20,7 @@
 } @else if (posts.error()) {
   <p class="form-error" role="alert">The posts couldn't be loaded. Is the API running?</p>
 } @else if (rows().length === 0) {
-  <p class="state">No posts yet. Create one with Postman for now; the editor arrives in step 6c.</p>
+  <p class="state">No posts yet. <a routerLink="/admin/posts/new">Write your first post</a>.</p>
 } @else {
   <div class="table-wrap">
     <table>
@@ -37,7 +38,7 @@
         @for (post of rows(); track post.id) {
           <tr [class.is-busy]="busyId() === post.id">
             <td>
-              <span class="title">{{ post.title }}</span>
+              <a class="title" [routerLink]="['/admin/posts', post.id]">{{ post.title }}</a>
               <span class="slug">/blog/{{ post.slug }}</span>
             </td>
             <td>
@@ -54,20 +55,15 @@
             </td>
             <td class="muted">{{ post.updatedAt | date: 'd MMM y, HH:mm' }}</td>
             <td class="actions">
-              @if (confirmDeleteId() === post.id) {
-                <span class="confirm">Delete this post?</span>
-                <button class="btn btn--navy small" type="button" (click)="confirmDelete(post)"
-                        [attr.aria-label]="'Yes, delete ' + post.title">Yes, delete</button>
-                <button class="btn btn--outline small" type="button" (click)="cancelDelete()">Cancel</button>
-              } @else {
-                <button class="btn btn--outline small" type="button" [disabled]="busyId() === post.id"
-                        (click)="togglePublish(post)"
-                        [attr.aria-label]="(post.status === 'PUBLISHED' ? 'Unpublish ' : 'Publish ') + post.title">
-                  {{ post.status === 'PUBLISHED' ? 'Unpublish' : 'Publish' }}
-                </button>
-                <button class="btn btn--outline small danger" type="button" [disabled]="busyId() === post.id"
-                        (click)="askDelete(post)" [attr.aria-label]="'Delete ' + post.title">Delete</button>
-              }
+              <a class="btn btn--outline small" [routerLink]="['/admin/posts', post.id]"
+                 [attr.aria-label]="'Edit ' + post.title">Edit</a>
+              <button class="btn btn--outline small" type="button" [disabled]="busyId() === post.id"
+                      (click)="togglePublish(post)"
+                      [attr.aria-label]="(post.status === 'PUBLISHED' ? 'Unpublish ' : 'Publish ') + post.title">
+                {{ post.status === 'PUBLISHED' ? 'Unpublish' : 'Publish' }}
+              </button>
+              <button class="btn btn--outline small danger" type="button" [disabled]="busyId() === post.id"
+                      (click)="deletePost(post)" [attr.aria-label]="'Delete ' + post.title">Delete</button>
             </td>
           </tr>
         }

@@ -1,0 +1,84 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: dialog-host.scss
+// Look of the shared dialog: a white card on a dimmed navy backdrop,
+// using the site's colour tokens. Buttons reuse the global .btn styles.
+// ──────────────────────────────────────────────────────────────────────
+
+.dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 0; // the inner card has the padding, so a click on <dialog> itself = the backdrop
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 24px 60px rgb(19 41 75 / 0.25);
+
+  &::backdrop {
+    background: rgb(19 41 75 / 0.45); // navy, see-through
+  }
+
+  &[open] {
+    animation: dialog-in 160ms var(--ease-out);
+  }
+}
+
+.dialog__card {
+  padding: 24px;
+}
+
+.dialog__title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--color-ink);
+}
+
+.dialog__message {
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+
+  .btn {
+    min-height: 44px;
+    padding: 0 20px;
+  }
+}
+
+.btn--danger {
+  background: var(--color-error);
+  color: #fff;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+// Phones: full-width buttons, the main action on top
+@media (max-width: 480px) {
+  .dialog__actions {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] {
+    animation: none;
+  }
+}

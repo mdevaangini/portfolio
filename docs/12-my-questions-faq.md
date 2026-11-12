@@ -86,8 +86,58 @@ The full path of a request: Angular → `app.ts` pipeline (CORS, JSON body, cook
 ### The posts table (6b): `run()`, `busyId` and `exhaustMap`
 - **`run()`** writes the five steps every row action shares **once** (lock the row → clear the message → call the API → success: unlock + message + `posts.reload()` / error: unlock + message). Each action passes only what differs: the prepared request (an Observable, sent only when `run()` subscribes) and the success text. DRY: one place to change.
 - **The id travels in the URL:** `POST /api/admin/posts/5/publish`. The API finds row 5, checks the rules, and updates **the same row** (`status = PUBLISHED`, `published_at` the first time). The public API shows it because it only returns PUBLISHED, not-deleted rows.
-- **`busyId`** = the row whose request is **in progress** (set when an action starts, cleared when the API answers): its buttons are disabled and it dims, so a double click can't send two requests. **`confirmDeleteId`** = the row asking "Delete this post?".
+- **`busyId`** = the row whose request is **in progress** (set when an action starts, cleared when the API answers): its buttons are disabled and it dims, so a double click can't send two requests. (Delete now asks in the shared dialog, see "Why our own dialog" below; the old `confirmDeleteId` in-row question is gone.)
 - **Like RxJS `exhaustMap`:** both make "the first click wins, extra clicks are ignored until it finishes". `busyId` also **shows** it (disabled button) and works per row; `exhaustMap` silently drops clicks in a stream. Real projects often use both.
+
+### Editor (6c): why signals (`toSignal`) for the title and content, not RxJS?
+The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** into a signal, and everything after that is signals:
+- the template reads `content()` / `title()` directly: no `async` pipe, no `subscribe`, no unsubscribe (toSignal cleans up itself);
+- **derived values are one line**: `suggestedSlug = computed(() => toSlug(this.title()))`;
+- works naturally with `OnPush` (signals tell Angular exactly what changed);
+- it's Angular's direction (signals, `httpResource`, Signal Forms, stable since Angular 22).
+
+**When RxJS would be the better tool:** anything about **time or async coordination**: `debounceTime(300)` before an expensive preview or an autosave, `switchMap` to cancel an old save when a new one starts, `combineLatest` of several async sources, `exhaustMap` for "first click wins". Rule of thumb: **signals for state shown on screen; RxJS for events over time.**
+
+**One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
+
+### Editor (6c): Save on a new post = create API, Save on an existing post = update (PATCH)?
+**Yes.** The address decides:
+
+| Address | Save calls | API |
+|---|---|---|
+| `/admin/posts/new` (no id) | `create()`, whole form | **POST** `/api/admin/posts`, checked by `createPostSchema`, saved as **DRAFT**, returns the new id → Angular goes to `/admin/posts/<id>` with "Draft created." |
+| `/admin/posts/5` | `update(5, …)`, only the **dirty** (changed) fields | **PATCH** `/api/admin/posts/5`, checked by `updatePostSchema` (`.partial()`), changes only those columns |
+
+PUT = replace everything; PATCH = change just these parts. **Save never publishes**: Publish is its own call (`POST /api/admin/posts/5/publish`).
+
+**Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
+
+### Why our own dialog instead of `window.confirm`? (6d, my decision: option A)
+The browser's box can't be styled, looks different in every browser and freezes the page. I chose **A: the HTML `<dialog>` element + our own `DialogService`** (no package; the browser gives the backdrop, focus trap and Esc for free). B = Angular CDK Dialog (good for big apps with many dialogs), C = a hand-made div (we'd have to build all the accessibility).
+
+**Flow:** a page or guard calls `dialog.confirm({...})` → the service puts the question in a **signal** and returns a **Promise** → `<app-dialog-host>` (once in `app.html`) sees the signal and calls `showModal()` → the user clicks Leave/Stay (Esc or click outside = Stay) → `answer(true/false)` resolves the Promise → the caller continues. The guard just returns that Promise: **guards may return a Promise, and the router waits**.
+
+**Where:** "Leave without saving?" (guard) and "Delete this post?" (posts page). Rule: **dialogs are for decisions**; "Saved" / errors stay small notices.
+
+**One limit:** closing or reloading the tab (`beforeunload`) can **only** show the browser's own box. Browsers forbid custom dialogs there so sites can't trap people.
+
+**Interview line:** *"I built one shared confirm dialog on the native `<dialog>` element: a root service holds the question in a signal and returns a Promise, a single host component renders it. Guards return that Promise. In a larger app I'd use CDK Dialog."*
+
+### Reactive Forms or Signal Forms for this project?
+**Decision: keep Reactive Forms** (contact, login, editor). Signal Forms (`form()` from `@angular/forms/signals`) are a public API since Angular 22.0 (checked in my installed 22.2), so they are a real option, but:
+- **jobs and interviews:** most company codebases use Reactive Forms;
+- **consistency:** one form system in one small app is easier to read; mixing two is a typical review comment;
+- the editor already gets the signal benefits through `toSignal()` + `computed()`.
+
+| | Reactive Forms | Signal Forms |
+|---|---|---|
+| Building blocks | `FormGroup` / `FormControl`, `Validators`, `valueChanges` (Observable) | a `signal` holds the data; `form(model, rules)` builds the fields |
+| Reading values | `.value`, or `toSignal(valueChanges)` | already signals |
+| Maturity | years, everywhere | new (Angular 22) |
+
+**Optional exercise after go-live:** migrate the **login form** (2 fields, simple rules) to Signal Forms to compare them.
+
+**Interview line:** *"Reactive Forms are the mature standard most teams use; Signal Forms, stable since Angular 22, make form state signals natively. In an existing app I'd stay consistent and migrate gradually, starting with simple forms like login."*
 
 ### httpResource vs HttpClient: where are my API services?
 Every endpoint group has its own service, next to the component that uses it (`projects.service.ts`, `skills.service.ts`, `contact.service.ts`, `core/auth/auth.service.ts`). **Reads** use `httpResource` (Angular 19.2+): signals for `value()`, `isLoading()`, `error()`, no subscribe, reloads when its signals change. **Actions** (POST/PATCH/DELETE) use classic `HttpClient` observables. Both go through the same interceptors.

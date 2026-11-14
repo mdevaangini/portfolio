@@ -21,3 +21,7 @@ api/_prisma-backup/
 # Editor and operating-system clutter
 .DS_Store
 Thumbs.db
+
+# Copies the Claude app saves when it sends me a file in the chat
+# (the real documents live in docs/)
+Claude outputs/

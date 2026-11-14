@@ -100,6 +100,9 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### "Latest writing" on Home: how many posts? Is there pagination?
+**At most 3, the newest; no pagination, no tag chips.** It's a teaser: `loadPosts(() => ({ tag: null, page: 1, pageSize: 3 }))` → `GET /api/posts?limit=3&offset=0` (the API sorts newest first). 1 post → 1 card, 0 → the section is hidden. A new post appears first and the oldest of the three drops off. Filters and pages live only on `/blog` ("All posts →"). To show more, change `pageSize`. It appears only when you scroll near the bottom (`@defer on viewport`).
+
 ### `withInMemoryScrolling()`: what problem does it solve? (the easy version)
 **Picture:** a normal website gives you a **new sheet of paper** for every page, so you start at the top. Angular uses **one whiteboard**: it wipes and redraws the content, but your scroll position (how far down you are) **stays where it was**. That causes three problems:
 1. **A new page opens in the middle** (you clicked the 8th post far down the list) → `scrollPositionRestoration: 'enabled'` = "new page → go to the top".

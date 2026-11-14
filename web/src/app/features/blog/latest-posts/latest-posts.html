@@ -1,0 +1,28 @@
+<!--
+  ABOUT THIS FILE: latest-posts.html
+  Only drawn when there is at least one post; otherwise nothing at all.
+  Each card's title link is stretched over the whole card.
+-->
+@if (cards().length) {
+  <section class="latest" id="writing" aria-labelledby="writing-title">
+    <div class="container latest__inner">
+      <app-section-heading class="reveal" index="05" title="Latest writing" headingId="writing-title" />
+
+      <div class="grid">
+        @for (post of cards(); track post.slug) {
+          <article class="card lift reveal">
+            <time class="mono-label" [attr.datetime]="post.publishedAt">{{ post.publishedAt | date: 'd MMM y' }}</time>
+            <h3 class="card__title">
+              <a class="card__link" [routerLink]="['/blog', post.slug]">{{ post.title }}</a>
+            </h3>
+            @if (post.excerpt) {
+              <p class="card__excerpt">{{ post.excerpt }}</p>
+            }
+          </article>
+        }
+      </div>
+
+      <a class="all arrow" routerLink="/blog">All posts <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+}

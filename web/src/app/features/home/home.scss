@@ -4,6 +4,10 @@
 // ──────────────────────────────────────────────────────────────────────
 
 /* Reserves space for a deferred section so the page doesn't jump when it loads */
+.deferred-marker {
+  height: 1px; // just a spot for "on viewport" to watch; the section may stay empty
+}
+
 .deferred-placeholder {
   min-height: 900px;
   background: var(--color-surface);

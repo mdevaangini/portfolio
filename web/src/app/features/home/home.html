@@ -1,7 +1,7 @@
 <!--
   ABOUT THIS FILE: features/home/home.html
-  The ORDER of the sections on the home page. Projects loads lazily with
-  @defer (its code + API call only start when you scroll near it).
+  The ORDER of the sections on the home page. Projects and Latest posts load
+  lazily with @defer (their code + API call only start when you scroll near them).
 -->
 <app-hero />
 <app-impact-strip />
@@ -20,4 +20,14 @@
 
 <app-experience />
 <app-skills />
+
+<!--
+  "05 · Latest writing" (from features/blog): its code and its API call
+  only start when this spot nears the screen. With no posts it shows nothing.
+-->
+@defer (on viewport; prefetch on idle) {
+  <app-latest-posts />
+} @placeholder {
+  <div class="deferred-marker"></div>
+}
 <app-contact />

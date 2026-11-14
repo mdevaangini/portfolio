@@ -75,7 +75,7 @@ web/src/
         │       ├── experience/     timeline · experience.service.ts · experience.model.ts
         │       ├── skills/         skill "folders" · skills.service.ts · skill.model.ts
         │       └── contact/        form + WhatsApp · contact.service.ts · contact.model.ts
-        ├── blog/                  LAZY (loadChildren, inside PublicLayout): blog.routes.ts · blog.service.ts · blog.model.ts · blog-list-page/
+        ├── blog/                  LAZY (loadChildren, inside PublicLayout): blog.routes.ts · blog.service.ts · blog.model.ts · blog-list-page/ · blog-post-page/ · latest-posts/ (placed by Home in @defer)
         └── admin/                 LAZY (loadChildren): admin.routes.ts · login-page/ · posts-page/
 ```
 

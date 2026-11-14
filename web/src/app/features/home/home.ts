@@ -13,10 +13,11 @@ import { Hero } from './sections/hero/hero';
 import { ImpactStrip } from './sections/impact-strip/impact-strip';
 import { Projects } from './sections/projects/projects';
 import { Skills } from './sections/skills/skills';
+import { LatestPosts } from '@features/blog/latest-posts/latest-posts';
 
 @Component({
   selector: 'app-home',
-  imports: [Hero, ImpactStrip, Expertise, Projects, Experience, Skills, Contact],
+  imports: [Hero, ImpactStrip, Expertise, Projects, Experience, Skills, LatestPosts, Contact],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

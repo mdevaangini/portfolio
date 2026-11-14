@@ -1,0 +1,92 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: latest-posts.scss
+// "05 · Latest writing" on Home: up to 3 small post cards in a row (one
+// column on phones). Hover lift and reveal come from the global styles.
+// ──────────────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+}
+
+.latest {
+  border-top: 1px solid var(--color-line);
+}
+
+.latest__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-block: 96px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px;
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+
+.card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+// The title link covers the whole card: click anywhere, one link for screen readers
+.card__link {
+  color: var(--color-ink);
+  text-decoration: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.card:has(.card__link:focus-visible) {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+// At most 3 lines of excerpt, so the cards stay the same height
+.card__excerpt {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+.all {
+  align-self: flex-start;
+  color: var(--color-accent-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .latest__inner {
+    padding-block: 72px;
+  }
+
+  .card {
+    padding: 22px;
+  }
+}

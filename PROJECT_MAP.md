@@ -105,6 +105,7 @@ web/src/app/
 |---|---|
 | `blog.routes.ts` | `/blog` → list page, `/blog/:slug` → article page |
 | `blog.service.ts` · `blog.model.ts` | Read-only `httpResource`s: `loadPosts(query)` (`GET /api/posts?limit&offset&tag`), `loadPost(slug)` (`GET /api/posts/:slug`), `loadTags()` (`GET /api/tags`) |
+| `latest-posts/` 🆕 | "05 · Latest writing" on **Home**: the 3 newest posts (`loadPosts` with 3 per page). Home places it inside `@defer (on viewport)`; with 0 posts or an API error it shows **nothing** |
 | `blog-post-page/` 🆕 | One article: slug as `input()`, loading / **404 "doesn't exist"** / error + Try again / the article (date, reading time, tags → filtered list, cover, `content \| markdown` in `.prose`). Sets the tab **title** and **description** (`Title`, `Meta`) and restores the description on leaving |
 | `blog-list-page/` | `/blog?tag=angular&page=2`: **the URL is the source of truth**. `tag` and `page` arrive as `input()`s (`withComponentInputBinding`); chips and Newer/Older are links that only change the URL; skeleton / error / empty / cards states |
 

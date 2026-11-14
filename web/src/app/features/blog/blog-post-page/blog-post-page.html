@@ -1,0 +1,64 @@
+<!--
+  ABOUT THIS FILE: blog-post-page.html
+  One article. Shows ONE of: a loading placeholder / "doesn't exist" (404)
+  / "couldn't be loaded" / the article itself.
+  The body is Markdown → HTML via the markdown pipe; [innerHTML] runs
+  Angular's sanitizer, so nothing in a post can run code.
+-->
+<div class="container page">
+  <a class="back" routerLink="/blog"><span aria-hidden="true">←</span> All posts</a>
+
+  @if (post.isLoading() && !post.hasValue()) {
+    <div aria-hidden="true">
+      <div class="skeleton skeleton--title"></div>
+      <div class="skeleton skeleton--body"></div>
+    </div>
+    <p class="visually-hidden" role="status">Loading the post…</p>
+  } @else if (notFound()) {
+    <div class="state">
+      <h1 class="state__title">This post doesn't exist (any more).</h1>
+      <p class="state__text">It may have been renamed or taken down.</p>
+      <a class="btn btn--navy state__button" routerLink="/blog">See all posts</a>
+    </div>
+  } @else if (post.error()) {
+    <div class="state" role="alert">
+      <p class="state__title">The post couldn't be loaded.</p>
+      <p class="state__text">Please check your connection and try again.</p>
+      <button class="btn btn--navy state__button" type="button" (click)="post.reload()">Try again</button>
+    </div>
+  } @else if (article(); as p) {
+    <article class="article" aria-labelledby="post-title">
+      <header class="article__head">
+        <p class="mono-label">
+          <time [attr.datetime]="p.publishedAt">{{ p.publishedAt | date: 'd MMM y' }}</time>
+          · {{ p.readingMinutes }} min read
+        </p>
+        <h1 class="article__title" id="post-title">{{ p.title }}</h1>
+        @if (p.excerpt) {
+          <p class="article__excerpt">{{ p.excerpt }}</p>
+        }
+        @if (p.tags.length) {
+          <ul class="article__tags" aria-label="Tags">
+            @for (t of p.tags; track t.slug) {
+              <!-- a tag leads to the list filtered by it -->
+              <li><a class="tag" routerLink="/blog" [queryParams]="{ tag: t.slug }">{{ t.name }}</a></li>
+            }
+          </ul>
+        }
+      </header>
+
+      @if (p.coverImageUrl) {
+        <img class="article__cover" [src]="p.coverImageUrl" alt="" />
+      }
+
+      <div class="prose article__body" [innerHTML]="p.content | markdown"></div>
+
+      <footer class="article__foot">
+        <a class="back" routerLink="/blog"><span aria-hidden="true">←</span> All posts</a>
+        @if (wasEdited()) {
+          <span class="mono-label">Updated <time [attr.datetime]="p.updatedAt">{{ p.updatedAt | date: 'd MMM y' }}</time></span>
+        }
+      </footer>
+    </article>
+  }
+</div>

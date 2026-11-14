@@ -10,7 +10,7 @@
 import { httpResource } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '@core/api/api.config';
-import { BlogTag, PostPage } from './blog.model';
+import { BlogPost, BlogTag, PostPage } from './blog.model';
 
 /** Which page of the list to load. `page` starts at 1. */
 export interface PostQuery {
@@ -34,6 +34,14 @@ export class BlogService {
       if (tag) params['tag'] = tag;
       return { url: `${this.baseUrl}/posts`, params };
     });
+  }
+
+  /**
+   * GET /api/posts/:slug → one published post (with its Markdown content and reading time).
+   * 404 for unknown slugs AND for drafts / deleted posts: the API never reveals drafts.
+   */
+  loadPost(slug: () => string) {
+    return httpResource<BlogPost>(() => `${this.baseUrl}/posts/${encodeURIComponent(slug())}`);
   }
 
   /** GET /api/tags → the tags used by published posts, A→Z (for the filter chips). */

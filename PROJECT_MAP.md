@@ -103,8 +103,9 @@ web/src/app/
 ### `features/blog/` 🆕: the public blog (lazy-loaded, Milestone 7)
 | File | What it does and why |
 |---|---|
-| `blog.routes.ts` | `/blog` → list page (`/blog/:slug` comes in 7b) |
-| `blog.service.ts` · `blog.model.ts` | Read-only `httpResource`s: `loadPosts(query)` (`GET /api/posts?limit&offset&tag`), `loadTags()` (`GET /api/tags`) |
+| `blog.routes.ts` | `/blog` → list page, `/blog/:slug` → article page |
+| `blog.service.ts` · `blog.model.ts` | Read-only `httpResource`s: `loadPosts(query)` (`GET /api/posts?limit&offset&tag`), `loadPost(slug)` (`GET /api/posts/:slug`), `loadTags()` (`GET /api/tags`) |
+| `blog-post-page/` 🆕 | One article: slug as `input()`, loading / **404 "doesn't exist"** / error + Try again / the article (date, reading time, tags → filtered list, cover, `content \| markdown` in `.prose`). Sets the tab **title** and **description** (`Title`, `Meta`) and restores the description on leaving |
 | `blog-list-page/` | `/blog?tag=angular&page=2`: **the URL is the source of truth**. `tag` and `page` arrive as `input()`s (`withComponentInputBinding`); chips and Newer/Older are links that only change the URL; skeleton / error / empty / cards states |
 
 The header's section links became `routerLink="/"` + `fragment`, so they work from the blog too (`withInMemoryScrolling` scrolls to the section; the header sets the scroll offset). A **blog** link stays visible on phones.

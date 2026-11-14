@@ -1,0 +1,131 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: blog-post-page.scss
+// One article: a comfortable reading width, the heading block, the cover,
+// and the footer. The article TEXT is styled by the global .prose
+// (shared/styles/prose.scss), the same as the editor preview.
+// ──────────────────────────────────────────────────────────────────────
+
+@use '../../../shared/styles/states';
+
+:host {
+  display: block;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 760px; // ~70 characters per line: easy to read
+  padding-block: 48px 96px;
+}
+
+.back {
+  align-self: flex-start;
+  color: var(--color-accent-text);
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.skeleton--title {
+  min-height: 120px;
+  margin-bottom: 20px;
+}
+
+.skeleton--body {
+  min-height: 360px;
+}
+
+.article {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.article__head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .mono-label {
+    margin: 0;
+  }
+}
+
+.article__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5.5vw, 48px);
+  line-height: 1.12;
+  color: var(--color-ink);
+}
+
+.article__excerpt {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.article__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-peach);
+  color: var(--color-accent-deep);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+}
+
+.article__cover {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 20px;
+  background: var(--color-peach);
+}
+
+.article__body {
+  font-size: 18px;
+}
+
+.article__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-line);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-block: 32px 72px;
+  }
+
+  .article__excerpt {
+    font-size: 18px;
+  }
+
+  .article__body {
+    font-size: 17px;
+  }
+}

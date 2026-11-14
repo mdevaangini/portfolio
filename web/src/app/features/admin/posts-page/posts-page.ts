@@ -28,7 +28,8 @@ export class PostsPage {
 
   /** The list, as a resource: posts.value(), posts.isLoading(), posts.error(), posts.reload(). */
   protected readonly posts = this.postsService.loadPosts();
-  protected readonly rows = computed(() => this.posts.value()?.data ?? []);
+  // hasValue() first: value() throws while the request is in its error state.
+  protected readonly rows = computed(() => (this.posts.hasValue() ? this.posts.value().data : []));
 
   /** The id of the row whose action is running (its buttons are disabled meanwhile). */
   protected readonly busyId = signal<number | null>(null);

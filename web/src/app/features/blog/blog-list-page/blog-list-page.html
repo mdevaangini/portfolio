@@ -13,7 +13,7 @@
   </header>
 
   <!-- Tag chips: shown only when at least one published post has a tag -->
-  @if (tags.value(); as tagList) {
+  @if (tags.hasValue() ? tags.value() : null; as tagList) {
     @if (tagList.length) {
       <nav class="chips" aria-label="Filter posts by tag">
         <a class="chip" routerLink="/blog" [class.chip--active]="!selectedTag()" [attr.aria-current]="!selectedTag() ? 'true' : null">

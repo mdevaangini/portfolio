@@ -720,7 +720,18 @@ Exact stopping point (2026-10-25):
   way, why, watch out, reuse, interview line) AND an entry in
   docs/16-angular-approaches.md (started: withComponentInputBinding,
   withInMemoryScrolling + index of earlier ones).
-  NEXT: she tests 7a → 7b article page → 7c latest posts → go-live.
+  7a committed baac93b (her "commit"; testing not confirmed). NOTE: baac93b
+  holds the SHORT docs/16; the full 33-entry version was rewritten
+  2026-11-14 and goes into the 7b commit.
+  7b WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: blog.service
+  loadPost(slug); blog.routes ':slug'; blog-post-page (slug input, article
+  computed via hasValue, notFound = HttpErrorResponse 404, wasEdited,
+  Title + Meta in an effect, description restored onDestroy; footer simple:
+  "← All posts", no "read next"). BUG FIX: value() throws in error state →
+  guarded with hasValue() in projects.ts/html, blog list (tags, cards),
+  posts-page rows, editor effect. Playbook entries 34-36 added.
+  NEXT: she tests 7b → commit → 7c latest posts on Home → go-live.
+  (old) NEXT: she tests 7a → 7b article page → 7c latest posts → go-live.
   (old) NEXT: user tests 6c + 6d → commit → M6 recap + FRONTEND HANDBOOK
   (docs/15) → Milestone 7 (public blog pages).
   (old) NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,

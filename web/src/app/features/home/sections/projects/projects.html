@@ -8,7 +8,7 @@
     <app-section-heading class="reveal" index="02" title="Things I've helped build" headingId="work-title" />
 
     <!-- Filter chips. Hidden until the category list has loaded -->
-    @if (categories.value(); as categoryList) {
+    @if (categories.hasValue() ? categories.value() : null; as categoryList) {
       @if (categoryList.length) {
         <div class="chips" role="group" aria-label="Filter projects by category">
           <button

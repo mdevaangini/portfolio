@@ -47,8 +47,10 @@ export class BlogListPage {
   }));
   protected readonly tags = this.blog.loadTags();
 
-  protected readonly cards = computed(() => this.posts.value()?.data ?? []);
-  protected readonly total = computed(() => this.posts.value()?.total ?? 0);
+  /** The loaded page, or null (still loading, or failed). Check hasValue() first: value() throws on errors. */
+  private readonly loaded = computed(() => (this.posts.hasValue() ? this.posts.value() : null));
+  protected readonly cards = computed(() => this.loaded()?.data ?? []);
+  protected readonly total = computed(() => this.loaded()?.total ?? 0);
   protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize)));
   /** Only the very first load shows skeletons; later loads just dim the old list. */
   protected readonly firstLoad = computed(() => this.posts.isLoading() && !this.posts.hasValue());

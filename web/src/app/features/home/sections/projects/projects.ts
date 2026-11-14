@@ -34,7 +34,8 @@ export class Projects {
    * the previous ones (dimmed) instead of flashing an empty grid.
    */
   private readonly list = linkedSignal<Project[] | undefined, Project[]>({
-    source: () => this.resource.value()?.data,
+    // hasValue() first: value() throws while the request is in its error state.
+    source: () => (this.resource.hasValue() ? this.resource.value().data : undefined),
     computation: (data, previous) => data ?? previous?.value ?? [],
   });
 

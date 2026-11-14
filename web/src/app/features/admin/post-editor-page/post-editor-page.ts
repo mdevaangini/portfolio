@@ -89,6 +89,8 @@ export class PostEditorPage implements HasUnsavedChanges {
 
     // When the post arrives from the API, put it into the form (once per load).
     effect(() => {
+      // hasValue() first: value() throws if loading failed (e.g. 404).
+      if (!this.post.hasValue()) return;
       const loaded = this.post.value();
       if (loaded) untracked(() => this.fill(loaded));
     });

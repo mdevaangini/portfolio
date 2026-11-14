@@ -100,6 +100,24 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### M7 check Q1: on `/blog?tag=angular` I click "Signals". How does the list change? (my answer, corrected ✓)
+- ✅ `tag=signals` goes into the URL's query params; the router's input binding hands it to the page; the new list replaces the old one without a reload (SPA).
+- 🔧 **Angular does not filter the list itself.** The browser only holds one page (10 posts), so local filtering would miss posts on other pages. **The API filters, in the database.**
+- **The chain:** chip = link → the URL changes first → input binding gives `tag = "signals"` → `selectedTag` (computed) changes → `httpResource` sends `GET /api/posts?tag=signals&limit=10&offset=0` → the DB returns the newest 10 Signals posts → new cards replace the old (which dimmed meanwhile).
+
+**Interview line:** *"The chip only changes the URL. The tag arrives as a signal input, and `httpResource` refetches with the new tag. Filtering and paging happen on the server, so the client never needs every post."*
+
+### M7 check Q2: someone opens `/blog/my-draft-post` (a draft). What happens? (my answer + the missing parts ✓)
+- ✅ **404 Not Found:** visitors only ever see published posts. Even better: the 404 is **identical** to an unknown slug, so nobody can tell a draft exists (no 403, which would reveal "something is here").
+- **The page shows:** "This post doesn't exist (any more)." + "See all posts", not an error box.
+- **Why no "Try again":** retrying can't help (a draft stays a draft). The page checks `notFound()` (status 404) **before** the general `error()` branch; only other errors (server down, network) get Try again.
+
+**Interview line:** *"Drafts return 404 like unknown slugs, so their existence isn't revealed. The page branches on the status: 404 → not-found page; other errors → retry."*
+
+### M7 check Q3: I publish a 4th post. What changes in "Latest writing"? How to show 6? (my answer, checked ✓)
+- The newest is first: before = 3, 2, 1 → after = **4**, 3, 2. Only the **oldest** (1) drops off. Home shows it on the next load (it asks the API once per visit; no live update).
+- **6 posts:** change `pageSize: 3` → `pageSize: 6` in `latest-posts.ts`. The grid (`auto-fit`) makes it 2 rows of 3 by itself.
+
 ### "Latest writing" on Home: how many posts? Is there pagination?
 **At most 3, the newest; no pagination, no tag chips.** It's a teaser: `loadPosts(() => ({ tag: null, page: 1, pageSize: 3 }))` → `GET /api/posts?limit=3&offset=0` (the API sorts newest first). 1 post → 1 card, 0 → the section is hidden. A new post appears first and the oldest of the three drops off. Filters and pages live only on `/blog` ("All posts →"). To show more, change `pageSize`. It appears only when you scroll near the bottom (`@defer on viewport`).
 

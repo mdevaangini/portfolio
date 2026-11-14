@@ -736,7 +736,9 @@ Exact stopping point (2026-10-25):
   or error, heading 05 "Latest writing", id="writing", stretched-link
   cards, "All posts →"); Home places it after Skills in @defer (on
   viewport; prefetch on idle) with a 1px .deferred-marker placeholder.
-  NEXT: she tests 7c → commit → M7 recap → GO-LIVE (admin on Neon,
+  7c committed 1cfd479; .gitignore "Claude outputs/" ff677b9. M7 recap +
+  3-question check done (Q1 corrected: the API filters, not Angular) → FAQ.
+  NEXT: GO-LIVE (admin on Neon,
   JWT_SECRET + CORS_ORIGIN on Vercel, first post) → security review.
   (old) NEXT: she tests 7a → 7b article page → 7c latest posts → go-live.
   (old) NEXT: user tests 6c + 6d → commit → M6 recap + FRONTEND HANDBOOK

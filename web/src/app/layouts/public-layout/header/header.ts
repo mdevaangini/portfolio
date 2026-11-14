@@ -2,9 +2,14 @@
 // ABOUT THIS FILE: header.ts
 // Header (sticky top bar): logic + data for this part of the page.
 // Holds the nav links; shows a shadow once you scroll.
+// The section links are ROUTER links to "/" + the section ("/#work"), so
+// they also work from the blog: they go back to Home, then scroll there.
+// "blog" is a normal page link, highlighted while you are on /blog.
 // ──────────────────────────────────────────────────────────────────────
 
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 interface NavItem {
   label: string;
@@ -16,6 +21,7 @@ interface NavItem {
 
 @Component({
   selector: 'app-header',
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './header.html',
   styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +44,13 @@ export class Header {
 
   /** Set to true once the Contact section exists */
   protected readonly contactReady = true;
+
+  constructor() {
+    // When the router scrolls to a section, stop it just below this sticky
+    // header (otherwise the header would cover the section's title).
+    const host = inject<ElementRef<HTMLElement>>(ElementRef);
+    inject(ViewportScroller).setOffset(() => [0, host.nativeElement.querySelector('header')?.offsetHeight ?? 0]);
+  }
 
   /** True once the page has scrolled, so the header can show a soft shadow */
   protected readonly scrolled = signal(false);

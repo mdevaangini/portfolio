@@ -1,0 +1,99 @@
+<!--
+  ABOUT THIS FILE: blog-list-page.html
+  The blog list: heading, tag chips, then ONE of: skeletons (first load) /
+  error / empty / the cards + Newer·Older. Chips and page buttons are real
+  links (<a>): they only change the URL, and the page follows the URL.
+  Each card's title link covers the whole card (see .post-card__link::after).
+-->
+<section class="container blog" aria-labelledby="blog-title">
+  <header class="blog__head">
+    <span class="mono-label">// blog</span>
+    <h1 class="blog__title" id="blog-title">Notes from building for the web</h1>
+    <p class="blog__intro">What I learn working with Angular, TypeScript and the web platform: small lessons, written down.</p>
+  </header>
+
+  <!-- Tag chips: shown only when at least one published post has a tag -->
+  @if (tags.value(); as tagList) {
+    @if (tagList.length) {
+      <nav class="chips" aria-label="Filter posts by tag">
+        <a class="chip" routerLink="/blog" [class.chip--active]="!selectedTag()" [attr.aria-current]="!selectedTag() ? 'true' : null">
+          All
+        </a>
+        @for (t of tagList; track t.slug) {
+          <a class="chip" routerLink="/blog" [queryParams]="{ tag: t.slug }"
+             [class.chip--active]="selectedTag() === t.slug" [attr.aria-current]="selectedTag() === t.slug ? 'true' : null">
+            {{ t.name }}
+          </a>
+        }
+      </nav>
+    }
+  }
+
+  @if (firstLoad()) {
+    <div class="list" aria-hidden="true">
+      <div class="skeleton skeleton--card"></div>
+      <div class="skeleton skeleton--card"></div>
+    </div>
+    <p class="visually-hidden" role="status">Loading posts…</p>
+  } @else if (posts.error()) {
+    <div class="state" role="alert">
+      <p class="state__title">The posts couldn't be loaded.</p>
+      <p class="state__text">Please check your connection and try again.</p>
+      <button class="btn btn--navy state__button" type="button" (click)="posts.reload()">Try again</button>
+      @if (selectedTag()) {
+        <p class="state__text"><a routerLink="/blog">Show all posts</a></p>
+      }
+    </div>
+  } @else if (cards().length === 0) {
+    <div class="state">
+      @if (selectedTag()) {
+        <p class="state__title">No posts with this tag yet.</p>
+        <p class="state__text"><a routerLink="/blog">Show all posts</a></p>
+      } @else if (total() > 0) {
+        <p class="state__title">This page is empty.</p>
+        <p class="state__text"><a routerLink="/blog">Back to the newest posts</a></p>
+      } @else {
+        <p class="state__title">No posts yet.</p>
+        <p class="state__text">The first one is on its way.</p>
+      }
+    </div>
+  } @else {
+    <div class="list" [class.list--loading]="posts.isLoading()" [attr.aria-busy]="posts.isLoading()">
+      @for (post of cards(); track post.slug) {
+        <article class="post-card lift">
+          @if (post.coverImageUrl) {
+            <img class="post-card__cover" [src]="post.coverImageUrl" alt="" loading="lazy" />
+          }
+          <div class="post-card__body">
+            <time class="mono-label" [attr.datetime]="post.publishedAt">{{ post.publishedAt | date: 'd MMM y' }}</time>
+            <h2 class="post-card__title">
+              <a class="post-card__link" [routerLink]="['/blog', post.slug]">{{ post.title }}</a>
+            </h2>
+            @if (post.excerpt) {
+              <p class="post-card__excerpt">{{ post.excerpt }}</p>
+            }
+            @if (post.tags.length) {
+              <ul class="post-card__tags" aria-label="Tags">
+                @for (t of post.tags; track t.slug) {
+                  <li class="post-card__tag">{{ t.name }}</li>
+                }
+              </ul>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <nav class="pager" aria-label="Pages">
+        @if (currentPage() > 1) {
+          <a class="btn btn--outline" routerLink="/blog" [queryParams]="pageParams(currentPage() - 1)" rel="prev">← Newer</a>
+        }
+        <span class="pager__info">Page {{ currentPage() }} of {{ totalPages() }}</span>
+        @if (currentPage() < totalPages()) {
+          <a class="btn btn--outline" routerLink="/blog" [queryParams]="pageParams(currentPage() + 1)" rel="next">Older →</a>
+        }
+      </nav>
+    }
+  }
+</section>

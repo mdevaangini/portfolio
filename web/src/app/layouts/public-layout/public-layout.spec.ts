@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: public-layout.spec.ts
 // Unit test for the public frame: the header's nav shows exactly the
-// sections that exist. Run: `npm test`.
+// sections that exist, plus the blog link. Run: `npm test`.
 // ──────────────────────────────────────────────────────────────────────
 
 import { TestBed } from '@angular/core/testing';
@@ -17,11 +17,11 @@ describe('PublicLayout', () => {
     }).compileComponents();
   });
 
-  it('should only show nav links for sections that exist', () => {
+  it('should show nav links for the sections that exist, then the blog', () => {
     const fixture = TestBed.createComponent(PublicLayout);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const links = Array.from(compiled.querySelectorAll('.nav__link')).map((a) => a.textContent?.trim());
-    expect(links).toEqual(['01. expertise', '02. work', '03. experience', '04. skills']);
+    expect(links).toEqual(['01. expertise', '02. work', '03. experience', '04. skills', 'blog']);
   });
 });

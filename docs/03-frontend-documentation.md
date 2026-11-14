@@ -65,7 +65,7 @@ web/src/
     ├── shared/                    REUSABLE BUILDING BLOCKS: no data, no app logic
     │   ├── ui/section-heading/      "01. Title ────" heading used by sections
     │   ├── ui/dialog/               shared "Are you sure?" dialog: DialogService + <app-dialog-host> (in app.html)
-    │   └── styles/forms.scss        field / input / error styles (@use)
+    │   └── styles/forms.scss        field / input / error styles (@use); chips.scss · states.scss (Projects + blog)
     │
     └── features/                  ONE FOLDER PER FEATURE: component + service + model together
         ├── home/                    home.ts/.html/.scss/.spec.ts (headline test) — the sections in order
@@ -75,12 +75,13 @@ web/src/
         │       ├── experience/     timeline · experience.service.ts · experience.model.ts
         │       ├── skills/         skill "folders" · skills.service.ts · skill.model.ts
         │       └── contact/        form + WhatsApp · contact.service.ts · contact.model.ts
+        ├── blog/                  LAZY (loadChildren, inside PublicLayout): blog.routes.ts · blog.service.ts · blog.model.ts · blog-list-page/
         └── admin/                 LAZY (loadChildren): admin.routes.ts · login-page/ · posts-page/
 ```
 
 **Routing with layouts:** instead of one frame that hides its header on some pages, each group of pages has its own frame:
 ```ts
-{ path: '', component: PublicLayout, children: [ { path: '', component: Home } ] },          // + /blog later
+{ path: '', component: PublicLayout, children: [ { path: '', component: Home }, { path: 'blog', loadChildren: … } ] },
 { path: 'admin', loadChildren: () => import('@features/admin/admin.routes') },               // uses AdminLayout
 ```
 

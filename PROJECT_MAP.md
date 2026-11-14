@@ -61,7 +61,7 @@ web/src/app/
 | `src/index.html` | The first file the browser loads: fonts, favicon, and the empty `<app-root>` Angular fills |
 | `src/main.ts` | Starts Angular: boots `App` with the settings from `app.config.ts` |
 | `app/app.config.ts` | App-wide tools: the router, and `HttpClient` with the auth interceptor |
-| `app/app.routes.ts` 🆕 | Which frame + page for which address: `/` → `PublicLayout` → Home, `/admin/…` → the admin area (**lazy-loaded**, `AdminLayout`). `/blog` comes later |
+| `app/app.routes.ts` 🆕 | Which frame + page for which address: `/` → `PublicLayout` → Home, `/admin/…` → the admin area (**lazy-loaded**, `AdminLayout`), `/blog…` → the blog (**lazy**, inside `PublicLayout`) |
 | `app/app.ts` · `app.html` 🆕 | Only `<router-outlet>`: the router picks the frame (`PublicLayout` or `AdminLayout`) |
 | `src/styles.scss` | Colours, fonts and shared helpers (`.btn`, scroll animations) used by every component |
 
@@ -87,6 +87,7 @@ web/src/app/
 | `shared/ui/section-heading` | The numbered heading ("01. Title ────") reused by the sections |
 | `shared/ui/dialog/` 🆕 | The app's own **"Are you sure?" dialog** (HTML `<dialog>` + `DialogService`). `dialog.confirm({...})` returns a Promise<boolean>; `<app-dialog-host>` sits once in `app.html` and draws it. Used for "Leave without saving?" and "Delete this post?" |
 | `shared/styles/forms.scss` 🆕 | Field, input and error styles, pulled in with `@use` (admin login) |
+| `shared/styles/chips.scss` · `states.scss` 🆕 | Filter chips and the loading / error / empty looks, moved out of Projects because the blog list uses them too |
 
 ### `features/home/`: the portfolio page
 | File | What it does and why |
@@ -98,6 +99,15 @@ web/src/app/
 | `sections/skills/` | Skill chips · `skills.service.ts` (`GET /api/skills`) · `skill.model.ts` |
 | `sections/contact/` | The form · `contact.service.ts` (**sends** `POST /api/contact` with `HttpClient.post`: a one-off action, so not `httpResource`) · `contact.model.ts` · WhatsApp link (no API) |
 | `environments/*.ts` (in `src/`) | `apiBaseUrl: '/api'` for both laptop and live |
+
+### `features/blog/` 🆕: the public blog (lazy-loaded, Milestone 7)
+| File | What it does and why |
+|---|---|
+| `blog.routes.ts` | `/blog` → list page (`/blog/:slug` comes in 7b) |
+| `blog.service.ts` · `blog.model.ts` | Read-only `httpResource`s: `loadPosts(query)` (`GET /api/posts?limit&offset&tag`), `loadTags()` (`GET /api/tags`) |
+| `blog-list-page/` | `/blog?tag=angular&page=2`: **the URL is the source of truth**. `tag` and `page` arrive as `input()`s (`withComponentInputBinding`); chips and Newer/Older are links that only change the URL; skeleton / error / empty / cards states |
+
+The header's section links became `routerLink="/"` + `fragment`, so they work from the blog too (`withInMemoryScrolling` scrolls to the section; the header sets the scroll offset). A **blog** link stays visible on phones.
 
 ### `features/admin/` 🆕: my admin area (lazy-loaded)
 | File | What it does and why |

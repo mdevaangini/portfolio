@@ -100,6 +100,36 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### `withInMemoryScrolling()`: what problem does it solve? (the easy version)
+**Picture:** a normal website gives you a **new sheet of paper** for every page, so you start at the top. Angular uses **one whiteboard**: it wipes and redraws the content, but your scroll position (how far down you are) **stays where it was**. That causes three problems:
+1. **A new page opens in the middle** (you clicked the 8th post far down the list) → `scrollPositionRestoration: 'enabled'` = "new page → go to the top".
+2. **Back doesn't return to my spot** → the **same switch** remembers how far down each page was ("in memory") and scrolls back there, like a bookmark.
+3. **"02. work" from the blog stays at the top of Home** → `anchorScrolling: 'enabled'` = "`#work` in the address → scroll to the element with `id="work"`" (its name tag).
+- **Sticky header:** Angular would put the section at the very top edge, under the header, so the header tells Angular its height (`ViewportScroller.setOffset`) = "stop that many pixels earlier".
+- **Watch out:** a filter chip changes the address, so it counts as a new page and jumps to the top (fine on the blog list).
+
+**How Angular decides where to put you (in this order):** 1. Back/Forward → the **remembered** position · 2. the address has `#name` → the element with `id="name"` (minus the header height) · 3. otherwise → the **top**.
+
+| You do | Address | Rule | You see |
+|---|---|---|---|
+| scroll the list to the 8th post | `/blog` | (you scroll) | position 2100 |
+| click the 8th post | `/blog/8th-post` | 3 → top | the article's title (without the switch: the middle of the article) |
+| click "02. work" in the header | `/#work` | 2 → `#work` | the Projects title, just below the sticky header |
+| Back | `/blog/8th-post` | 1 → remembered | the article where I left it |
+| Back again | `/blog` | 1 → remembered | the list at the 8th post |
+
+Where in the code: the switches in `app.config.ts`; the link `routerLink="/" fragment="work"` in `header.html`; the name tag `id="work"` on Projects (and its `@defer` placeholder); `ViewportScroller.setOffset` in `header.ts`.
+
+### Blog list (7a): how does the tag filter / page work? (the easy version)
+**The address is an order slip.** `/blog?tag=angular&page=2` = "Angular posts, page 2" (the part after `?` = query params). Same idea as `/admin/posts/7`, where the 7 tells the editor which post.
+- **Address bar** = the slip, **list page** = the waiter, **API** = the kitchen, **screen** = the plate. The waiter always follows the slip.
+- **Opening `/blog`:** the router picks the blog page (inside the normal header + footer) and hands it the slip ("no tag, no page" = all posts, page 1) → the page asks `GET /api/posts?limit=10&offset=0` → the cards + "Page 1 of 3".
+- **Clicking a chip:** it's only a link; it **only changes the address** (`?tag=angular`). The page sees the new slip and asks the API again **by itself**. Nobody wrote "on click, call the API".
+- **Free bonuses:** Reload keeps the filter, Back returns to the previous one, a shared link shows the same list, all because the slip is in the address.
+- **Page → API:** page 2 = skip 10 (offset), take 10 (limit).
+- **Names:** slip = query params; "hand the slip to the page" = `withComponentInputBinding()`; the page receiving it = `tag = input()`, `page = input()`; "ask again when it changes" = `httpResource`.
+- **Header:** the section links now mean "go to Home, then jump to the section", so they work from the blog too; the scroll stops below the sticky header.
+
 ### What is `admin-posts.schema.ts`? Is it the set of rules we check?
 **Yes: the rulebook for a post's fields**, written with Zod (the server's `Validators`). No database, no request handling. The controller runs it first: `checkBody(createPostSchema, req.body)` → invalid = **400** + one message per field (the service never runs); valid = clean data → service.
 - **Three jobs at once:** check (field messages), clean (trim, lowercase slug/tags, `""` → `null` cover), type (`z.infer` makes the TypeScript type *from* the rules).

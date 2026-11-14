@@ -76,6 +76,13 @@
   color: var(--color-accent-text);
 }
 
+/* The page I'm on (e.g. "blog" while reading the blog): underlined in apricot */
+.nav__link--active {
+  color: var(--color-ink);
+  font-weight: 700;
+  background-size: 100% 2px;
+}
+
 .nav__cta {
   min-height: 42px;
   padding: 0 18px;
@@ -126,9 +133,14 @@
   }
 }
 
-/* Phones: keep only the name and the "Let's talk" button on one row */
+/* Phones: keep only the name, "blog" and the "Let's talk" button on one row */
 @media (max-width: 720px) {
   .nav__link {
     display: none;
+  }
+
+  /* …but the blog link stays: it's a separate page, not a scroll target */
+  .nav__link--page {
+    display: inline;
   }
 }

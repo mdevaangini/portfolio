@@ -2,19 +2,21 @@
   ABOUT THIS FILE: header.html
   Header (sticky top bar): the markup (what you see).
   Includes a thin apricot bar that fills as you scroll down the page.
+  Section links = routerLink "/" + fragment, so they work from every page.
 -->
 <header class="header" [class.header--scrolled]="scrolled()">
   <div class="container header__inner">
-    <a class="brand" href="#top" aria-label="Devaangini Mehta, back to top">
+    <a class="brand" routerLink="/" fragment="top" aria-label="Devaangini Mehta, back to top">
       Devaangini Mehta<span class="brand__dot" aria-hidden="true">.</span>
     </a>
 
     <nav class="nav" aria-label="Main">
       @for (item of navItems; track item.target) {
-        <a class="nav__link" [href]="'#' + item.target"><span class="nav__number">{{ item.number }}.</span> {{ item.label }}</a>
+        <a class="nav__link" routerLink="/" [fragment]="item.target"><span class="nav__number">{{ item.number }}.</span> {{ item.label }}</a>
       }
+      <a class="nav__link nav__link--page" routerLink="/blog" routerLinkActive="nav__link--active">blog</a>
       @if (contactReady) {
-        <a class="btn btn--navy nav__cta" href="#contact">Let's talk</a>
+        <a class="btn btn--navy nav__cta" routerLink="/" fragment="contact">Let's talk</a>
       }
     </nav>
   </div>

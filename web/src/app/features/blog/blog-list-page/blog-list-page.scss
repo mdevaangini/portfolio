@@ -1,0 +1,156 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: blog-list-page.scss
+// The blog list: heading, post cards, Newer/Older. Chips and the
+// loading / error / empty looks are shared with Projects (shared/styles).
+// ──────────────────────────────────────────────────────────────────────
+
+@use '../../../shared/styles/chips';
+@use '../../../shared/styles/states';
+
+:host {
+  display: block;
+}
+
+.blog {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 860px; // a reading width, narrower than the home page
+  padding-block: 72px 96px;
+}
+
+.blog__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 46px);
+  line-height: 1.1;
+  color: var(--color-ink);
+}
+
+.blog__intro {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 18px;
+  color: var(--color-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: opacity 0.2s ease;
+}
+
+.list--loading {
+  opacity: 0.55;
+}
+
+.skeleton--card {
+  min-height: 180px;
+}
+
+/* One post in the list; the whole card is clickable (stretched title link) */
+.post-card {
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+
+.post-card__cover {
+  flex: 1 1 220px;
+  max-height: 220px;
+  object-fit: cover;
+  background: var(--color-peach);
+}
+
+.post-card__body {
+  flex: 3 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px;
+}
+
+.post-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.post-card__link {
+  color: var(--color-ink);
+  text-decoration: none;
+
+  // Covers the whole card, so a click anywhere opens the post (one link for screen readers)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// The keyboard focus ring goes around the whole card
+.post-card:has(.post-card__link:focus-visible) {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.post-card__excerpt {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.post-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post-card__tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-peach);
+  color: var(--color-accent-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pager__info {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .blog {
+    padding-block: 48px 72px;
+  }
+
+  .post-card__body {
+    padding: 22px;
+  }
+}

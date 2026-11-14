@@ -5,7 +5,8 @@
 //   "/admin/..." → the admin area, LAZY-loaded (features/admin/admin.routes.ts),
 //                  which uses AdminLayout
 //   anything else → back to "/"
-// Coming with the Blog: "/blog", "/blog/:slug" (inside PublicLayout).
+//   "/blog..."    → the blog, LAZY-loaded (features/blog/blog.routes.ts),
+//                  inside PublicLayout (same header + footer as Home)
 // ──────────────────────────────────────────────────────────────────────
 
 import { Routes } from '@angular/router';
@@ -20,6 +21,8 @@ export const routes: Routes = [
     children: [
       // Home is loaded directly (not lazy): it's the first thing every visitor sees.
       { path: '', component: Home, title: 'Devaangini Mehta · Frontend Engineer' },
+      // The blog's code loads only when someone opens /blog.
+      { path: 'blog', loadChildren: () => import('@features/blog/blog.routes').then((m) => m.BLOG_ROUTES) },
     ],
   },
   // Visitors never download the admin code: it loads only when /admin is opened.

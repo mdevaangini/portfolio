@@ -1,0 +1,55 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: states.scss
+// The "while loading / it failed / nothing here" looks, pulled in with @use:
+// .skeleton (warm shimmer placeholder) and .state (dashed box with a title,
+// a line of text and a button). Used by: Projects and the blog list.
+// ──────────────────────────────────────────────────────────────────────
+
+/* Loading skeletons: warm shimmer */
+.skeleton {
+  min-height: 280px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #f6ece2 0%, #fdf7f1 50%, #f6ece2 100%);
+  background-size: 200% 100%;
+}
+
+.skeleton--featured {
+  min-height: 320px;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+/* Error and empty states */
+.state {
+  padding: 48px 32px;
+  border: 1px dashed var(--color-line-strong);
+  border-radius: 20px;
+  background: var(--color-bg);
+  text-align: center;
+}
+
+.state__title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.state__text {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+}
+
+.state__button {
+  margin-top: 20px;
+  min-height: 44px;
+}

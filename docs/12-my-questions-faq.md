@@ -100,6 +100,53 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### What is `admin-posts.schema.ts`? Is it the set of rules we check?
+**Yes: the rulebook for a post's fields**, written with Zod (the server's `Validators`). No database, no request handling. The controller runs it first: `checkBody(createPostSchema, req.body)` → invalid = **400** + one message per field (the service never runs); valid = clean data → service.
+- **Three jobs at once:** check (field messages), clean (trim, lowercase slug/tags, `""` → `null` cover), type (`z.infer` makes the TypeScript type *from* the rules).
+- **Only `title` is required** on create; slug, excerpt, content, cover and tags are optional (a draft can be unfinished). Unknown fields like `status` are dropped, so nobody can create an already-published post.
+- **`createPostSchema`** → POST; **`updatePostSchema = createPostSchema.partial()`** → PATCH (everything optional).
+- **Not in this file:** "excerpt + content are needed before publishing". That's a business rule about the post's state, so it lives in the service's `publish`.
+- The editor's Angular `Validators` mirror these rules for quick feedback; **this file is the one that counts**, because anyone can call the API directly.
+
+### The admin controller also has rules. Is that different from `schema.ts`?
+**Yes: each layer checks what only it can know.**
+
+| Where | Checks | Examples |
+|---|---|---|
+| **schema.ts** (Zod) | the **body's fields**, each on its own | title 3–150, slug pattern, excerpt ≤ 300, https cover, ≤ 8 tags |
+| **controller** | the **request** around the body | id in the URL is a positive whole number; the slug made from the title is ≥ 3 characters (`"!!!"` passes the title rule but gives an empty slug); an empty PATCH `{}` → "Nothing to change" |
+| **service** | **business rules** that need the saved post | publish only with excerpt + content; a published post can't be emptied |
+| **database** | rules that must hold even under races | unique slug |
+
+The controller also **translates** service results into status codes (`slug-taken` → 409, `not-found` → 404, `incomplete` → 400); those decisions are made by the service or database.
+
+**Rule of thumb:** schema = "is each field OK?"; controller = "is the request OK?" + which status; service = "allowed for this post now?"; database = "true for all posts?".
+**Could move to Zod:** the id (`z.coerce.number().int().positive()`, as the public posts controller does for its query) and the empty PATCH (`.refine`). Keeping them in the controller is simple and readable; both are fine.
+
+### M6 check Q1: the access token expired and I click Publish. What happens? (my answer, corrected ✓)
+**Correction:** the interceptor does **not** check whether the token has expired. It **can't**: the cookies are httpOnly, so JavaScript can't read them. It reacts **after** the API says 401 ("try first, fix it if it fails"):
+1. Publish → the browser adds the access cookie → API `requireAdmin`: JWT expired → **401**.
+2. The interceptor catches the 401 → `POST /api/auth/refresh` (the browser adds the **refresh** cookie, which only goes to `/api/auth/…`).
+3. The API finds the hash in `refresh_tokens`, deletes it (rotation), sets **new** access + refresh cookies.
+4. The interceptor **repeats Publish once**, this time with the new access cookie → 200 → the table reloads.
+5. If the refresh fails too (e.g. after 7 days) → the login page.
+
+**Interview line:** *"The interceptor can't read httpOnly cookies, so it doesn't check expiry up front. It reacts to a 401: one shared refresh call, the browser stores the rotated cookies, and the original request is retried once."*
+
+### M6 check Q2: if someone deletes `adminGuard`, can a stranger publish? (my answer, checked ✓)
+**No.** The guard only stops people at the door of the user interface; the real security is **`requireAdmin` in the API**, which also applies to Postman calls. It checks the **JWT inside the cookie**: the signature (`JWT_SECRET`, the "real stamp"), expiry (15 min), issuer/audience, and role `ADMIN`. If any check fails, the controller never runs.
+- Precise detail: the guard doesn't hide buttons. It decides whether the `/admin` routes **match and load**. Without it a stranger could open the admin screens, but every API call → 401 → refresh fails → login page.
+- Remaining risks: a stolen cookie or a leaked secret. That's why the cookies are httpOnly + sameSite strict, `checkOrigin` exists, the access token lasts only 15 min, and the secret is only in `.env` / Vercel.
+
+**Interview line:** *"Frontend guards are for user experience, not security: anyone can call the API directly. Every admin endpoint is protected server-side by `requireAdmin`, which verifies the JWT's signature, expiry, issuer, audience and role before the controller runs."*
+
+### M6 check Q3: I change only the excerpt of post 7 and click Save. What happens? (my answer + the missing part ✓)
+- **Request:** `PATCH /api/admin/posts/7` (the 7 comes from the address). **Body:** only the dirty field, `{ "excerpt": "…" }`.
+- **Rules (the part I missed):** the route decides the schema. `PATCH /:id` → `checkBody(updatePostSchema, body)`, and `updatePostSchema = createPostSchema.partial()`: the **same rules** as create, but every field is optional. A missing field is fine; a sent field must pass its rule (otherwise 400 with `fields`). One source of truth for both.
+- The service updates only the `excerpt` column (+ `updatedAt`); everything else stays as it was → 200 + the updated post.
+
+**Interview line:** *"Update is a PATCH with only the dirty fields. The API validates it with the create schema's `.partial()`: one set of rules, missing fields allowed, present fields must be valid. The service updates only those columns."*
+
 ### Editor (6c): Save on a new post = create API, Save on an existing post = update (PATCH)?
 **Yes.** The address decides:
 

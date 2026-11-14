@@ -48,6 +48,7 @@ flowchart LR
 | 12 | [My questions (FAQ)](12-my-questions-faq.md) | The questions I asked while building it, with short answers ("front desk", Vitest, create-admin, two databases…) |
 | 13 | [JWT login: my interview notes](13-jwt-login-notes.md) | The whole login flow (access + refresh token) on one page, in my own words. Read before an interview |
 | 14 | [Backend API handbook](14-backend-api-handbook.md) | **Every API in one place**: reference with JSON examples, public vs admin, Postman testing guide, request lifecycle, database mapping, known gaps, interview Q&A |
+| 15 | [Frontend handbook](15-frontend-handbook.md) | **The Angular app in one place**: how it starts, folders + decision guide, routing and lazy loading, API services (httpResource vs HttpClient), login flows (interceptor, guard), admin pages, signals, forms, Markdown safety, tests, interview Q&A |
 
 Diagrams: [system architecture](diagrams/system-architecture.md) · [frontend flow](diagrams/frontend-flow.md) · [API request flow](diagrams/api-request-flow.md) · [database relationships](diagrams/database-relationships.md)
 

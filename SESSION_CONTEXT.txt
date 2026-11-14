@@ -695,7 +695,12 @@ Exact stopping point (2026-10-25):
   <app-dialog-host />. unsaved-changes.guard returns dialog.confirm(...)
   (beforeunload stays browser-native). posts-page: deletePost() awaits the
   dialog; confirmDeleteId/cancelDelete/confirmDelete removed.
-  NEXT: user tests 6c + 6d → commit → M6 recap + FRONTEND HANDBOOK
+  6c + 6d tested by her, committed 0dbcfa1. M6 recap done (3-question
+  check: Q1 corrected = interceptor reacts to 401, can't read expiry; Q2 ✓;
+  Q3 missing part = updatePostSchema .partial()). All in FAQ.
+  docs/15-frontend-handbook.md WRITTEN 2026-11-14 (uncommitted until she reviews).
+  NEXT: she reviews docs/15 → commit → Milestone 7 (public blog pages).
+  (old) NEXT: user tests 6c + 6d → commit → M6 recap + FRONTEND HANDBOOK
   (docs/15) → Milestone 7 (public blog pages).
   (old) NEXT: Milestone 6 (Angular admin: login page, refresh interceptor, guard,
   posts table, editor) — problem → options → she decides.

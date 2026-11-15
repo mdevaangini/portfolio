@@ -148,6 +148,7 @@ Receives every request, **never trusts the browser**, applies the rules, decides
 | `app.ts` | The pipeline every request passes, in order: CORS → read JSON body → read cookies → `/api` routes → 404 → 500 |
 | `routes.ts` | The switchboard: one line per feature (`/projects`, `/contact`, `/auth`, `/admin` …) |
 | `config/env.ts` | Reads the settings (`.env`) in one place; stops at start-up if one is missing |
+| `config/database.ts` 🆕 | Reads **only** `DATABASE_URL`. `db/prisma.ts` uses it, so scripts that only touch the database (create-admin, seed) don't need `JWT_SECRET`; `env.ts` re-uses it (least privilege) |
 | `db/prisma.ts` | The one shared database connection every service uses |
 
 #### `server.ts` vs `app.ts`

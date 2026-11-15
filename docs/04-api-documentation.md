@@ -32,7 +32,8 @@ api/
     ├── server.ts        starts the server — nothing else
     ├── app.ts           middleware + routes (no listen → testable)
     ├── routes.ts        main router: one line per feature
-    ├── config/env.ts    reads and checks .env
+    ├── config/env.ts    reads and checks .env (the server's settings)
+    ├── config/database.ts  reads only DATABASE_URL (used by db/prisma.ts and env.ts)
     ├── db/prisma.ts     the one shared Prisma Client
     ├── lib/
     │   ├── password.ts      scrypt fingerprint of a password + check

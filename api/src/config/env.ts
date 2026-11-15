@@ -1,8 +1,12 @@
 // ──────────────────────────────────────────────────────────────────────
 // ABOUT THIS FILE: env.ts
-// Reads the settings from .env (DATABASE_URL, PORT, CORS_ORIGIN) in ONE place.
+// Reads the settings from .env (DATABASE_URL, PORT, CORS_ORIGIN, JWT_SECRET…) in ONE place.
 // Stops the app at start-up if a required setting is missing.
+// The database address itself is read by config/database.ts (so database-only
+// scripts don't need the server's secrets); this file re-uses it.
 // ──────────────────────────────────────────────────────────────────────
+
+import { databaseUrl } from "./database.js";
 
 /**
  * All settings the app reads from the environment (.env), in one place.
@@ -35,7 +39,7 @@ function optional(name: string, fallback: string): string {
 
 export const env = {
   /** Connection string for PostgreSQL. Required: no sensible default exists. */
-  databaseUrl: required("DATABASE_URL"),
+  databaseUrl, // read and checked in config/database.ts
 
   /** Port the API listens on */
   port: Number(optional("PORT", "3000")),

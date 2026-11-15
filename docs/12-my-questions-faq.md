@@ -100,6 +100,37 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### create-admin on Neon: "Can't reach database server" on Jio Fiber, but it worked on my phone's hotspot. Why?
+**Ports are numbered doors.** Websites use door **443** (https); PostgreSQL (Neon) uses door **5432**. My Jio Fiber connection (the provider or its router) most likely blocks outgoing traffic to 5432, as many home networks block unusual ports; the mobile network doesn't.
+- Everything else still worked on Jio: the live site (browser → 443; Vercel's servers, not my laptop, talk to Neon) and my local database (it never leaves the laptop). Only **laptop → Neon directly** needs 5432.
+- **Rarely needed:** only for admin jobs (create/reset the admin, seeding live). Then use the hotspot, or Neon's SQL Editor in the browser (443).
+- The long yellow "SSL modes" warning is harmless: a notice from the `pg` library about a future version.
+- Check whether a port is reachable: `node -e "require('net').connect(5432,'<host>').on('connect',()=>{console.log('OPEN');process.exit()}).on('error',e=>{console.log('BLOCKED:',e.code);process.exit()})"`
+
+### create-admin on Neon failed: "Missing required environment variable: JWT_SECRET". Why?
+**Picture:** the API is a building; `env.ts` is the **one reception desk**, which checks **all** keys (the storeroom key `DATABASE_URL` **and** the stamp `JWT_SECRET`) and stops anyone missing one. That's right for the **server**, which needs both.
+- The script runs **on my laptop** and only writes into the database. With `--env-file=.env.production.local` it got **only** `DATABASE_URL` (Vercel's sensitive variables aren't copied to laptops), but it reached the database through `prisma.ts → env.ts`, so reception stopped it.
+- The live server on Vercel **does** have its `JWT_SECRET`; the problem was only the laptop script. Locally it worked because `.env` has both keys.
+- **Not the fix:** copying the live secret to the laptop.
+- **Fix (option B, chosen):** `config/database.ts` reads **only** `DATABASE_URL`; `prisma.ts` uses it, and `env.ts` re-uses it. Database-only scripts need only the database address; the server still checks everything at start-up. This is **least privilege**: each piece of code gets only what it needs. (Option A would have been a throwaway `JWT_SECRET=… ` in front of the command.)
+
+**Did we remove JWT_SECRET or any login check? No.** Only the file the database connection reads its address from changed.
+
+| | Before | After |
+|---|---|---|
+| Server starts (laptop or Vercel) | `env.ts` checks **all** settings incl. JWT_SECRET | **the same** |
+| Server without JWT_SECRET | refuses to start | **still refuses** |
+| Login signs the token with JWT_SECRET | ✅ | **the same** |
+| `requireAdmin` checks the token with JWT_SECRET | ✅ | **the same** |
+| refresh, logout, cookies, lockout | ✅ | **the same** |
+| Vercel's JWT_SECRET | needed | **still needed and used** |
+| **Database connection (`prisma.ts`)** | address **via `env.ts`**, so it also demanded JWT_SECRET | address **from `database.ts`**, so only `DATABASE_URL` |
+
+**Why the server is just as strict:** the server starts from `server.ts` → `env.ts` (and `app.ts`, the auth code… import `env.ts` too), so it always passes the full reception desk before any request. The **create-admin script** never imports `server.ts`, `app.ts` or the auth code, only `prisma.ts` + the password helper. Before, `prisma.ts` dragged `env.ts` along; now it doesn't. So only the script skips the full check, and it never signs or checks tokens.
+**In short:** login security is identical; the database door just no longer demands the login stamp.
+
+**Interview line:** *"I separated the database config from the app's secrets, so maintenance scripts against production need only the connection string, never the token-signing key."*
+
 ### M7 check Q1: on `/blog?tag=angular` I click "Signals". How does the list change? (my answer, corrected ✓)
 - ✅ `tag=signals` goes into the URL's query params; the router's input binding hands it to the page; the new list replaces the old one without a reload (SPA).
 - 🔧 **Angular does not filter the list itself.** The browser only holds one page (10 posts), so local filtering would miss posts on other pages. **The API filters, in the database.**

@@ -76,6 +76,25 @@
   color: var(--color-accent-text);
 }
 
+/*
+ * "blog" opens another PAGE (the numbered links scroll within Home), so a thin
+ * line in front of it separates the two groups:  01 … 04  │  blog
+ */
+.nav__link--page {
+  position: relative;
+  margin-left: 4px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -16px; // in the middle of the 24px gap (+4px margin)
+    top: 50%;
+    height: 16px;
+    border-left: 1px solid var(--color-line-strong);
+    transform: translateY(-50%);
+  }
+}
+
 /* The page I'm on (e.g. "blog" while reading the blog): underlined in apricot */
 .nav__link--active {
   color: var(--color-ink);
@@ -142,5 +161,10 @@
   /* …but the blog link stays: it's a separate page, not a scroll target */
   .nav__link--page {
     display: inline;
+
+    // only "blog" is visible here, so no divider is needed
+    &::before {
+      display: none;
+    }
   }
 }

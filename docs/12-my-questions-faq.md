@@ -100,6 +100,14 @@ The form's `valueChanges` **is** RxJS; `toSignal()` converts it **at the edge** 
 
 **One line for an interview:** *"The form's valueChanges is an Observable; I convert it with toSignal because the preview is just state the template reads, and computed() derives the suggested slug. If I needed debouncing or autosave with cancellation, I'd keep it in RxJS with debounceTime/switchMap and convert only the final value."*
 
+### The `hasValue()` issue: what exactly happens when the API fails? (the easy version)
+**A resource is a parcel delivery** with three states: loading (on its way), has a value (arrived), error (delivery failed). `value()` = "open the parcel".
+- Loading → empty box → `undefined` (fine). Arrived → the data.
+- **Failed → `value()` does not return an empty box; it *throws* (shouts).** A thrown error jumps straight out, so `?.` and `?? []` never get a chance; they only handle a quiet `undefined`.
+- **What the visitor saw (API down):** the resource is in error → something reads `cards()` → `value()` throws → Angular can't draw the section → an empty or broken area instead of the "Try again" box we built for exactly this case.
+- **Fix:** `hasValue()` = "has a parcel really arrived?" (never throws): `hasValue() ? value().data : []` → with the API down, `cards = []`, the template reaches its error branch → "Couldn't be loaded" + Try again.
+- **Why we didn't notice earlier:** it only happens when the API fails; test the unhappy path on purpose.
+
 ### create-admin on Neon: "Can't reach database server" on Jio Fiber, but it worked on my phone's hotspot. Why?
 **Ports are numbered doors.** Websites use door **443** (https); PostgreSQL (Neon) uses door **5432**. My Jio Fiber connection (the provider or its router) most likely blocks outgoing traffic to 5432, as many home networks block unusual ports; the mobile network doesn't.
 - Everything else still worked on Jio: the live site (browser → 443; Vercel's servers, not my laptop, talk to Neon) and my local database (it never leaves the laptop). Only **laptop → Neon directly** needs 5432.

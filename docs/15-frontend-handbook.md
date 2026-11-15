@@ -4,12 +4,11 @@
 
 The single reference for the portfolio's **Angular app** (`web/`): how it starts, where every file lives and why, how pages talk to the API, how login works on the browser side, how the admin pages work, and how to explain all of it in an interview.
 
-Written in plain words, **flow first, not line by line**. It's from the actual code in `web/src/` as of **14 Nov 2026** (end of Milestone 6). The backend side is in [14 — Backend API handbook](14-backend-api-handbook.md).
+Written in plain words, **flow first, not line by line**. It's from the actual code in `web/src/` as of **15 Nov 2026** (Milestone 7 done, blog live). The backend side is in [14 — Backend API handbook](14-backend-api-handbook.md).
 
 | Label | Meaning |
 |---|---|
 | ✅ **Live** | built, tested, on the live site |
-| 🟢 **Built** | built and tested on the laptop, committed; not usable live yet (the admin user isn't on Neon yet) |
 | 🕓 **Planned** | agreed, **not built** |
 
 ---
@@ -22,6 +21,7 @@ Written in plain words, **flow first, not line by line**. It's from the actual c
 5. [Talking to the API](#5-talking-to-the-api)
 6. [Login on the browser side](#6-login-on-the-browser-side)
 7. [The admin pages, one by one](#7-the-admin-pages-one-by-one)
+7b. [The public blog pages](#7b-the-public-blog-pages)
 8. [State: signals, and where RxJS still fits](#8-state-signals-and-where-rxjs-still-fits)
 9. [Forms](#9-forms)
 10. [Markdown and safety](#10-markdown-and-safety)
@@ -43,11 +43,12 @@ Written in plain words, **flow first, not line by line**. It's from the actual c
                          ┌──────────────── Angular app (web/) ────────────────┐
  visitor ──▶  /          │  PublicLayout (header + footer)                     │
                          │     └── Home: hero · impact · expertise · projects  │ ✅ Live
-                         │               · experience · skills · contact       │
-                         │     └── /blog, /blog/:slug                          │ 🕓 M7
+                         │               · experience · skills · latest writing│
+                         │               · contact                             │
+                         │     └── /blog, /blog/:slug  (LAZY)                  │ ✅ Live
                          │                                                     │
  me ──────▶  /admin/...  │  LAZY: downloaded only when /admin is opened        │
-                         │  adminGuard ─▶ AdminLayout (top bar + Log out)      │ 🟢 Built
+                         │  adminGuard ─▶ AdminLayout (top bar + Log out)      │ ✅ Live
                          │     └── posts table · post editor · login page      │
                          └──────────────────────────┬──────────────────────────┘
                                                     │ every request goes to "/api/..."
@@ -102,9 +103,11 @@ web/src/app/
 │   ├── ui/section-heading/   "01. Title ────"
 │   ├── ui/dialog/            our own "Are you sure?" dialog
 │   ├── pipes/markdown.pipe   Markdown → HTML
-│   └── styles/               forms.scss, prose.scss
+│   └── styles/               forms.scss, prose.scss, chips.scss, states.scss
 └── features/    ONE FOLDER PER FEATURE: component + service + model together
     ├── home/      home page + sections/* (each section has its own service + model)
+    ├── blog/      blog.routes · blog.service · blog.model · blog-list-page · blog-post-page
+                   · latest-posts (placed on Home by @defer)
     └── admin/     admin.routes · login-page · posts-page · post-editor-page
                    · admin-posts.service · post.model · api-error · unsaved-changes.guard
 ```
@@ -130,18 +133,23 @@ web/src/app/
 | Address | Frame | Page | How it loads | Status |
 |---|---|---|---|---|
 | `/` | PublicLayout | Home | directly (first thing every visitor sees) | ✅ |
-| `/admin/login` | none | LoginPage | lazy | 🟢 |
-| `/admin` | AdminLayout | → redirects to `/admin/posts` | lazy, **`canMatch: adminGuard`** | 🟢 |
-| `/admin/posts` | AdminLayout | PostsPage | lazy | 🟢 |
-| `/admin/posts/new` | AdminLayout | PostEditorPage (create) | lazy, **`canDeactivate: unsavedChangesGuard`** | 🟢 |
-| `/admin/posts/:id` | AdminLayout | PostEditorPage (edit) | lazy, same guard | 🟢 |
-| `/blog`, `/blog/:slug` | PublicLayout | blog list, article | lazy | 🕓 M7 |
+| `/admin/login` | none | LoginPage | lazy | ✅ |
+| `/admin` | AdminLayout | → redirects to `/admin/posts` | lazy, **`canMatch: adminGuard`** | ✅ |
+| `/admin/posts` | AdminLayout | PostsPage | lazy | ✅ |
+| `/admin/posts/new` | AdminLayout | PostEditorPage (create) | lazy, **`canDeactivate: unsavedChangesGuard`** | ✅ |
+| `/admin/posts/:id` | AdminLayout | PostEditorPage (edit) | lazy, same guard | ✅ |
+| `/blog?tag=…&page=…` | PublicLayout | BlogListPage | lazy (`loadChildren` → `loadComponent`) | ✅ |
+| `/blog/:slug` | PublicLayout | BlogPostPage | lazy | ✅ |
 | anything else | | → `/` | | ✅ |
 
 **The three kinds of "lazy" in this app:**
 1. **`loadChildren`**: the whole admin area (`admin.routes.ts`) is a separate download. Visitors never download it.
 2. **`loadComponent`**: inside the admin area, each page is its own small download.
-3. **`@defer (on viewport; prefetch on idle)`** on Home: the Projects section's code *and* its API call only start when you scroll near it. The code is fetched in the background when the browser is idle, so it's ready in time.
+3. **`@defer (on viewport; prefetch on idle)`** on Home: the Projects section's code *and* its API call only start when you scroll near it. The code is fetched in the background when the browser is idle, so it's ready in time. "Latest writing" (from `features/blog`) is deferred the same way.
+
+**Router extras** (in `app.config.ts`, Milestone 7):
+- **`withComponentInputBinding()`**: URL values arrive as `input()`s, e.g. `?tag=angular` → `tag = input()` on the blog list, `:slug` → `slug = input.required()` on the article.
+- **`withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' })`**: a new page starts at the top, Back returns to where you were, `/#work` scrolls to the section. The header sets the scroll offset (its own height), and its section links are `routerLink="/" fragment="…"`, so they work from the blog too.
 
 **Layout routes:** a route with a `component` (the frame) and `children` (the pages). The frame has its own `<router-outlet>`, and the page appears inside it. This is how Home gets the public header while the admin gets its own top bar.
 
@@ -185,6 +193,9 @@ Both go through the same interceptor.
 | `…/contact/contact.service.ts` | `POST /api/contact` |
 | `core/auth/auth.service.ts` | `/api/auth/login`, `/refresh`, `/me`, `/logout` |
 | `features/admin/admin-posts.service.ts` | everything under `/api/admin/posts` |
+| `features/blog/blog.service.ts` | `GET /api/posts?limit&offset&tag`, `GET /api/posts/:slug`, `GET /api/tags` (all read-only `httpResource`s) |
+
+**`hasValue()` before `value()`:** in Angular 20+, `resource.value()` **throws** while the resource is in its error state (the request failed). Read it only after `hasValue()`, or put the `error()` branch before anything that reads `value()`. This was a real bug in four places, fixed in Milestone 7.
 
 **Why `httpResource` has to be called "at creation time":** it lives as long as the component that created it and is cleaned up with it. So `loadPosts()` is called in a component *field* (`posts = this.postsService.loadPosts()`), not inside a click handler.
 
@@ -289,6 +300,45 @@ Leave/Delete → true      Stay/Cancel, Esc, click outside → false
 
 ---
 
+## 7b. The public blog pages
+*Milestone 7, live since 15 Nov 2026.* All in `features/blog/`, lazy-loaded, inside PublicLayout (same header and footer as Home).
+
+### List: `/blog?tag=angular&page=2`
+**The URL is the "order slip".** The page never remembers the filter itself; it reads it from the address.
+```
+chip "Signals" = a LINK → the URL changes first → /blog?tag=signals
+  → the router hands it over as an input (tag = input())       withComponentInputBinding
+  → computed selectedTag / currentPage ("?page=abc" → page 1)
+  → httpResource refetches: GET /api/posts?tag=signals&limit=10&offset=0
+  → the API filters in the database → new cards replace the old (old ones dim meanwhile)
+```
+- **Why the URL:** Reload, Back/Forward and shared links all keep the filter for free.
+- **Why the API filters, not Angular:** the browser holds only one page (10 posts); local filtering would miss the others.
+- Page → API: page 2 = skip 10 (`offset`), take 10 (`limit`). Newer/Older appear from 11 posts on.
+- States: skeletons (first load) / "couldn't be loaded" + Try again / empty ("No posts with this tag yet", "This page is empty") / cards.
+- Cards: date, title (stretched link), excerpt, tags.
+
+### Article: `/blog/:slug`
+```
+card click → /blog/signals-vs-rxjs → slug = input.required() → GET /api/posts/signals-vs-rxjs
+  200 → the article: date · reading time, title, excerpt, tags (→ the filtered list), cover,
+        content | markdown in .prose (exactly like the editor preview)
+  404 → "This post doesn't exist (any more)" + See all posts   (unknown, draft or deleted: the API can't tell them apart)
+  other → "Couldn't be loaded" + Try again
+```
+- **`Title` and `Meta` services** rewrite the page's "label": the browser tab shows the post's title, and the description becomes the excerpt. On leaving, the site description is put back.
+- `notFound = computed(...)` checks `HttpErrorResponse.status === 404` **before** the general error branch.
+
+### Home: "05 · Latest writing"
+- `features/blog/latest-posts/`: Home only **places** it, inside `@defer (on viewport; prefetch on idle)` after Skills.
+- The 3 newest posts (`loadPosts` with page 1 × 3). No pagination or filters; "All posts →" leads to `/blog`.
+- **Hidden** with 0 posts or on an API error: a teaser should never show an empty or broken block.
+
+### Header
+- Section links are router links to `/` + fragment, so they work from the blog; a thin divider separates them from **blog** (another page, highlighted while you're on it, visible on phones).
+
+---
+
 ## 8. State: signals, and where RxJS still fits
 
 | Tool | Used for | Example |
@@ -328,7 +378,7 @@ textarea (Markdown) ──▶ markdown pipe (marked, GitHub-flavoured) ──▶
 - `shared/pipes/markdown.pipe.ts` is a **pure pipe**: it runs again only when the text changes.
 - **Safety is in the binding:** `[innerHTML]` always sanitizes. We never use `bypassSecurityTrustHtml`, so even pasted HTML can't run code (XSS).
 - **`.prose`** (`shared/styles/prose.scss`, loaded globally from `styles.scss`) styles rendered Markdown: headings, lists, code blocks, quotes, tables. It's global because rendered HTML isn't part of any component's template, so component styles can't reach it.
-- The blog pages (M7) will reuse **both**, so the preview looks exactly like the published post.
+- The blog article page reuses **both**, so the editor preview looks exactly like the published post.
 
 ---
 
@@ -352,10 +402,11 @@ textarea (Markdown) ──▶ markdown pipe (marked, GitHub-flavoured) ──▶
 - Animations respect `prefers-reduced-motion`.
 
 **Performance**
-- Lazy admin area + lazy admin pages + `@defer` for Projects → a visitor downloads the smallest possible first bundle.
+- Lazy admin area, lazy blog, lazy pages, `@defer` for Projects and Latest writing → a visitor downloads the smallest possible first bundle.
 - `OnPush` + signals → precise, cheap redraws.
 - `httpResource` cancels an old request when its signal changes (e.g. switching project categories quickly).
 - The pure `markdown` pipe re-renders only when the text changes.
+- Blog cards use the **stretched-link** pattern: the whole card is clickable, but there's only one link for keyboard and screen-reader users.
 
 ---
 
@@ -379,8 +430,11 @@ Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **7 tests
 
 | # | Gap / next step | Plan |
 |---|---|---|
-| 1 | Public blog pages (`/blog`, `/blog/:slug`) and "Latest posts" on Home | **Milestone 7**: `features/blog/`, lazy inside PublicLayout, reusing the `markdown` pipe + `.prose` |
-| 2 | Admin not usable live: no admin user on Neon yet | go-live step: `create-admin` against Neon, check `JWT_SECRET` and `CORS_ORIGIN` |
+| 1 | ✅ Done: public blog (list, article, Latest writing) | Milestone 7 |
+| 2 | ✅ Done: admin user on Neon, first post live | go-live, 15 Nov 2026 |
+| 7 | SEO: link previews (WhatsApp, LinkedIn) and crawlers without JavaScript see only `index.html`'s title | prerendering / SSR for the blog pages |
+| 8 | The editor reads `:id` with `ActivatedRoute.snapshot` | switch to `id = input<string>()` like the blog |
+| 9 | No "read next" on articles | needs neighbouring posts from the API |
 | 3 | No tests for services, the interceptor or the guards | add `HttpTestingController` tests (e.g. "three 401s → one refresh") |
 | 4 | Closing the tab uses the browser's box | by design; can't be changed by any website |
 | 5 | Optional: login form → Signal Forms | learning exercise after go-live |
@@ -405,6 +459,10 @@ Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **7 tests
 | **Reactive Forms (not Signal Forms yet)** | mature, what most teams use; consistent across the app | Signal Forms (stable since 22) | bridge to signals with `toSignal` |
 | **Own `<dialog>`-based confirm** | our look, native accessibility, no package | `window.confirm`; CDK Dialog | `beforeunload` must stay native |
 | **No NgRx** | the only global state is one signal | NgRx / SignalStore | add it if many features share state |
+| **Blog filters + page in the URL** (`?tag&page`) | Reload, Back and shared links work; real links | state only in the component | every filter click is a navigation (scrolls to top) |
+| **URL values as inputs** (`withComponentInputBinding`) | less code; signals; pages don't depend on the router | `ActivatedRoute` + subscribe | only for routed components; values are text |
+| **`Title` + `Meta` per article** | the tab and Google show the post's title and summary | one fixed title for every page | crawlers without JS still see `index.html` (needs prerendering) |
+| **404 page vs error + retry** | honest message; retrying a 404 can't help | one generic error box | one extra `computed` |
 
 ### 15.2 Questions and answers
 
@@ -445,4 +503,13 @@ A `CanDeactivate` guard asks any page implementing `hasUnsavedChanges()`. It ret
 The admin is lazy-loaded behind `CanMatch`, each admin page is lazy, Projects on Home uses `@defer (on viewport; prefetch on idle)`, every component is `OnPush` with signals, and `httpResource` cancels outdated requests.
 
 **Q13. What would you improve next?**
-`HttpTestingController` tests for the interceptor (three 401s → one refresh) and the services, the public blog pages, and possibly migrating simple forms to Signal Forms.
+`HttpTestingController` tests for the interceptor (three 401s → one refresh) and the services, prerendering for the blog (SEO and link previews), and possibly migrating simple forms to Signal Forms.
+
+**Q14. How does the blog's tag filter work?**
+The chip is a link that only changes the URL (`/blog?tag=signals`). With `withComponentInputBinding` the tag arrives as a signal input; a `computed` feeds `httpResource`, which refetches by itself. Filtering and paging happen in the API (database), because the browser only holds one page. Reload, Back and shared links keep the filter.
+
+**Q15. What happens when someone opens a draft's address?**
+The public API answers 404, the same as for an unknown slug, so a draft's existence isn't revealed. The page checks the status: a 404 shows "This post doesn't exist (any more)" with a link to all posts; other errors show Try again.
+
+**Q16. What's a bug you found and fixed?**
+In Angular 20+, `resource.value()` throws in the error state. Four places read it before checking, so with the API down, sections broke instead of showing "Try again". I guard every read with `hasValue()` now, and I found it by testing the unhappy path on purpose (stopping the API).

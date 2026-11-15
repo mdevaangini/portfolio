@@ -4,7 +4,7 @@
 
 The single reference for the portfolio's backend: **every API, how to test it in Postman, how a request travels through the code, how the APIs use the database, and how to explain all of it in an interview.**
 
-Written from the actual code (`api/src/`, `api/prisma/schema.prisma`) as of **9 Nov 2026**. Status labels:
+Written from the actual code (`api/src/`, `api/prisma/schema.prisma`) as of **15 Nov 2026** (the blog is live: Milestones 3–7 done, admin user on Neon). Status labels:
 
 | Label | Meaning |
 |---|---|
@@ -48,21 +48,21 @@ Written from the actual code (`api/src/`, `api/prisma/schema.prisma`) as of **9 
 | 4 | GET | `/api/experience` | public | ✅ Live |
 | 5 | GET | `/api/skills` | public | ✅ Live |
 | 6 | POST | `/api/contact` | public | ✅ Live |
-| 7 | GET | `/api/posts` | public | 🟢 Implemented |
-| 8 | GET | `/api/posts/:slug` | public | 🟢 Implemented |
-| 9 | GET | `/api/tags` | public | 🟢 Implemented |
-| 10 | POST | `/api/auth/login` | admin (logging in) | 🟢 Implemented |
-| 11 | POST | `/api/auth/refresh` | admin | 🟢 Implemented |
-| 12 | GET | `/api/auth/me` | admin | 🟢 Implemented |
-| 13 | POST | `/api/auth/logout` | admin | 🟢 Implemented |
-| 14 | GET | `/api/admin/check` | admin only | 🟢 Implemented (test endpoint) |
-| 15 | GET | `/api/admin/posts` | admin only | 🟢 Implemented |
-| 16 | GET | `/api/admin/posts/:id` | admin only | 🟢 Implemented |
-| 17 | POST | `/api/admin/posts` | admin only | 🟢 Implemented |
-| 18 | PATCH | `/api/admin/posts/:id` | admin only | 🟢 Implemented |
-| 19 | POST | `/api/admin/posts/:id/publish` | admin only | 🟢 Implemented |
-| 20 | POST | `/api/admin/posts/:id/unpublish` | admin only | 🟢 Implemented |
-| 21 | DELETE | `/api/admin/posts/:id` | admin only | 🟢 Implemented |
+| 7 | GET | `/api/posts` | public | ✅ Live |
+| 8 | GET | `/api/posts/:slug` | public | ✅ Live |
+| 9 | GET | `/api/tags` | public | ✅ Live |
+| 10 | POST | `/api/auth/login` | admin (logging in) | ✅ Live |
+| 11 | POST | `/api/auth/refresh` | admin | ✅ Live |
+| 12 | GET | `/api/auth/me` | admin | ✅ Live |
+| 13 | POST | `/api/auth/logout` | admin | ✅ Live |
+| 14 | GET | `/api/admin/check` | admin only | ✅ Live (test endpoint) |
+| 15 | GET | `/api/admin/posts` | admin only | ✅ Live |
+| 16 | GET | `/api/admin/posts/:id` | admin only | ✅ Live |
+| 17 | POST | `/api/admin/posts` | admin only | ✅ Live |
+| 18 | PATCH | `/api/admin/posts/:id` | admin only | ✅ Live |
+| 19 | POST | `/api/admin/posts/:id/publish` | admin only | ✅ Live |
+| 20 | POST | `/api/admin/posts/:id/unpublish` | admin only | ✅ Live |
+| 21 | DELETE | `/api/admin/posts/:id` | admin only | ✅ Live |
 
 **Not built (🕓 Planned):** `GET /api/health`; reading contact messages from an admin page (messages are only visible in pgAdmin / Neon). There is **no** sign-up endpoint and no plan for one: the admin user is created with a script (`npm run create-admin`).
 
@@ -216,7 +216,7 @@ Request:
 
 **Internally:** spam trap → field checks → **rate limit** (`countRecentMessages`: two counts in one transaction, email case-insensitive; counted in the **database** because several API copies run on Vercel) → `createMessage` (INSERT) → `notifyNewMessage` emails me via **Resend** (plain text, `replyTo` = the visitor; an email failure is logged and never breaks the request) → 201.
 
-### 3.2 Public blog (🟢 Implemented, Milestone 5)
+### 3.2 Public blog (✅ Live, Milestone 5; used by the blog pages since Milestone 7)
 The golden rule (`visible` in `posts.service.ts`): **`status = PUBLISHED` and `deleted_at` empty**. Visitors never get `id`, `status`, `authorId` or `deletedAt`.
 
 #### `GET /api/posts`: a page of published posts
@@ -252,7 +252,7 @@ The golden rule (`visible` in `posts.service.ts`): **`status = PUBLISHED` and `d
 #### `GET /api/tags`
 **200** `[ { "name": "angular", "slug": "angular" }, … ]`: only tags used by at least one **visible** post, A→Z (for the blog's filter chips).
 
-### 3.3 Login (🟢 Implemented, Session B, JWT)
+### 3.3 Login (✅ Live, Session B, JWT)
 **Tokens:** login sets two cookies via `Set-Cookie` **response headers**; the JSON body never contains a token.
 
 | Cookie | Holds | Lives | `path` → the browser sends it to |
@@ -278,7 +278,7 @@ Both: `httpOnly` (scripts can't read them), `sameSite: strict`, `secure` live (h
 
 #### `POST /api/auth/refresh`
 No body; the browser sends the `refresh_token` cookie. **200** `{ "user": {…} }` + **new** pair of cookies · **401** `{ "error": "Please log in again." }` + both cookies cleared (no cookie, already used, logged out, or expired).
-**Internally (rotation):** find the fingerprint → **delete that row** (only one concurrent request can win) → if it was still valid, `issueTokens()` again. Each refresh token works **once**. Called by me in Postman today; by an Angular interceptor in Milestone 6 (🕓).
+**Internally (rotation):** find the fingerprint → **delete that row** (only one concurrent request can win) → if it was still valid, `issueTokens()` again. Each refresh token works **once**. Called automatically by the Angular interceptor on a 401 (Milestone 6).
 
 #### `GET /api/auth/me`
 Checks **only the access token** (no database): **200** `{ "user": { "id": 1, "email": "…", "role": "ADMIN" } }` · **401** `{ "error": "Not logged in." }`.
@@ -286,7 +286,7 @@ Checks **only the access token** (no database): **200** `{ "user": { "id": 1, "e
 #### `POST /api/auth/logout`
 Always **204** (no body): deletes the refresh-token row (if a cookie was sent) and clears both cookies. The access token can't be cancelled; it expires within 15 minutes.
 
-### 3.4 Admin (🟢 Implemented, Milestones 3–4)
+### 3.4 Admin (✅ Live, Milestones 3–4; used by the admin pages since Milestone 6)
 **Every `/api/admin` route:** `checkOrigin` → `requireAdmin` (valid `access_token`, not expired, `role = ADMIN`; else **401** `{ "error": "Not logged in." }`, and the route's code never runs).
 
 #### `GET /api/admin/check`
@@ -581,11 +581,13 @@ Found while reviewing the code for this handbook. None blocks the blog; listed s
 | 2 | The access token can't be revoked | after logout it still works until it expires (≤ 15 min) | accepted JWT trade-off; keep it short |
 | 3 | Lockout is per account | someone could lock me out for 15 min with wrong passwords | accepted; re-run `create-admin` to unlock |
 | 4 | No security headers (e.g. Helmet) | missing hardening headers | add Helmet (Blog milestone 8, security review) |
-| 5 | Admin user not created on Neon yet | live login → 401 | at Blog go-live: `npx tsx --env-file=.env.production.local scripts/create-admin.ts` |
+| 5 | ✅ Fixed: admin user created on Neon (15 Nov 2026) | — | `npx tsx --env-file=.env.production.local scripts/create-admin.ts`. Needs port 5432 from the laptop: my Jio Fiber blocks it, a phone hotspot works |
 | 6 | `CORS_ORIGIN` doubles as the allowed Origin | if the live website address changes without updating it, live logins/admin changes → 403 | keep it equal to the live address |
 | 7 | Tests don't touch a database | DB behaviour (e.g. 409, rotation) is tested by hand in Postman | a separate test database (postponed) |
 | 8 | `GET /api/projects/:id` isn't used by any page | — | a project detail page, if ever wanted |
 | 9 | The posts list has no reading time | only `GET /api/posts/:slug` computes it | add it to cards if the design needs it |
+| 10 | ✅ Fixed: database scripts needed `JWT_SECRET` | `create-admin` against Neon failed with "Missing JWT_SECRET": `db/prisma.ts` imported `config/env.ts`, which checks every server setting | `config/database.ts` reads only `DATABASE_URL`; `prisma.ts` uses it, `env.ts` re-uses it. Scripts need only the database address; the server still checks everything at start-up (least privilege) |
+| 11 | No "neighbouring posts" endpoint | articles have no "read next" | add `prev`/`next` to `GET /api/posts/:slug` if wanted |
 
 ---
 
@@ -651,5 +653,8 @@ PATCH changes only the fields sent; PUT replaces the whole resource. The editor 
 **Q14. Why does a visitor get 404 for a draft and not 403?**
 403 would confirm that something exists there. 404 makes a draft indistinguishable from a missing post, so nothing leaks.
 
-**Q15. How would you scale or improve this?**
+**Q15. A maintenance script against production failed with "Missing JWT_SECRET". What did you change?**
+The Prisma client imported the app's whole config, which requires every server secret. I moved the database address into its own small config file, so database-only scripts need just the connection string. The server still validates all settings at start-up. That's least privilege: production signing keys never need to be on a laptop.
+
+**Q16. How would you scale or improve this?**
 Cursor-based paging for very large lists, a test database for DB-level tests, Helmet security headers, correct 4xx from the error handler, caching public blog responses, and a separate role for co-authors using the existing RBAC check.

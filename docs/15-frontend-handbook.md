@@ -209,7 +209,7 @@ The API always answers errors as `{ error: "sentence", fields?: { name: "sentenc
 
 ## 6. Login on the browser side
 
-**The golden rule:** Angular **never sees the tokens**. They're in two **httpOnly** cookies that only the browser can read, so JavaScript (including any injected script) can't steal them.
+**The golden rule:** Angular **never sees the tokens**. They're in two **httpOnly** cookies that only the browser can read, so JavaScript (including any injected script) can't steal them. `console.log(document.cookie)` doesn't show them, yet the browser still sends them with every matching request. Full explanation, with examples and the four cookie settings: [13 — HttpOnly: what it means](13-jwt-login-notes.md#httponly-what-it-means-and-why-my-tokens-are-safe-from-scripts).
 
 | Cookie | Holds | Lives | Sent by the browser to |
 |---|---|---|---|

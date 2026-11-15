@@ -46,6 +46,59 @@ In B1 we built **only two functions**. Nothing used them yet.
    - `createRefreshToken()` → **cuts a new locker key**, and writes the key's **fingerprint** in reception's **book** (the `refresh_tokens` table).
 4. The response gives both tokens to the browser **in its headers**, as two `Set-Cookie` lines. The **body** only says who logged in: `{ "user": { "id": 1, "email": "…", "role": "ADMIN" } }`. The tokens are **never in the body**, so page scripts (even Angular) can't read them.
 
+### HttpOnly: what it means (and why my tokens are safe from scripts)
+**HttpOnly is a security setting on a cookie that stops JavaScript from reading it.** The browser still stores the cookie and still sends it to the server, but no script on the page can see it, Angular included.
+
+**1. How my tokens get into a cookie**
+1. Angular sends my email and password to the Express API (`POST /api/auth/login`).
+2. Express checks the password.
+3. Express makes the tokens: the JWT access token (and the refresh token).
+4. Express sends them to the browser **as cookies**, in the response headers. What my API really sends (in `auth.controller.ts`, `cookieOptions`) looks like this:
+   ```
+   Set-Cookie: access_token=eyJhbGc…; Path=/api; Max-Age=900; HttpOnly; Secure; SameSite=Strict
+   Set-Cookie: refresh_token=k3J9…;   Path=/api/auth; Max-Age=604800; HttpOnly; Secure; SameSite=Strict
+   ```
+
+**2. With HttpOnly (what my project does)**
+If any script on the page tries to read the cookies:
+```js
+console.log(document.cookie);   // access_token and refresh_token are NOT in there
+```
+The tokens are **invisible to JavaScript**. But the browser **still attaches them** to every matching request by itself:
+
+| Who | Can it read the token? | What it does |
+|---|---|---|
+| **Browser cookie storage** | holds it | keeps `access_token` / `refresh_token` (marked HttpOnly) |
+| **Angular / any JavaScript** | ❌ no | `document.cookie` doesn't show them; Angular never touches the tokens |
+| **The browser, when sending a request** | ✅ attaches it | automatically adds them to `/api/…` requests (each only to its `path`) |
+| **The Express API** | ✅ reads it | `cookie-parser` reads it; `requireAdmin` / `/refresh` check it |
+
+**3. Without HttpOnly (what we avoid)**
+```
+Set-Cookie: access_token=eyJhbGc…
+```
+```js
+console.log(document.cookie);   // "access_token=eyJhbGc…"  ← any script can read it
+```
+**The risk: XSS (Cross-Site Scripting).** If an attacker ever managed to inject their own JavaScript into the page (through a bug, a bad library, pasted HTML…), that script could read the token and **send it to the attacker**. With the token they could act as me **from their own computer**, until it expires. HttpOnly blocks exactly this: **there's nothing for a script to steal.** (That's also why I don't keep tokens in `localStorage`: any script can read that too.)
+
+**4. The four cookie settings together** (all set in `cookieOptions`)
+
+| Setting | What it does | Protects against |
+|---|---|---|
+| `HttpOnly` | scripts can't read the cookie | token **theft** through XSS |
+| `Secure` | sent only over **https** (on when live; off on the laptop, which uses http) | someone reading the token on the network |
+| `SameSite=Strict` | sent only when the request comes **from my own site** | other websites making requests "as me" (CSRF) |
+| `Path` | sent only to `/api` (access) or `/api/auth` (refresh) | the long-lived refresh token travelling where it isn't needed |
+
+**5. What HttpOnly does not do (honest limit)**
+HttpOnly stops a script from **stealing** the token, but an injected script running **on my page** could still make requests while I'm logged in, because the browser attaches the cookie for it. So HttpOnly is one layer, not the whole defence. The other layers in my project:
+- Angular escapes text and **sanitizes** `[innerHTML]` (the Markdown pipe), so injecting a script in the first place is hard;
+- the access token lives only **15 minutes**;
+- the API's `checkOrigin` and `SameSite=Strict` block requests from other sites.
+
+**Interview line:** *"Both tokens are in HttpOnly cookies, so JavaScript, including any injected script, can't read or steal them; the browser still sends them automatically. Combined with Secure, SameSite=Strict, a narrow path and a short-lived access token, that's defence in depth against XSS token theft and CSRF."*
+
 ### Why each cookie has a "path"
 - **What:** when the server sets a cookie, it also says **which addresses the browser may send it to**. That's the cookie's `path`, set in `auth.controller.ts`.
 - **How:** the browser attaches a cookie only to requests whose address **starts with** that path. It does this by itself.

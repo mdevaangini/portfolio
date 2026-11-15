@@ -71,6 +71,9 @@ Browser (Angular) ──/api──▶ Express API ──Prisma──▶ PostgreS
 
 **Show:** log in (normal window) → **DevTools → Application → Cookies**: `access_token` and `refresh_token`, both **HttpOnly**.
 
+**Then prove it:** in the **Console** type `document.cookie` → the tokens are **not** there. Then show a request in **Network** → its `Cookie` header **does** carry them.
+> "HttpOnly: JavaScript, even an injected script, can't read the tokens, but the browser still sends them. Nothing to steal." (📖 `docs/13`, HttpOnly section)
+
 **Say (the login flow, `docs/13`):**
 > "Login gives two **httpOnly cookies**: a 15-minute **JWT access token**, and a 7-day **refresh token**, stored only as a hash and **rotated** on every use. Angular never touches the tokens, so a script can't steal them. When the access token expires, the API answers 401; my **interceptor** makes **one shared refresh** and repeats the request, and the user never notices."
 

@@ -390,6 +390,14 @@ The password is checked once (step 2); after that, only the cookie is checked (s
 - **3b, read it:** **read** the cookie from the **request** (cookie-parser) and use it for `/me` (who am I?) and `/logout` (delete the session).
 - **3c, guard it:** before any `/api/admin/...` action, read the cookie, check **logged in** (fingerprint in `sessions`, not expired), then check **admin** (`role = ADMIN`). Either no → 401 and the action never runs.
 
+### What does HttpOnly mean on a cookie?
+**A cookie setting that stops JavaScript from reading the cookie.** The browser still stores it and still sends it to the server automatically.
+- **With HttpOnly** (my project): `console.log(document.cookie)` doesn't show `access_token` / `refresh_token`; Angular can't read them, but the browser attaches them to `/api` requests and Express reads them.
+- **Without it:** any script can read the token. If an attacker injects JavaScript (XSS), it could steal the token and act as me from their own computer.
+- My cookies also have `Secure` (https only, when live), `SameSite=Strict` (only from my own site, against CSRF) and a narrow `Path`.
+- **Limit:** HttpOnly stops *theft*, not an injected script making requests on my page; hence the other layers (sanitizer, 15-minute token, `checkOrigin`).
+→ Full version with examples: [13 — HttpOnly](13-jwt-login-notes.md#httponly-what-it-means-and-why-my-tokens-are-safe-from-scripts)
+
 ### Who attaches the cookie: the API or the browser?
 Both, but in **different directions** and with **different headers**:
 

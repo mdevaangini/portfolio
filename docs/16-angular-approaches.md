@@ -374,7 +374,8 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 - **Problem:** tokens in `localStorage` can be stolen by any injected script (XSS).
 - **Old way:** save the JWT in `localStorage`; an interceptor adds `Authorization: Bearer …` to each request.
 - **What we do:** the API sends two **httpOnly** cookies (access 15 min, refresh 7 days); the **browser** stores and attaches them. Angular only keeps *who* is logged in, in a signal.
-- **Why:** scripts can't read httpOnly cookies, so there's nothing to steal from JavaScript. With one `/api` address (entry 5) the cookies are first-party.
+- **Why:** scripts can't read httpOnly cookies (`document.cookie` doesn't show them), so even an injected script (XSS) has nothing to steal; the browser still sends them to the API by itself. With one `/api` address (entry 5) the cookies are first-party. Full explanation with examples: [13 — HttpOnly](13-jwt-login-notes.md#httponly-what-it-means-and-why-my-tokens-are-safe-from-scripts).
+- **Honest limit:** HttpOnly stops token *theft*, not everything: an injected script could still send requests while I'm logged in. Hence the other layers: Angular's sanitizer, a 15-minute token, `SameSite=Strict`, `checkOrigin`.
 - **Watch out:** Angular can't read the expiry, so the interceptor **reacts to 401** instead of checking beforehand (entry 20).
 - **Interview line:** *"Tokens live in httpOnly, sameSite-strict cookies; Angular never touches them."*
 

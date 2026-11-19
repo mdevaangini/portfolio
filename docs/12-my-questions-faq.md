@@ -249,6 +249,17 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Comments C2: what do the new reactions files do? (the easy version)
+Same layers as every feature: **routes → controller → service → database**, plus one helper.
+- **`lib/visitor-id.ts`: the browser's name tag.** Like a cloakroom token: a random number, not a login. `readVisitorId` reads the `visitor_id` cookie (only if it's in our random format); `ensureVisitorId` returns it or **makes a new one** (`randomUUID()`) and sets it as an httpOnly, sameSite-strict cookie for `/api/posts`, valid 1 year.
+- **`reactions.service.ts`: talks to the database.** `REACTION_NAMES` = like / love / insightful (LIKE… in the DB). `findVisiblePostId` = a **published** post's id (drafts get none). `getReactionSummary` = counts per type (`groupBy` = SQL GROUP BY) + "which did this browser give" → `{ counts, mine }`. `addReaction` saves, but **skips** if already there (`skipDuplicates`, so clicking twice never makes two). `removeReaction` deletes it (nothing happens if it's not there).
+- **`reactions.controller.ts`: the front desk.** `getReactions` (GET, never makes a cookie), `addOne` (PUT: name ok? → post published? → get or make the token → add → 200), `removeOne` (DELETE). Cheap checks (name 400, slug format 404) run before the database.
+- **`reactions.routes.ts`: the address list.** GET `/`, PUT `/:type` and DELETE `/:type`; **`checkOrigin`** before PUT/DELETE (only my website may change things). **`mergeParams: true`** lets these child routes see the parent's `:slug`.
+- **One line in `posts.routes.ts`:** `postsRouter.use("/:slug/reactions", reactionsRouter)` plugs the module in.
+- **`tests/reactions.test.ts`:** 403 from another site, 400 unknown reaction, 404 bad slug, the cookie check (2).
+
+**One click:** `PUT /api/posts/my-post/reactions/like` → posts.routes → reactions.routes (checkOrigin) → addOne (name ✅, post ✅, token) → service (add, count) → `200 { counts: { like: 1, … }, mine: ["like"] }`.
+
 ### How did we build the dialog? (the easy version)
 **3 small pieces:**
 1. **The notepad** (`dialog.service.ts`): holds **one question**, or nothing. `confirm({ title, message })` **writes** the question and says "I'll tell you the answer later". `answer(true / false)` **erases** the notepad and **gives the answer** to whoever asked.

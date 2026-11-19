@@ -961,5 +961,15 @@ text only; honeypot + DB rate limits (3/browser/10 min, 30/post/hour) +
 checkOrigin. Design: docs/18-comments-and-reactions-design.md (written, NOT
 yet reviewed). Plan C1 migration → C2 reactions API → C3 comments API → C4
 admin API → C5 reaction bar → C6 comments UI → C7 admin page + badge → C8 live.
-NEXT: she reviews docs/18 (3 open questions) → approve → C1.
+She skipped the full review ("explain while coding"); open questions =
+my proposals (oldest first, no counts on cards yet, replies from admin).
+C1 committed 16a6cd6 (migration 20261119092032_comments_and_reactions).
+C2 WRITTEN [tsc OK; UNCONFIRMED]: lib/visitor-id.ts (readVisitorId UUID
+check, ensureVisitorId sets httpOnly cookie Path=/api/posts 1y);
+modules/reactions (service: findVisiblePostId, getReactionSummary groupBy,
+addReaction createMany skipDuplicates, removeReaction deleteMany;
+controller: lowercase names like/love/insightful, 400 unknown, 404;
+routes mergeParams, checkOrigin on PUT/DELETE) mounted in posts.routes
+at /:slug/reactions; tests/reactions.test.ts (5) → api npm test 53.
+NEXT: she tests C2 (npm test + Postman) → commit → C3 comments API.
 

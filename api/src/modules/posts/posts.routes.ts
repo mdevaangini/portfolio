@@ -7,9 +7,13 @@
 
 import { Router } from "express";
 import { getOne, list } from "./posts.controller.js";
+import { reactionsRouter } from "../reactions/reactions.routes.js";
 
 /** URL map for public posts, mounted at "/api/posts". */
 export const postsRouter = Router();
 
 postsRouter.get("/", list); //         GET /api/posts?limit&offset&tag  → a page of published posts
 postsRouter.get("/:slug", getOne); //  GET /api/posts/signals-vs-rxjs   → one published post
+
+// Reactions on a post (Comments milestone C2): /api/posts/:slug/reactions[/:type]
+postsRouter.use("/:slug/reactions", reactionsRouter);

@@ -162,6 +162,9 @@ model Post {
   authorId      Int        @map("author_id")
   author        User       @relation(fields: [authorId], references: [id])
   tags          PostTag[]
+  /// Visitor comments and reactions (Comments milestone C1).
+  comments      Comment[]
+  reactions     Reaction[]
 
   // Speeds up the public list: "published posts, newest first".
   @@index([status, publishedAt])
@@ -192,6 +195,76 @@ model PostTag {
   @@id([postId, tagId])
   @@index([tagId])
   @@map("post_tags")
+}
+
+// ── Comments and reactions (Comments milestone C1, design: docs/18) ──────
+
+/// Where a visitor's comment is in my review.
+enum CommentStatus {
+  PENDING   // waiting for my review (every new visitor comment)
+  APPROVED  // visible on the post
+  REJECTED  // never shown (spam or not suitable)
+
+  @@map("comment_status")
+}
+
+/// The three reactions a visitor can give a post.
+enum ReactionType {
+  LIKE       // 👍
+  LOVE       // ❤️
+  INSIGHTFUL // 💡
+
+  @@map("reaction_type")
+}
+
+/// A comment on a post, OR a reply to a comment. Only ONE level of replies:
+/// parentId always points to a TOP-LEVEL comment (the API enforces that).
+model Comment {
+  id         Int           @id @default(autoincrement())
+  postId     Int           @map("post_id")
+  post       Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// Empty = a top-level comment. Otherwise the TOP-LEVEL comment this replies to.
+  parentId   Int?          @map("parent_id")
+  parent     Comment?      @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[]     @relation("Replies")
+  authorName String        @map("author_name") @db.VarChar(50)
+  /// Plain text only (never HTML/Markdown), so nothing in it can run as code.
+  body       String        @db.VarChar(2000)
+  /// true = written by me (the admin); shown with an "Author" badge.
+  isAuthor   Boolean       @default(false) @map("is_author")
+  status     CommentStatus @default(PENDING)
+  /// The anonymous browser id from the visitor_id cookie (rate limiting). Never shown.
+  /// Empty for my own replies.
+  visitorId  String?       @map("visitor_id") @db.VarChar(36)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  approvedAt DateTime?     @map("approved_at")
+  /// Soft delete, like posts.
+  deletedAt  DateTime?     @map("deleted_at")
+
+  // "Approved comments of this post, oldest first" (the article page).
+  @@index([postId, status, createdAt])
+  // "Pending comments, newest first" (my review queue).
+  @@index([status, createdAt])
+  @@index([parentId])
+  @@map("comments")
+}
+
+/// One reaction (👍 ❤️ 💡) from one browser on one post.
+model Reaction {
+  id        Int          @id @default(autoincrement())
+  postId    Int          @map("post_id")
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  /// The anonymous browser id from the visitor_id cookie.
+  visitorId String       @map("visitor_id") @db.VarChar(36)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  /// "One per browser per type": the DATABASE itself refuses a second row,
+  /// even if two clicks arrive at the same moment.
+  @@unique([postId, visitorId, type])
+  // Counting: "how many LIKEs does this post have?"
+  @@index([postId, type])
+  @@map("reactions")
 }
 
 // ── My notes ────────────────────────────────────────────────────────────

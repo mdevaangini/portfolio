@@ -51,6 +51,7 @@ flowchart LR
 | 15 | [Frontend handbook](15-frontend-handbook.md) | **The Angular app in one place**: how it starts, folders + decision guide, routing and lazy loading, API services (httpResource vs HttpClient), login flows (interceptor, guard), admin pages, signals, forms, Markdown safety, tests, interview Q&A |
 | 16 | [Angular approaches playbook](16-angular-approaches.md) | **Every Angular approach that was new to me**, reusable in other projects: problem, old way, new way, why, watch-outs, copy-paste setup, interview line |
 | 17 | [Demo script](17-demo-script.md) | **A 15–20 minute walkthrough** for a guide or interviewer: what to show in which order, what to say, likely questions with short answers, and where the details are |
+| 18 | [Comments and reactions: design](18-comments-and-reactions-design.md) | **The design (RFC) for the next feature**: decisions, user stories, tables, API, screens, security and abuse, edge cases, build plan C1–C8 |
 
 Diagrams: [system architecture](diagrams/system-architecture.md) · [frontend flow](diagrams/frontend-flow.md) · [API request flow](diagrams/api-request-flow.md) · [database relationships](diagrams/database-relationships.md)
 

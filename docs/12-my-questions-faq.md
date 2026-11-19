@@ -249,6 +249,42 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### How did we build the dialog? (the easy version)
+**3 small pieces:**
+1. **The notepad** (`dialog.service.ts`): holds **one question**, or nothing. `confirm({ title, message })` **writes** the question and says "I'll tell you the answer later". `answer(true / false)` **erases** the notepad and **gives the answer** to whoever asked.
+2. **The box** (`dialog-host.html`): the box on screen: title, message, **Cancel** / **Delete**. Placed **once** in `app.html` (the whole app shares it), normally hidden, and it shows whatever is on the notepad. Cancel → `answer(false)`, Delete → `answer(true)`.
+3. **The watcher** (the `afterRenderEffect`): keeps looking at the notepad. Question there → **open the box**; notepad empty → **close the box**.
+
+**Clicking "Delete" on a post:**
+```
+1. The posts page asks:      confirm("Delete this post?")  → the question goes on the notepad
+2. The watcher sees it:      → opens the box
+3. I click "Delete":         answer(true)                  → the notepad is erased
+4. The watcher sees it:      → closes the box
+5. The posts page gets "yes" → deletes the post
+```
+Cancel (or Esc) works the same way, but the answer is "no", so nothing is deleted.
+
+**"The answer later"** = a **Promise**. The page **waits** for my click with `await`:
+```ts
+const ok = await this.dialog.confirm({ title: 'Delete this post?' });
+if (ok) { /* delete */ }
+```
+**In one line:** the page writes a question on the notepad → the watcher opens the box → my click erases the notepad and gives the answer → the watcher closes the box → the page continues.
+
+### Dialog: what exactly does the `afterRenderEffect` in `dialog-host.ts` do?
+**It's the bridge between the signal (the question) and the real `<dialog>` element.** A modal dialog (backdrop, focus trap, Esc) can only be opened by **calling** `el.showModal()`; there's no template binding for it. So something must watch the signal and call the method.
+```ts
+const el = this.dialogEl().nativeElement;          // the real <dialog> (viewChild)
+const isAsking = this.dialog.request() !== null;   // is there a question? (reading the signal = re-run when it changes)
+if (isAsking && !el.open) el.showModal();          // question + closed → open
+if (!isAsking && el.open) el.close();              // no question + open → close
+```
+- **Like a thermostat:** it compares "what should be" (the signal) with "what is" (`el.open`) and fixes the difference. The `open` checks matter: `showModal()` on an already-open dialog throws.
+- **Why an effect:** `computed` calculates values; an effect *does* something (calls a browser method).
+- **Why `afterRenderEffect`:** the title and buttons are inside `@if (dialog.request())`, so they exist only after Angular draws. It runs **after** drawing, so the dialog opens with its content and `autofocus` finds the Cancel button. A plain `effect` might run before → an empty box, no focus.
+- **Round trip:** `confirm()` → `request` set → Angular draws the buttons → effect: `showModal()` → click Delete → `answer(true)` → `request = null` → buttons removed → effect: `close()`. **Esc:** the browser closes it itself → `(close)` → `onClose()` → `answer(false)` → the effect finds it already closed and does nothing.
+
 ### Why our own dialog instead of `window.confirm`? (6d, my decision: option A)
 The browser's box can't be styled, looks different in every browser and freezes the page. I chose **A: the HTML `<dialog>` element + our own `DialogService`** (no package; the browser gives the backdrop, focus trap and Esc for free). B = Angular CDK Dialog (good for big apps with many dialogs), C = a hand-made div (we'd have to build all the accessibility).
 

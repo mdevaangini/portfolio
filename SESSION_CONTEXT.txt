@@ -952,3 +952,14 @@ Blog plan doc (private): https://claude.ai/artifact/MQui2S4EGWACMJfQAkdhD7
 
 Secrets: NOT stored here. DATABASE_URL lives only in api/.env.
 ==============================================================================
+
+NEW FEATURE (2026-11-16): COMMENTS + REACTIONS. Her picks: name-only comments,
+admin approves first, one reply level (parentId → top-level only), reactions
+LIKE/LOVE/INSIGHTFUL counted per browser via an anonymous httpOnly visitor_id
+cookie (UUID, Path=/api/posts) + @@unique([postId, visitorId, type]); plain
+text only; honeypot + DB rate limits (3/browser/10 min, 30/post/hour) +
+checkOrigin. Design: docs/18-comments-and-reactions-design.md (written, NOT
+yet reviewed). Plan C1 migration → C2 reactions API → C3 comments API → C4
+admin API → C5 reaction bar → C6 comments UI → C7 admin page + badge → C8 live.
+NEXT: she reviews docs/18 (3 open questions) → approve → C1.
+

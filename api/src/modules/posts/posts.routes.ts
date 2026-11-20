@@ -7,6 +7,7 @@
 
 import { Router } from "express";
 import { getOne, list } from "./posts.controller.js";
+import { commentsRouter } from "../comments/comments.routes.js";
 import { reactionsRouter } from "../reactions/reactions.routes.js";
 
 /** URL map for public posts, mounted at "/api/posts". */
@@ -17,3 +18,6 @@ postsRouter.get("/:slug", getOne); //  GET /api/posts/signals-vs-rxjs   → one 
 
 // Reactions on a post (Comments milestone C2): /api/posts/:slug/reactions[/:type]
 postsRouter.use("/:slug/reactions", reactionsRouter);
+
+// Comments on a post (Comments milestone C3): /api/posts/:slug/comments
+postsRouter.use("/:slug/comments", commentsRouter);

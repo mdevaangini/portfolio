@@ -2,7 +2,7 @@
 
 [← Docs home](README.md)
 
-**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) written.
+**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) ✅ · C3 (public comments API) written.
 **Written:** 16 Nov 2026 · **Decisions:** "your picks" (16 Nov 2026)
 
 The design (an "RFC") for letting visitors **react to** and **comment on** blog posts. In a company, a page like this is written and reviewed **before** coding, so everyone agrees on the tables, the API and the screens, and the edge cases are found on paper, not in production.
@@ -127,8 +127,8 @@ later requests: the browser sends it by itself → the API knows "same browser a
 | GET | `/api/posts/:slug/reactions` | — | `200 { counts: { like: 4, love: 1, insightful: 0 }, mine: ["like"] }` (`mine` from the cookie; names are lowercase in URLs and JSON, uppercase only in the database enum) |
 | PUT | `/api/posts/:slug/reactions/:type` | — | **add** my reaction (`:type` = `like` · `love` · `insightful`) → `200` + the new counts. Doing it twice changes nothing (*idempotent*). Unknown type → 400 |
 | DELETE | `/api/posts/:slug/reactions/:type` | — | **remove** my reaction → `200` + the new counts |
-| GET | `/api/posts/:slug/comments` | — | `200 [ { id, authorName, isAuthor, body, createdAt, replies: [ … ] } ]`: **approved only**, top-level and replies **oldest first** (a conversation reads top to bottom) |
-| POST | `/api/posts/:slug/comments` | `{ authorName, body, parentId?, website }` | `202 { status: "PENDING" }` ("accepted, not visible yet"); `400` field errors; `429` too many |
+| GET | `/api/posts/:slug/comments` | — | `200 { data: [ { id, authorName, isAuthor, body, createdAt, replies: [ … ] } ], total }` (`total` = comments + replies): **approved only**, top-level and replies **oldest first** (a conversation reads top to bottom) |
+| POST | `/api/posts/:slug/comments` | `{ authorName, body, parentId?, website }` | `202 { status: "PENDING", message }` ("accepted, not visible yet"); `400` field errors; `404` post; `429` too many |
 
 **Why PUT/DELETE for reactions (not one "toggle")?** "Make sure my 👍 is there" (PUT) and "make sure it's gone" (DELETE) give the same result however often they're sent: a double-click or a retry can't flip the state by accident.
 

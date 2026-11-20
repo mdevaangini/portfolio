@@ -13,6 +13,15 @@ import { prisma } from "../../db/prisma.js";
 export const visible = { status: "PUBLISHED", deletedAt: null } satisfies Prisma.PostWhereInput;
 
 /**
+ * The id of a PUBLISHED post with this slug, or null (draft, deleted or unknown).
+ * Shared by the features that hang under a post: reactions and comments.
+ */
+export async function findVisiblePostId(slug: string): Promise<number | null> {
+  const post = await prisma.post.findFirst({ where: { slug, ...visible }, select: { id: true } });
+  return post?.id ?? null;
+}
+
+/**
  * What visitors get for a post in the LIST: no content (too long for a list),
  * and nothing internal (no id, status, author or deleted_at).
  */

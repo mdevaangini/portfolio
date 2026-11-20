@@ -249,6 +249,12 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Comments C3: the `website` trap and the allowed fields (the 3 things to remember)
+1. **A comment uses only 3 fields:** `authorName`, `body`, `parentId` (for replies). `status` is **not** one of them: every new comment starts as **PENDING**. Anything else a visitor sends is ignored (Zod keeps only what `comments.schema.ts` lists).
+2. **`website` is a trap for robots, and the name is our own choice.** The form has a `website` input hidden from people with CSS. People leave it empty; robots fill every field. **`website` filled → a robot → save nothing** (but still answer 202 "Thanks!", so it doesn't learn). The same trick as the contact form. Any name would work; "website" looks normal to robots.
+3. **Why it matters:** robots can't add spam, and nobody can approve their own comment by sending `status`.
+- Code: the 3 fields in `comments.schema.ts`; the trap is the first `if` in `create` in `comments.controller.ts` (its `return` stops before `createComment`).
+
 ### Comments C2: what do the new reactions files do? (the easy version)
 Same layers as every feature: **routes → controller → service → database**, plus one helper.
 - **`lib/visitor-id.ts`: the browser's name tag.** Like a cloakroom token: a random number, not a login. `readVisitorId` reads the `visitor_id` cookie (only if it's in our random format); `ensureVisitorId` returns it or **makes a new one** (`randomUUID()`) and sets it as an httpOnly, sameSite-strict cookie for `/api/posts`, valid 1 year.

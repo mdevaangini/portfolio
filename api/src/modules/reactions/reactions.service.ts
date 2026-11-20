@@ -10,7 +10,8 @@
 
 import type { ReactionType } from "../../../generated/prisma/client.js";
 import { prisma } from "../../db/prisma.js";
-import { visible } from "../posts/posts.service.js";
+// findVisiblePostId lives in posts.service (shared with comments); re-exported for the controller.
+export { findVisiblePostId } from "../posts/posts.service.js";
 
 /** The reaction names used in URLs and JSON (lowercase), in display order. */
 export const REACTION_NAMES = ["like", "love", "insightful"] as const;
@@ -19,12 +20,6 @@ export type ReactionName = (typeof REACTION_NAMES)[number];
 /** "like" ↔ LIKE: lowercase in the API, uppercase in the database enum. */
 const toType = (name: ReactionName) => name.toUpperCase() as ReactionType;
 const toName = (type: ReactionType) => type.toLowerCase() as ReactionName;
-
-/** The id of a PUBLISHED post with this slug, or null (draft, deleted or unknown). */
-export async function findVisiblePostId(slug: string): Promise<number | null> {
-  const post = await prisma.post.findFirst({ where: { slug, ...visible }, select: { id: true } });
-  return post?.id ?? null;
-}
 
 /**
  * The counts for a post, and which reactions THIS browser has given.

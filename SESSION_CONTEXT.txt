@@ -981,5 +981,26 @@ createComment PENDING), controller (6 rules: honeypot 202 → Zod 400 → post
 404 → parent 400 → rate limit 3/visitor/10min + 30/post/h 429 → save 202
 {status, message}; GET {data,total}), routes (mergeParams, checkOrigin on
 POST) mounted at /:slug/comments; tests/comments.test.ts (5) → api 58.
-NEXT: she tests C3 → commit → C4 admin moderation API.
+C3 committed fc1b849.
+C4 WRITTEN [tsc OK; UNCONFIRMED]: modules/admin-comments (schema: ?status
+pending|approved|rejected default pending, reply body 2-2000; service:
+listComments {data, counts} newest first with post + parent, setCommentStatus
+(approvedAt), softDeleteComment, replyAsAuthor (AUTHOR_NAME "Devaangini
+Mehta", isAuthor, APPROVED; reply-to-reply → top-level; replying approves
+pending target/top-level in one $transaction; rejected → 400); controller
+list/approve/reject/remove 204/reply 201; routes) mounted in admin.routes
+at /comments (behind requireAdmin + checkOrigin). tests/admin-comments.test.ts
+(3 × 401) → api 61.
+NEXT: she tests C4 (Postman, logged in) → commit → C5 Angular reaction bar.
+
+NEXT FEATURE, after comments C5-C8 are live (agreed 2026-11-20): ADMIN CONTENT
+EDITOR (a small CMS). Her idea: edit portfolio sections from the admin
+instead of the DB/seed. Agreed scope: Skills (skill_groups + skills) +
+Projects editable, a read-only Messages inbox (contact messages, today only
+in pgAdmin/Neon); Experience later (rarely changes). Hero / impact /
+expertise stay in the Angular code. No "approval" for my own edits (I'm the
+only editor): Zod validation, leave-without-saving guard, soft delete,
+optional "last updated". RULE to document: once edited live, NEVER run the
+seed against Neon (it clears the tables). Admin nav: Posts · Comments ·
+Messages · Portfolio. Process: decisions → design doc → small steps.
 

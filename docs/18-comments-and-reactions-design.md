@@ -2,7 +2,7 @@
 
 [← Docs home](README.md)
 
-**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) ✅ · C3 (public comments API) written.
+**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) ✅ · C3 (public comments API) ✅ · C4 (admin moderation API) written.
 **Written:** 16 Nov 2026 · **Decisions:** "your picks" (16 Nov 2026)
 
 The design (an "RFC") for letting visitors **react to** and **comment on** blog posts. In a company, a page like this is written and reviewed **before** coding, so everyone agrees on the tables, the API and the screens, and the edge cases are found on paper, not in production.
@@ -143,11 +143,11 @@ later requests: the browser sends it by itself → the API knows "same browser a
 ### Admin (behind `checkOrigin` + `requireAdmin`, like the posts admin)
 | Method | Address | Does |
 |---|---|---|
-| GET | `/api/admin/comments?status=PENDING` | the review queue, newest first, with the post title |
+| GET | `/api/admin/comments?status=pending` | `{ data, counts: { pending, approved, rejected } }`: the list (newest first, with the post and the comment it replies to); `counts.pending` = the badge |
 | POST | `/api/admin/comments/:id/approve` | → APPROVED (+ `approvedAt`) |
 | POST | `/api/admin/comments/:id/reject` | → REJECTED |
 | DELETE | `/api/admin/comments/:id` | soft delete (hidden everywhere) |
-| POST | `/api/admin/comments/:id/reply` | my reply as the author: `isAuthor: true`, **APPROVED immediately** |
+| POST | `/api/admin/comments/:id/reply` | my reply as the author: `isAuthor: true`, **APPROVED immediately** (201). Replying to a **reply** attaches it to the top-level comment; replying to a **pending** comment **approves it too** ("replying = accepting"); a **rejected** one → 400 |
 
 **Plus:** the public POST endpoints also get `checkOrigin`, so only my own website can send them.
 

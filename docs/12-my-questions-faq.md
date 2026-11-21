@@ -249,6 +249,20 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Comments C4: what did we build, and why? (the easy version)
+**Why:** after C3 a visitor's comment is PENDING and hidden, and I had no way to approve it (only pgAdmin). C4 = **my moderation back-office**: the API behind the future admin "Comments" page (C7). **Picture:** I'm a newspaper editor; readers' letters land in my inbox, and I approve (print), reject, delete later, or reply ("Author").
+
+| What I do | Endpoint | Answer |
+|---|---|---|
+| see the inbox | `GET /api/admin/comments?status=pending` | list (newest first, with the post + the comment it replies to) + `counts` |
+| approve / reject 5 | `POST /api/admin/comments/5/approve` · `/reject` | 200 |
+| delete 5 | `DELETE /api/admin/comments/5` | 204 (soft; its replies disappear too) |
+| reply to 5 | `POST /api/admin/comments/5/reply` `{ "body": "Thanks!" }` | 201, approved at once, `isAuthor: true` |
+
+- **Files:** routes (the 5 addresses) · one line in `admin.routes.ts` (mounted under `/api/admin`, so `checkOrigin` + `requireAdmin` already protect it: no login → 401) · schema (status pending/approved/rejected; reply 2-2000) · controller (id check, body check, status code) · service (`listComments` + counts → the badge, `setCommentStatus` + `approvedAt`, `softDeleteComment`, `replyAsAuthor`) · tests (3 × 401).
+- **Reply decisions:** replying to a **pending** comment approves it too (both writes in one transaction); replying to a **reply** goes under the top-level comment (one level only); a **rejected** one → 400.
+- **Approve flow:** checkOrigin ✅ → requireAdmin ✅ → valid id ✅ → status APPROVED + approvedAt → 200 → visible in the public GET.
+
 ### Comments C3: the `website` trap and the allowed fields (the 3 things to remember)
 1. **A comment uses only 3 fields:** `authorName`, `body`, `parentId` (for replies). `status` is **not** one of them: every new comment starts as **PENDING**. Anything else a visitor sends is ignored (Zod keeps only what `comments.schema.ts` lists).
 2. **`website` is a trap for robots, and the name is our own choice.** The form has a `website` input hidden from people with CSS. People leave it empty; robots fill every field. **`website` filled → a robot → save nothing** (but still answer 202 "Thanks!", so it doesn't learn). The same trick as the contact form. Any name would work; "website" looks normal to robots.

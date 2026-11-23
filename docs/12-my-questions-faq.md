@@ -249,6 +249,30 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Reaction bar: `reactions` vs `summary`, and when does the `linkedSignal` run?
+- ✅ **"Like `computed`, but it can be set"**: right. It calculates from another signal **and** allows `.set()`.
+- 🔧 **It recalculates when `reactions` changes, not on clicks.**
+
+| Name | What | Changes when |
+|---|---|---|
+| `reactions` | the server data (`httpResource`, GET) | the article opens (or the slug changes). **Not** on clicks |
+| `summary` | what's on screen (`linkedSignal`) | automatically when `reactions` loads · by `toggle()` with `.set()` on a click |
+
+```
+opens  → reactions { like: 4 }        → summary follows → 👍 4
+click  → summary.set({ like: 5 })      → 👍 5  (reactions still { like: 4 })
+answer → summary.set(server's answer)  → 👍 5 (or more if others reacted)
+```
+- **Other visitors' clicks** don't appear live: I see them when I open/reload the article, or in the server's answer when I click (live updates would need WebSockets).
+
+### What is an "optimistic update"? (reaction bar, C5)
+**Assume it will work, and show the result immediately.**
+- **Normal ("pessimistic"):** click → send → wait ~300 ms → server "ok" → the number changes. Feels slow.
+- **Optimistic:** click → the number changes **now** → send in the background → "ok" = keep it ✅ · "error" = put it back + a message ❌. Feels instant. "Optimistic" because we expect the server to say yes, and it almost always does.
+- **Known from:** WhatsApp (the message appears at once with ✓; a red "!" if it fails), Instagram/YouTube likes.
+- **Use it when** the action almost never fails and undoing is harmless (reactions). **Not** for payments or comments (you can't say "posted!" before the server has checked it).
+- **In my code:** `summary.set(...)` before the request → PUT/DELETE → success: the server's numbers; error: undo only that reaction + "Couldn't save your reaction." (Playbook entry 38.)
+
 ### Comments C4: what did we build, and why? (the easy version)
 **Why:** after C3 a visitor's comment is PENDING and hidden, and I had no way to approve it (only pgAdmin). C4 = **my moderation back-office**: the API behind the future admin "Comments" page (C7). **Picture:** I'm a newspaper editor; readers' letters land in my inbox, and I approve (print), reject, delete later, or reply ("Author").
 

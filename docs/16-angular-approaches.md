@@ -69,6 +69,8 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 **8. UI building blocks**
 
 36. [`Title` and `Meta`: the tab title and description per page](#36-title-and-meta-the-tab-title-and-description-per-page)
+37. [`linkedSignal`: follows the server, but I can change it](#37-linkedsignal-follows-the-server-but-i-can-change-it)
+38. [Optimistic update (with a per-item undo)](#38-optimistic-update-with-a-per-item-undo)
 
 29. [Our own dialog on the native `<dialog>` element](#29-our-own-dialog-on-the-native-dialog-element)
 30. [A pure pipe + the sanitizer for Markdown](#30-a-pure-pipe--the-sanitizer-for-markdown)
@@ -564,6 +566,37 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 - **Interview line:** *"Cards use the stretched-link pattern: one accessible link, the whole card clickable."*
 
 ---
+
+### 37. `linkedSignal`: follows the server, but I can change it
+*Where:* reaction bar (Comments C5), Projects (keeps the old list while filtering) · *Angular 19+*
+- **Problem:** I need a value that **starts from server data** but that **I can also change myself** (e.g. a count that goes up the moment I click). A `computed` can't be changed by hand; a plain `signal` doesn't follow the resource.
+- **What we do:**
+  ```ts
+  protected readonly summary = linkedSignal<ReactionSummary | null>(() =>
+    this.reactions.hasValue() ? this.reactions.value() : null,
+  );
+  this.summary.set(newValue);   // allowed: my own change
+  ```
+  When the resource gets new data, `summary` follows it again automatically.
+- **Why:** one signal for "what's on screen", with the server as its source and room for local changes.
+- **Watch out:** the hand-made value is replaced as soon as the source changes. That's what we want here (the server's answer wins).
+- **Interview line:** *"linkedSignal derives from a source like computed, but stays writable: ideal for optimistic UI on top of server data."*
+
+### 38. Optimistic update (with a per-item undo)
+*Where:* reaction bar (Comments C5)
+- **Problem:** if the count only changes after the server answers, the button feels slow (200–500 ms).
+- **What we do:**
+  ```ts
+  this.summary.set(applyReaction(before, name, add));     // 1. change the screen NOW
+  request.subscribe({
+    next: (fromServer) => this.summary.set(fromServer),   // 2a. the server's numbers are the truth
+    error: () => this.summary.set(applyReaction(this.summary()!, name, !add)), // 2b. undo only this one + message
+  });
+  ```
+  A `pending` set ignores more clicks on a reaction whose request is still running (like `busyId`).
+- **Why:** instant feedback, as on Instagram, YouTube or LinkedIn likes; the server still decides the real numbers.
+- **Watch out:** build **new objects** (never mutate: the old one is needed for undo, and signals compare by reference). Undo only the failed item, not everything, because another click may be on its way. Use it only for actions that almost always succeed and are easy to undo (not for payments).
+- **Interview line:** *"For reactions I update the UI optimistically and reconcile with the server's response; on error I roll back just that change and tell the user."*
 
 ## 9. Testing
 

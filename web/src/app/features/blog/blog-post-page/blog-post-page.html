@@ -53,6 +53,9 @@
 
       <div class="prose article__body" [innerHTML]="p.content | markdown"></div>
 
+      <!-- 👍 ❤️ 💡 (Comments milestone C5) -->
+      <app-reaction-bar [slug]="slug()" />
+
       <footer class="article__foot">
         <a class="back" routerLink="/blog"><span aria-hidden="true">←</span> All posts</a>
         @if (wasEdited()) {

@@ -1,0 +1,31 @@
+<!--
+  ABOUT THIS FILE: reaction-bar.html
+  Three toggle buttons (aria-pressed = "is it mine?"). Shown only once the
+  counts have loaded; if loading failed, nothing at all.
+  Buttons are never disabled (that would lose keyboard focus): a click on a
+  reaction whose request is still running is simply ignored (aria-busy).
+-->
+@if (summary(); as s) {
+  <section class="reactions" aria-labelledby="reactions-title">
+    <h2 class="reactions__title mono-label" id="reactions-title">// did this help?</h2>
+    <div class="reactions__buttons">
+      @for (option of options; track option.name) {
+        <button
+          type="button"
+          class="reaction"
+          [class.is-mine]="isMine(option.name)"
+          [attr.aria-pressed]="isMine(option.name)"
+          [attr.aria-busy]="pending().has(option.name)"
+          [attr.aria-label]="option.label + ', ' + s.counts[option.name] + (s.counts[option.name] === 1 ? ' reaction' : ' reactions')"
+          (click)="toggle(option.name)"
+        >
+          <span class="reaction__emoji" aria-hidden="true">{{ option.emoji }}</span>
+          <span class="reaction__count" aria-hidden="true">{{ s.counts[option.name] }}</span>
+        </button>
+      }
+    </div>
+    @if (error()) {
+      <p class="reactions__error" role="alert">{{ error() }}</p>
+    }
+  </section>
+}

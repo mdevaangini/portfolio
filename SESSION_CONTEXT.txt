@@ -991,7 +991,20 @@ pending target/top-level in one $transaction; rejected → 400); controller
 list/approve/reject/remove 204/reply 201; routes) mounted in admin.routes
 at /comments (behind requireAdmin + checkOrigin). tests/admin-comments.test.ts
 (3 × 401) → api 61.
-NEXT: she tests C4 (Postman, logged in) → commit → C5 Angular reaction bar.
+C4 committed dac2329 (git locks cleaned; delete permission re-granted).
+WORKING MODE (her decision 2026-11-23): I write the code (backend AND
+Angular), explain flow + each file simply; she reviews/tests. (I had
+suggested she write Angular herself; she chose to keep this mode.)
+C5 WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: blog.model
+ReactionName + ReactionSummary; blog.service HttpClient + loadReactions
+(httpResource) / addReaction (put) / removeReaction (delete);
+features/blog/reaction-bar (input slug, linkedSignal summary from the
+resource via hasValue, pending Set, error, toggle = optimistic + server
+truth + per-item undo via exported applyReaction; buttons aria-pressed,
+aria-busy, never disabled) + spec (2) → web npm test 9; placed in
+blog-post-page after the article body. Playbook entries 37 (linkedSignal),
+38 (optimistic update).
+NEXT: she tests C5 → commit → C6 comments list + form on the article.
 
 NEXT FEATURE, after comments C5-C8 are live (agreed 2026-11-20): ADMIN CONTENT
 EDITOR (a small CMS). Her idea: edit portfolio sections from the admin

@@ -2,7 +2,7 @@
 
 [← Docs home](README.md)
 
-**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) ✅ · C3 (public comments API) ✅ · C4 (admin moderation API) written.
+**Status:** 🚧 Building. C1 (tables) ✅ · C2 (reactions API) ✅ · C3 (public comments API) ✅ · C4 (admin moderation API) ✅ · C5 (reaction bar) written.
 **Written:** 16 Nov 2026 · **Decisions:** "your picks" (16 Nov 2026)
 
 The design (an "RFC") for letting visitors **react to** and **comment on** blog posts. In a company, a page like this is written and reviewed **before** coding, so everyone agrees on the tables, the API and the screens, and the edge cases are found on paper, not in production.

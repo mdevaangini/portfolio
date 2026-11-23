@@ -37,3 +37,14 @@ export interface BlogPost extends PostCard {
   updatedAt: string;
   readingMinutes: number;
 }
+
+/** The three reactions (lowercase, as in the API's URLs and JSON). */
+export type ReactionName = 'like' | 'love' | 'insightful';
+
+/** GET/PUT/DELETE /api/posts/:slug/reactions… → how many of each, and which ones THIS browser gave. */
+export interface ReactionSummary {
+  /** e.g. { like: 4, love: 1, insightful: 0 } */
+  counts: Record<ReactionName, number>;
+  /** e.g. ["like"]: known from the browser's anonymous visitor_id cookie */
+  mine: ReactionName[];
+}

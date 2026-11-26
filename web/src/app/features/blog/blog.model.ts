@@ -48,3 +48,41 @@ export interface ReactionSummary {
   /** e.g. ["like"]: known from the browser's anonymous visitor_id cookie */
   mine: ReactionName[];
 }
+
+/** One shown comment or reply (only APPROVED ones ever arrive). Plain text: always shown as text. */
+export interface CommentReply {
+  id: number;
+  authorName: string;
+  /** true = written by me, the author: shown with an "Author" badge. */
+  isAuthor: boolean;
+  body: string;
+  createdAt: string;
+}
+
+/** A top-level comment with its replies (one level only), oldest first. */
+export interface BlogComment extends CommentReply {
+  replies: CommentReply[];
+}
+
+/** GET /api/posts/:slug/comments */
+export interface CommentList {
+  data: BlogComment[];
+  /** comments + replies, for "3 comments" */
+  total: number;
+}
+
+/** POST /api/posts/:slug/comments: what the form sends. */
+export interface NewComment {
+  authorName: string;
+  body: string;
+  /** Only for a reply: the TOP-LEVEL comment it belongs to. */
+  parentId?: number;
+  /** The hidden spam trap: always empty from real people. */
+  website: string;
+}
+
+/** 202: accepted, but not visible until I approve it. */
+export interface CommentAccepted {
+  status: 'PENDING';
+  message: string;
+}

@@ -249,6 +249,43 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Comments section: why two "Reply" buttons, and what do they send?
+```
+Asha (comment, id 5)    "Great post!"   [Reply] ← button 1: startReply(comment.id, comment.authorName) → (5, "Asha")
+   └── Ravi (reply, id 8)  "Agreed!"    [Reply] ← button 2: startReply(comment.id, reply.authorName)   → (5, "Ravi")
+```
+- Both send **threadId = 5 (Asha's comment)**; only the **name** differs ("Replying to Asha" / "Replying to Ravi").
+- Button 2 does **not** send Ravi's id (8): a reply to a reply is refused by the API (one level only). Both answers appear in the same place: one level under Asha.
+- `replyingTo` = `{ threadId, name }` or `null`: only one reply form is open at a time; Cancel/Close → `null`.
+
+### Comment form: what does `inject(NonNullableFormBuilder).group({...})` do?
+**It's the form's blueprint:** which fields, what each starts with, and its rules. Each field = `[starting value, [rules]]`.
+- `authorName: [readSavedName(), [required, minLength(2), maxLength(50)]]`: starts with my remembered name (or `''`).
+- `body: ['', [required, minLength(2), maxLength(2000)]]`: starts empty.
+- `website: ['']`: the honeypot, no rules; sent along, never seen by people.
+- **NonNullable:** reset → back to `''`, never `null` (simple `string` types).
+- **The rules = the API's Zod limits** (`comments.schema.ts`), so mistakes show instantly; the API still checks (its check counts).
+- **Used in:** the template (`[formGroup]`, `formControlName` connects each input), `errorFor()` (reads `controls[field].errors` → messages), `submit()` (invalid → `markAllAsTouched()`, no send; valid → `getRawValue()` → API), after sending `controls.body.reset('')` (keeps the name).
+
+### Comment form: `input()` in, `output()` out. What does it mean? (the easy version)
+**Parent** = `comments-section` (decides where forms appear) · **child** = `comment-form`, used **twice** (a reply form under a comment, the new-comment form at the bottom).
+- **`input()`: parent → child**, like settings: `<app-comment-form [slug]="slug()" />` = a new comment; `<app-comment-form [slug]="slug()" [parentId]="comment.id" [replyTo]="comment.authorName" />` = a reply ("Replying to Asha", "Send reply", Cancel).
+- **`output()`: child → parent**, an announcement: the form can't close itself (the parent showed it), so `readonly closed = output<void>()` + `(click)="closed.emit()"` on Cancel/Close; the parent listens with `(closed)="closeReply()"` → `replyingTo.set(null)`.
+
+| | Direction | Syntax | Ours |
+|---|---|---|---|
+| `input()` | parent → child | `[name]="value"` | `[slug]`, `[parentId]`, `[replyTo]` |
+| `output()` | child → parent | `(name)="method()"` | `(closed)` |
+
+- **Why one form:** fields, rules, the trap and the error messages exist once.
+- **Old syntax:** `@Input() parentId` → `input()`; `@Output() closed = new EventEmitter<void>()` → `output<void>()`.
+
+### Comment form: "it remembers your name". How?
+**The browser's little notebook, `localStorage`:** each website gets a small private store in the visitor's browser; notes stay after closing the browser, are **never sent to the server**, and other sites can't read them.
+- **In `comment-form.ts`:** when the form is created, `readSavedName()` reads the note `blog.commentName` into the Name field (empty the first time); after a successful send, `saveName(...)` writes the name. Both in `try/catch`, because some browsers block `localStorage` (private mode): then the field just starts empty.
+- **See it:** DevTools → Application → Local storage → `localhost:4200` → `blog.commentName`.
+- **Not the visitor cookie:** `blog.commentName` = my typed name, never sent, a convenience · `visitor_id` = a random id, sent automatically with blog requests, httpOnly (Angular can't read it), for "one reaction per browser" + rate limits.
+
 ### Reaction bar: `reactions` vs `summary`, and when does the `linkedSignal` run?
 - ✅ **"Like `computed`, but it can be set"**: right. It calculates from another signal **and** allows `.set()`.
 - 🔧 **It recalculates when `reactions` changes, not on clicks.**

@@ -1,0 +1,66 @@
+<!--
+  ABOUT THIS FILE: comment-form.html
+  Either the thank-you message (after sending) or the form.
+  The "website" field is the spam trap: moved off-screen and hidden from
+  screen readers, so only bots fill it in (same as the contact form).
+-->
+@if (sent()) {
+  <div class="thanks" role="status">
+    <p class="thanks__title">Thanks! Your {{ parentId() ? 'reply' : 'comment' }} will appear after review.</p>
+    @if (parentId()) {
+      <button type="button" class="link-button" (click)="closed.emit()">Close</button>
+    } @else {
+      <button type="button" class="link-button" (click)="writeAnother()">Write another comment</button>
+    }
+  </div>
+} @else {
+  <form class="comment-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (replyTo(); as name) {
+      <p class="comment-form__context">Replying to <strong>{{ name }}</strong></p>
+    }
+
+    <label class="field">
+      <span class="field__label">Name</span>
+      <input
+        type="text"
+        formControlName="authorName"
+        autocomplete="name"
+        [attr.maxlength]="max.authorName"
+        [attr.aria-invalid]="!!errorFor('authorName')"
+        [attr.aria-describedby]="uid + '-name-error'"
+      />
+      <span class="field__error" [id]="uid + '-name-error'">{{ errorFor('authorName') }}</span>
+    </label>
+
+    <label class="field">
+      <span class="field__label">{{ parentId() ? 'Your reply' : 'Comment' }}</span>
+      <textarea
+        rows="4"
+        formControlName="body"
+        [attr.maxlength]="max.body"
+        [attr.aria-invalid]="!!errorFor('body')"
+        [attr.aria-describedby]="uid + '-body-error ' + uid + '-hint'"
+      ></textarea>
+      <span class="field__error" [id]="uid + '-body-error'">{{ errorFor('body') }}</span>
+    </label>
+
+    <!-- Spam trap: hidden from people and screen readers; only bots fill it in -->
+    <div class="trap" aria-hidden="true">
+      <label>Website <input type="text" formControlName="website" tabindex="-1" autocomplete="off" /></label>
+    </div>
+
+    @if (notice()) {
+      <p class="form-error" role="alert">{{ notice() }}</p>
+    }
+
+    <div class="comment-form__actions">
+      <button type="submit" class="btn btn--navy" [disabled]="sending()">
+        {{ sending() ? 'Sending…' : parentId() ? 'Send reply' : 'Send comment' }}
+      </button>
+      @if (parentId()) {
+        <button type="button" class="link-button" (click)="closed.emit()">Cancel</button>
+      }
+      <p class="comment-form__hint" [id]="uid + '-hint'">Plain text. Comments appear after review.</p>
+    </div>
+  </form>
+}

@@ -71,6 +71,7 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 36. [`Title` and `Meta`: the tab title and description per page](#36-title-and-meta-the-tab-title-and-description-per-page)
 37. [`linkedSignal`: follows the server, but I can change it](#37-linkedsignal-follows-the-server-but-i-can-change-it)
 38. [Optimistic update (with a per-item undo)](#38-optimistic-update-with-a-per-item-undo)
+39. [One reusable form component: `input()` in, `output()` out](#39-one-reusable-form-component-input-in-output-out)
 
 29. [Our own dialog on the native `<dialog>` element](#29-our-own-dialog-on-the-native-dialog-element)
 30. [A pure pipe + the sanitizer for Markdown](#30-a-pure-pipe--the-sanitizer-for-markdown)
@@ -80,6 +81,7 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 **9. Testing**
 
 33. [Vitest + "draw once" component tests](#33-vitest--draw-once-component-tests)
+40. [Testing HTTP with `HttpTestingController`](#40-testing-http-with-httptestingcontroller)
 
 ---
 
@@ -598,6 +600,23 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 - **Watch out:** build **new objects** (never mutate: the old one is needed for undo, and signals compare by reference). Undo only the failed item, not everything, because another click may be on its way. Use it only for actions that almost always succeed and are easy to undo (not for payments).
 - **Interview line:** *"For reactions I update the UI optimistically and reconcile with the server's response; on error I roll back just that change and tell the user."*
 
+### 39. One reusable form component: `input()` in, `output()` out
+*Where:* `comment-form` (Comments C6), used for a new comment AND for replies
+- **Problem:** the new-comment form and the reply form are the same fields and rules. Two copies would drift apart.
+- **What we do:** one component, configured from outside:
+  ```ts
+  readonly parentId = input<number | null>(null);   // in: null = new comment, a number = a reply
+  readonly replyTo  = input<string | null>(null);   // in: "Replying to Asha"
+  readonly closed   = output<void>();               // out: "Cancel/Close was clicked"
+  ```
+  ```html
+  <app-comment-form [slug]="slug()" />                                                   <!-- new comment -->
+  <app-comment-form [slug]="slug()" [parentId]="comment.id" (closed)="closeReply()" />    <!-- reply -->
+  ```
+- **Why:** one place for the rules, the honeypot and the error handling. `output()` is the signal-era replacement for `@Output() closed = new EventEmitter<void>()`: the child **tells** the parent something happened, and the parent decides what to do (here: close the reply form).
+- **Watch out:** a component used twice on one page needs **unique ids** (for `aria-describedby`), hence the `uid` counter.
+- **Interview line:** *"A reusable child with signal inputs for configuration and an output() for events; the parent owns the state (which reply form is open)."*
+
 ## 9. Testing
 
 ### 33. Vitest + "draw once" component tests
@@ -606,3 +625,17 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 - **Why:** fast tests. **Lesson learned:** components that start real API requests must not wait with `whenStable()`, because the requests are never answered in a test and it waits forever. Drawing once is enough to check what's on screen.
 - **Next:** `HttpTestingController` tests for services and the interceptor (e.g. "three 401s → one refresh").
 - **Interview line:** *"Vitest for unit tests; components are tested through the DOM; HTTP is tested with `HttpTestingController`."*
+
+### 40. Testing HTTP with `HttpTestingController`
+*Where:* `comment-form.spec.ts` (Comments C6)
+- **Problem:** a form test shouldn't call a real API, but I still want to check **exactly what is sent** and how the form reacts to each answer (202, 400…).
+- **What we do:**
+  ```ts
+  providers: [provideHttpClient(), provideHttpClientTesting()]   // requests are CAUGHT, never sent
+  const req = http.expectOne('/api/posts/my-post/comments');       // "exactly one request to this URL"
+  expect(req.request.body).toEqual({ authorName: 'Asha', body: 'Great post!', website: '' });
+  req.flush({ status: 'PENDING', message: 'ok' }, { status: 202, statusText: 'Accepted' });  // answer it by hand
+  http.verify();                                                   // nothing unexpected was sent
+  ```
+- **Why:** fast, reliable tests of the real component, including the unhappy paths (400 messages under fields; invalid form → `expectNone`, nothing sent).
+- **Interview line:** *"I test HTTP-calling components with HttpTestingController: assert the request, flush a fake response, assert the UI."*

@@ -1004,7 +1004,20 @@ truth + per-item undo via exported applyReaction; buttons aria-pressed,
 aria-busy, never disabled) + spec (2) → web npm test 9; placed in
 blog-post-page after the article body. Playbook entries 37 (linkedSignal),
 38 (optimistic update).
-NEXT: she tests C5 → commit → C6 comments list + form on the article.
+C5 committed ab040e5.
+C6 WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: blog.model
+CommentReply/BlogComment/CommentList/NewComment/CommentAccepted;
+blog.service loadComments (httpResource) + addComment (post);
+features/blog/comments/comment-form (reusable: inputs slug, parentId,
+replyTo; output closed; Reactive form mirroring Zod + website trap;
+202 → thanks, 400 fields under inputs, 429/0 notices; name remembered in
+localStorage try/catch; uid for ids) + spec (3, HttpTestingController) →
+web npm test 12; comments-section (list via hasValue, total, oldest first,
+replies indented, Author badge, Reply → replyingTo {threadId, name}, reply
+to a reply → same thread, main form at the bottom, plain text {{ }} with
+pre-line). Placed in blog-post-page after the reaction bar. Playbook 39
+(input/output reusable form), 40 (HttpTestingController).
+NEXT: she tests C6 → commit → C7 admin Comments page + pending badge.
 
 NEXT FEATURE, after comments C5-C8 are live (agreed 2026-11-20): ADMIN CONTENT
 EDITOR (a small CMS). Her idea: edit portfolio sections from the admin

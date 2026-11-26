@@ -17,11 +17,12 @@ import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { MarkdownPipe } from '@shared/pipes/markdown.pipe';
 import { BlogService } from '../blog.service';
+import { CommentsSection } from '../comments/comments-section/comments-section';
 import { ReactionBar } from '../reaction-bar/reaction-bar';
 
 @Component({
   selector: 'app-blog-post-page',
-  imports: [DatePipe, RouterLink, MarkdownPipe, ReactionBar],
+  imports: [DatePipe, RouterLink, MarkdownPipe, ReactionBar, CommentsSection],
   templateUrl: './blog-post-page.html',
   styleUrl: './blog-post-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

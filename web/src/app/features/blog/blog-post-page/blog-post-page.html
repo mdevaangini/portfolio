@@ -56,6 +56,9 @@
       <!-- 👍 ❤️ 💡 (Comments milestone C5) -->
       <app-reaction-bar [slug]="slug()" />
 
+      <!-- Comments: approved ones + the form (Comments milestone C6) -->
+      <app-comments-section [slug]="slug()" />
+
       <footer class="article__foot">
         <a class="back" routerLink="/blog"><span aria-hidden="true">←</span> All posts</a>
         @if (wasEdited()) {

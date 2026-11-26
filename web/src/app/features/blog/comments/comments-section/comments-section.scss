@@ -1,0 +1,146 @@
+// ──────────────────────────────────────────────────────────────────────
+// ABOUT THIS FILE: comments-section.scss
+// The comments list (replies indented with a line on the left), the
+// "Author" badge, and the space for the reply / new-comment forms.
+// ──────────────────────────────────────────────────────────────────────
+
+:host {
+  display: block;
+}
+
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 28px;
+  border-top: 1px solid var(--color-line);
+}
+
+.comments__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--color-ink);
+}
+
+.comments__state {
+  margin: 0;
+  color: var(--color-muted);
+
+  p {
+    margin: 0 0 6px;
+  }
+}
+
+.thread-list,
+.replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+// Replies: indented, with a soft line showing which comment they belong to
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 14px 0 0 18px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-line);
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comment__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.comment__name {
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.comment__date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+// Plain text, but line breaks the visitor typed are kept
+.comment__body {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere; // a very long word or link can't break the layout
+}
+
+.comment__reply {
+  align-self: flex-start;
+  font-size: 14px;
+}
+
+.badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.reply-form {
+  margin: 14px 0 0 18px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-accent);
+}
+
+.new-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.new-comment__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: var(--color-ink);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 480px) {
+  .replies,
+  .reply-form {
+    margin-left: 6px;
+    padding-left: 12px;
+  }
+}

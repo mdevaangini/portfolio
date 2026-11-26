@@ -1,0 +1,81 @@
+<!--
+  ABOUT THIS FILE: comments-section.html
+  Heading + list (comments → replies) + reply form + the main form.
+  Comments are PLAIN TEXT shown with {{ }}: Angular escapes them, so
+  nothing a visitor writes can ever run as code (never [innerHTML] here).
+-->
+<section class="comments" aria-labelledby="comments-title">
+  <h2 class="comments__title" id="comments-title">
+    {{ total() === 0 ? 'Comments' : total() === 1 ? '1 comment' : total() + ' comments' }}
+  </h2>
+
+  @if (comments.isLoading() && !comments.hasValue()) {
+  <p class="comments__state" role="status">Loading comments…</p>
+  } @else if (comments.error()) {
+  <div class="comments__state" role="alert">
+    <p>The comments couldn't be loaded.</p>
+    <button type="button" class="link-button" (click)="comments.reload()">Try again</button>
+  </div>
+  } @else if (list().length === 0) {
+  <p class="comments__state">No comments yet. Be the first!</p>
+  } @else {
+  <ol class="thread-list">
+    @for (comment of list(); track comment.id) {
+    <li class="thread">
+      <article class="comment" [attr.aria-label]="'Comment by ' + comment.authorName">
+        <header class="comment__head">
+          <span class="comment__name">{{ comment.authorName }}</span>
+          @if (comment.isAuthor) {
+          <span class="badge">Author</span>
+          }
+          <time class="comment__date" [attr.datetime]="comment.createdAt">{{ comment.createdAt | date: 'd MMM y'
+            }}</time>
+        </header>
+        <p class="comment__body">{{ comment.body }}</p>
+        <button type="button" class="link-button comment__reply"
+          [attr.aria-expanded]="replyingTo()?.threadId === comment.id"
+          (click)="startReply(comment.id, comment.authorName)">
+          Reply
+        </button>
+      </article>
+
+      @if (comment.replies.length) {
+      <ol class="replies">
+        @for (reply of comment.replies; track reply.id) {
+        <li>
+          <article class="comment comment--reply" [attr.aria-label]="'Reply by ' + reply.authorName">
+            <header class="comment__head">
+              <span class="comment__name">{{ reply.authorName }}</span>
+              @if (reply.isAuthor) {
+              <span class="badge">Author</span>
+              }
+              <time class="comment__date" [attr.datetime]="reply.createdAt">{{ reply.createdAt | date: 'd MMM y'
+                }}</time>
+            </header>
+            <p class="comment__body">{{ reply.body }}</p>
+            <!-- A reply to a reply goes into the same thread (one level only) Why button 2 uses comment.id and not reply.id , Because we allow only one level of replies. If button 2 sent Ravi's id (8), your answer would be a reply to a reply, and the API refuses that ("You can only reply to a comment"). So both buttons send the comment's id. The only difference is the name shown in "Replying to …".-->
+            <button type="button" class="link-button comment__reply" (click)="startReply(comment.id, reply.authorName)">
+              Reply
+            </button>
+          </article>
+        </li>
+        }
+      </ol>
+      }
+
+      @if (replyingTo()?.threadId === comment.id) {
+      <div class="reply-form">
+        <app-comment-form [slug]="slug()" [parentId]="comment.id" [replyTo]="replyingTo()!.name"
+          (closed)="closeReply()" />
+      </div>
+      }
+    </li>
+    }
+  </ol>
+  }
+
+  <div class="new-comment">
+    <h3 class="new-comment__title">Leave a comment</h3>
+    <app-comment-form [slug]="slug()" />
+  </div>
+</section>

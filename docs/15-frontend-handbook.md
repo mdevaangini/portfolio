@@ -22,6 +22,7 @@ Written in plain words, **flow first, not line by line**. It's from the actual c
 6. [Login on the browser side](#6-login-on-the-browser-side)
 7. [The admin pages, one by one](#7-the-admin-pages-one-by-one)
 7b. [The public blog pages](#7b-the-public-blog-pages)
+7c. [Reactions and comments](#7c-reactions-and-comments-comments-milestone-live-since-27-nov-2026)
 8. [State: signals, and where RxJS still fits](#8-state-signals-and-where-rxjs-still-fits)
 9. [Forms](#9-forms)
 10. [Markdown and safety](#10-markdown-and-safety)
@@ -339,6 +340,31 @@ card click → /blog/signals-vs-rxjs → slug = input.required() → GET /api/po
 
 ---
 
+## 7c. Reactions and comments (Comments milestone, live since 27 Nov 2026)
+Design: [18 — Comments and reactions](18-comments-and-reactions-design.md). Everything public lives in `features/blog/`, the moderation page in `features/admin/`.
+
+### Reaction bar (`features/blog/reaction-bar/`), under the article text
+```
+article opens → reactions (httpResource GET …/reactions) → summary (linkedSignal follows it) → 👍 4 ❤️ 1 💡 0
+click 👍      → summary.set(+1, highlighted) NOW  → PUT …/reactions/like
+              → success: summary = the server's numbers · error: undo only 👍 + "Couldn't save your reaction"
+```
+- **Optimistic update:** the screen changes before the server answers (like Instagram likes), then is corrected by the server's answer.
+- **`linkedSignal`:** `summary` follows the resource **and** can be `.set()` by hand. A `pending` set ignores extra clicks while a request runs.
+- The anonymous `visitor_id` cookie is handled by the **browser**; Angular never sees it. If the counts can't load, the bar is hidden.
+
+### Comments (`features/blog/comments/`), under the reaction bar
+- **`comments-section`**: the heading with the count, approved comments **oldest first**, replies indented, "Author" badge on mine, plain text (`{{ }}`, line breaks kept), and the main form at the bottom.
+- **Reply:** `replyingTo = { threadId, name }` opens one reply form under that thread; "Reply" on a **reply** uses the same thread ("Replying to Ravi"), because the API allows one level.
+- **`comment-form`**: **one reusable form** (`input()` slug, parentId, replyTo; `output()` closed). Rules = the API's Zod limits; the hidden `website` honeypot; 202 → "Thanks! … after review" (nothing appears until I approve); 400 → messages under the fields; 429 → "several comments in a short time". The name is remembered in `localStorage`.
+
+### Admin: the Comments page (`features/admin/comments-page/`, `/admin/comments?status=…`)
+- Tabs **Pending · Approved · Rejected** with counts; the tab is **in the URL** (Reload/Back keep it).
+- One card per comment: its post, name, date, Author badge, "In reply to …", the text. **Approve · Reject · Reply · Delete** (Delete asks in the shared dialog); `busyId` locks the card while a request runs; a notice, then the list reloads.
+- **The badge** "Comments 3" in the top bar: `pendingCount`, a **signal in `AdminCommentsService`** shared by the layout and the page (the page writes it after each list load, the bar reads it).
+
+---
+
 ## 8. State: signals, and where RxJS still fits
 
 | Tool | Used for | Example |
@@ -412,7 +438,7 @@ textarea (Markdown) ──▶ markdown pipe (marked, GitHub-flavoured) ──▶
 
 ## 13. Tests
 
-Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **7 tests**:
+Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **13 tests**:
 
 | File | Checks |
 |---|---|
@@ -421,6 +447,9 @@ Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **7 tests
 | `features/home/home.spec.ts` | the hero headline appears |
 | `shared/pipes/markdown.pipe.spec.ts` (2) | Markdown becomes HTML; empty text gives `''` |
 | `shared/ui/dialog/dialog.service.spec.ts` (2) | the caller gets the answer; a new question answers an older one with "no" |
+| `features/blog/reaction-bar/reaction-bar.spec.ts` (2) | `applyReaction`: +1/−1 as a new object, never below 0 |
+| `features/blog/comments/comment-form/comment-form.spec.ts` (3) | with **HttpTestingController**: the exact POST body + thank-you; a 400 under the field; an empty form sends nothing |
+| `features/admin/admin-comments.service.spec.ts` (1) | the badge count comes from the API's `counts.pending` |
 
 **Lesson learned:** components that start real API requests must not wait for "everything finished" (`whenStable`) in tests, because the requests are never answered. The tests just draw the page once (`detectChanges`).
 
@@ -435,6 +464,8 @@ Run with **`npm test` in `web/`** (Angular's Vitest runner). Currently **7 tests
 | 7 | SEO: link previews (WhatsApp, LinkedIn) and crawlers without JavaScript see only `index.html`'s title | prerendering / SSR for the blog pages |
 | 8 | The editor reads `:id` with `ActivatedRoute.snapshot` | switch to `id = input<string>()` like the blog |
 | 9 | No "read next" on articles | needs neighbouring posts from the API |
+| 10 | Reactions and new approved comments don't appear live for other visitors | they see them on reload (live updates would need WebSockets) |
+| 11 | Next feature: admin content editor | Skills + Projects editable, a Messages inbox (see the session notes) |
 | 3 | No tests for services, the interceptor or the guards | add `HttpTestingController` tests (e.g. "three 401s → one refresh") |
 | 4 | Closing the tab uses the browser's box | by design; can't be changed by any website |
 | 5 | Optional: login form → Signal Forms | learning exercise after go-live |
@@ -513,3 +544,9 @@ The public API answers 404, the same as for an unknown slug, so a draft's existe
 
 **Q16. What's a bug you found and fixed?**
 In Angular 20+, `resource.value()` throws in the error state. Four places read it before checking, so with the API down, sections broke instead of showing "Try again". I guard every read with `hasValue()` now, and I found it by testing the unhappy path on purpose (stopping the API).
+
+**Q17. How do reactions feel instant?**
+An optimistic update: the count changes as soon as you click, using a `linkedSignal` that follows the server data but can be set by hand; then the server's answer replaces it, and on error only that reaction is rolled back with a message.
+
+**Q18. How do two unrelated components share state, like the admin badge?**
+The top bar and the comments page aren't parent and child, so inputs/outputs can't connect them. The count is a signal in a root service: the page writes it after each list load, and the bar reads it and redraws by itself.

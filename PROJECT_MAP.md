@@ -106,6 +106,9 @@ web/src/app/
 | `blog.routes.ts` | `/blog` → list page, `/blog/:slug` → article page |
 | `blog.service.ts` · `blog.model.ts` | Read-only `httpResource`s: `loadPosts(query)` (`GET /api/posts?limit&offset&tag`), `loadPost(slug)` (`GET /api/posts/:slug`), `loadTags()` (`GET /api/tags`) |
 | `latest-posts/` 🆕 | "05 · Latest writing" on **Home**: the 3 newest posts (`loadPosts` with 3 per page). Home places it inside `@defer (on viewport)`; with 0 posts or an API error it shows **nothing** |
+| `reaction-bar/` 🆕 | 👍 ❤️ 💡 under the article: counts + mine highlighted; **optimistic update** (`linkedSignal` + undo on error) |
+| `comments/comments-section/` 🆕 | The comments under the article: approved ones oldest first, replies indented, "Author" badge, Reply (one level) and the main form |
+| `comments/comment-form/` 🆕 | One reusable form for a comment or a reply (`input()` / `output()`), honeypot, API errors under fields, name remembered in `localStorage` |
 | `blog-post-page/` 🆕 | One article: slug as `input()`, loading / **404 "doesn't exist"** / error + Try again / the article (date, reading time, tags → filtered list, cover, `content \| markdown` in `.prose`). Sets the tab **title** and **description** (`Title`, `Meta`) and restores the description on leaving |
 | `blog-list-page/` | `/blog?tag=angular&page=2`: **the URL is the source of truth**. `tag` and `page` arrive as `input()`s (`withComponentInputBinding`); chips and Newer/Older are links that only change the URL; skeleton / error / empty / cards states |
 
@@ -116,12 +119,16 @@ The header's section links became `routerLink="/"` + `fragment`, so they work fr
 |---|---|
 | `admin.routes.ts` | The admin pages, downloaded only when `/admin` opens: `login`, and the rest (inside `AdminLayout`) behind `adminGuard` |
 | `login-page/` | Email + password form; shows the API's messages; returns to the wanted `/admin/…` page |
-| `posts-page/` | Placeholder for now; the posts table comes in step 6b |
+| `posts-page/` | The table of all my posts: Publish / Unpublish, Edit, Delete (shared dialog); `busyId` locks a row while its request runs |
+| `post-editor-page/` | One page for a new post and for editing: Reactive form, live Markdown preview, POST (new) / PATCH (changed fields), leave-without-saving guard |
+| `comments-page/` 🆕 | **Moderation:** tabs Pending/Approved/Rejected (`?status=` in the URL); Approve · Reject · Reply (as the author) · Delete |
+| `admin-posts.service.ts` · `admin-comments.service.ts` 🆕 | The admin API calls (reads = `httpResource`, actions = `HttpClient`). `admin-comments.service` also holds **`pendingCount`**, the badge signal shared with the top bar |
+| `post.model.ts` · `comment.model.ts` · `api-error.ts` · `unsaved-changes.guard.ts` | Types, one readable error sentence, the "leave without saving?" guard |
 
 ### Tests
 | File | What it does and why |
 |---|---|
-| `app.spec.ts` · `layouts/public-layout/public-layout.spec.ts` · `features/home/home.spec.ts` | 3 tests: the app starts, the nav links are right, the headline shows. `npm test` in `web/` |
+| `app.spec.ts` · `public-layout.spec.ts` · `home.spec.ts` · `markdown.pipe.spec.ts` · `dialog.service.spec.ts` · `reaction-bar.spec.ts` · `comment-form.spec.ts` · `admin-comments.service.spec.ts` | **13 tests**: the app, the nav, the headline, Markdown, the dialog, the reaction maths, the comment form against a fake backend (`HttpTestingController`), the badge count. `npm test` in `web/` |
 
 ---
 
@@ -209,7 +216,10 @@ Same idea as an Angular interceptor: each step can look at or change the request
 | `modules/auth` 🆕 | Login (check password, give the badge + locker key as two cookies), `/refresh` (key → new badge + new key), `/me` (who am I?), logout |
 | `modules/admin` 🆕 | The admin door: puts the guard in front of everything under `/api/admin`. Test route `/check` |
 | `modules/admin-posts` 🆕 | My blog posts (admin only): create, list, open, edit (PATCH), publish/unpublish, soft delete. `admin-posts.schema.ts` = the Zod rules |
-| `modules/posts` 🆕 | **Public** blog (no login): a page of published posts (`?limit&offset&tag`), one post by slug. Drafts → 404 |
+| `modules/posts` 🆕 | **Public** blog (no login): a page of published posts (`?limit&offset&tag`), one post by slug. Drafts → 404. Also mounts reactions and comments under `/:slug/…` |
+| `modules/reactions` 🆕 | `GET/PUT/DELETE /api/posts/:slug/reactions[/:type]`: counts + mine; one per browser (unique rule + `ON CONFLICT DO NOTHING`) |
+| `modules/comments` 🆕 | `GET/POST /api/posts/:slug/comments`: approved list; a new comment passes 6 checks (honeypot, Zod, post, parent, rate limits) → PENDING |
+| `modules/admin-comments` 🆕 | Moderation (admin only): queue + counts, approve, reject, soft delete, reply as the author |
 | `modules/tags` 🆕 | **Public**: the tags used by published posts, for the filter chips |
 
 #### How we build an API endpoint (the recipe)
@@ -279,6 +289,7 @@ Admin features add guards before the routes: `routes.ts` → `checkOrigin` → `
 | `lib/jwt.ts` 🆕 | The badge machine: signs the access token (JWT, 15 min, stamped with `JWT_SECRET`) and checks it. Library `jose` |
 | `lib/refresh-token.ts` 🆕 | Makes the locker key (refresh token, a random string) and its fingerprint (stored in `refresh_tokens`) |
 | `lib/slug.ts` 🆕 | "Signals vs RxJS" → `signals-vs-rxjs`: a post's web address, made from its title |
+| `lib/visitor-id.ts` 🆕 | The anonymous `visitor_id` cookie (a random UUID, HttpOnly): "the same browser" without accounts, for reactions and comment rate limits |
 | `lib/validation.ts` 🆕 | `checkBody()`: runs a Zod schema → clean data, or one message per field (400) |
 | `scripts/create-admin.ts` 🆕 💻 | Creates or resets my admin login. The only way to make a user; there's no sign-up page |
 | `tests/` · `vitest.config.ts` | API tests with Vitest + Supertest (fake requests, no real database). `npm test` in `api/` |

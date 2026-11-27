@@ -1028,7 +1028,15 @@ reply to", body pre-line; Approve/Reject/Reply/Delete with busyId, notice,
 run(); Delete via dialog; inline reply FormControl, "Approve + publish
 reply" for pending; effect → pendingCount); route 'comments'; admin-layout
 "Comments" link + badge (refreshPendingCount in constructor). Playbook 41.
-NEXT: she tests C7 → commit → C8 go-live (push; migration runs on Vercel)
+C7 committed a0c1e2f; she pushed (origin/main = a0c1e2f) → C8: Vercel
+build runs prisma migrate deploy (comments + reactions on Neon).
+C8 DOCS WRITTEN (2026-11-27): handbook 14 (endpoints 22-30, §3.6, tables +
+diagram, API↔table map, gaps 12-14, Q17-18), handbook 15 (§7c, 13 tests,
+gaps 10-11, Q17-18), PROJECT_MAP (blog + admin sections, API modules,
+visitor-id, tests), demo script step 3b, design doc status Live.
+NEXT: she checks live (visitor: react + comment; admin: badge, approve,
+reply) → commit C8 docs → next feature (admin content editor).
+(old) NEXT: she tests C7 → commit → C8 go-live (push; migration runs on Vercel)
 + docs (handbooks 14/15, PROJECT_MAP, demo script) → then the next
 feature (admin content editor).
 

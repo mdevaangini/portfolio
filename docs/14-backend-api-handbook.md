@@ -63,10 +63,19 @@ Written from the actual code (`api/src/`, `api/prisma/schema.prisma`) as of **15
 | 19 | POST | `/api/admin/posts/:id/publish` | admin only | ✅ Live |
 | 20 | POST | `/api/admin/posts/:id/unpublish` | admin only | ✅ Live |
 | 21 | DELETE | `/api/admin/posts/:id` | admin only | ✅ Live |
+| 22 | GET | `/api/posts/:slug/reactions` | public | ✅ Live (Comments C2) |
+| 23 | PUT | `/api/posts/:slug/reactions/:type` | public (visitor cookie) | ✅ Live |
+| 24 | DELETE | `/api/posts/:slug/reactions/:type` | public (visitor cookie) | ✅ Live |
+| 25 | GET | `/api/posts/:slug/comments` | public | ✅ Live (Comments C3) |
+| 26 | POST | `/api/posts/:slug/comments` | public | ✅ Live |
+| 27 | GET | `/api/admin/comments?status=…` | admin only | ✅ Live (Comments C4) |
+| 28 | POST | `/api/admin/comments/:id/approve` · `/reject` | admin only | ✅ Live |
+| 29 | DELETE | `/api/admin/comments/:id` | admin only | ✅ Live |
+| 30 | POST | `/api/admin/comments/:id/reply` | admin only | ✅ Live |
 
 **Not built (🕓 Planned):** `GET /api/health`; reading contact messages from an admin page (messages are only visible in pgAdmin / Neon). There is **no** sign-up endpoint and no plan for one: the admin user is created with a script (`npm run create-admin`).
 
-**Live note:** the blog APIs (7–21) are deployed with each `git push`, but the **admin user doesn't exist on Neon yet** (created at Blog go-live), so a live login currently answers 401. Test them on the laptop.
+**Live note:** everything above is deployed with each `git push`; the admin user exists on Neon since the Blog go-live (15 Nov 2026). Comments and reactions (22–30) are designed in [docs/18](18-comments-and-reactions-design.md).
 
 ---
 
@@ -344,6 +353,34 @@ For **PATCH**, the same rules with every field optional (`createPostSchema.parti
 
 ---
 
+### 3.6 Reactions and comments (✅ Live, Comments milestone C1–C8)
+Full design: [18 — Comments and reactions](18-comments-and-reactions-design.md). All public endpoints use the same `visible` rule as the blog: drafts and unknown slugs → **404**. Changing requests (`PUT`, `DELETE`, `POST`) pass **`checkOrigin`** first.
+
+**The anonymous visitor cookie** (`lib/visitor-id.ts`): the first time a browser **adds** something, the API makes a random id (`randomUUID()`) and sets `visitor_id` (HttpOnly, SameSite=Strict, `Path=/api/posts`, 1 year). It's not a login; it lets the API count "one reaction per browser" and rate-limit comments. Only ids in its own format are trusted.
+
+#### Reactions: `GET` / `PUT` / `DELETE /api/posts/:slug/reactions[/:type]`
+- `:type` = `like` · `love` · `insightful` (anything else → 400).
+- Every answer: `{ "counts": { "like": 4, "love": 1, "insightful": 0 }, "mine": ["like"] }`.
+- **PUT** adds mine, **DELETE** removes mine; both are **idempotent** (sending twice changes nothing). The database's `@@unique([postId, visitorId, type])` + `createMany(skipDuplicates)` (= `INSERT … ON CONFLICT DO NOTHING`) guarantee one per browser, even for two clicks at the same moment. GET never sets a cookie.
+
+#### Comments (public): `GET` / `POST /api/posts/:slug/comments`
+- **GET** → `{ "data": [ { id, authorName, isAuthor, body, createdAt, replies: [ … ] } ], "total": 3 }`: **approved** only, oldest first, replies under their comment (one level). A hidden comment hides its replies.
+- **POST** body `{ "authorName", "body", "parentId"?, "website" }` → **202** `{ "status": "PENDING", "message": "Thanks! …" }`. Six checks, cheapest first:
+  1. honeypot `website` filled → 202, **nothing saved**;
+  2. Zod: name 2–50, text 2–2000, `parentId` a positive whole number (unknown fields like `status` are dropped) → 400 + `fields`;
+  3. the post is published → else 404;
+  4. a reply's parent is on the same post, approved and top-level → else 400;
+  5. rate limits (database): 3 per browser per 10 min, 30 per post per hour → 429;
+  6. saved as **PENDING** → 202.
+
+#### Moderation (admin): `/api/admin/comments…`
+| Endpoint | Does |
+|---|---|
+| `GET ?status=pending` (default) / `approved` / `rejected` | `{ data, counts }`: newest first, with the post and the comment it replies to; `counts.pending` = the admin badge |
+| `POST /:id/approve` · `POST /:id/reject` | changes the status (`approvedAt` when approved) → 200 |
+| `DELETE /:id` | soft delete (`deleted_at`) → 204; its replies disappear too |
+| `POST /:id/reply` `{ "body" }` | my reply as the author: `isAuthor`, **approved at once** → 201. Reply to a reply → goes under the top-level comment; reply to a **pending** comment → approves it too (one transaction); a **rejected** one → 400 |
+
 ## 4. Postman testing guide
 
 ### 4.1 Set-up
@@ -534,6 +571,8 @@ The answer travels back the same way: rows → service → controller (`res.stat
 | `posts` | a blog post | `slug` unique `varchar(80)`; `title varchar(150)`; `excerpt varchar(300)`; `status` enum `post_status` (`DRAFT`/`PUBLISHED`, default DRAFT); `published_at`, `deleted_at` nullable; `updated_at` set by Prisma; `author_id` → `users`; index (`status`, `published_at`) |
 | `tags` | a tag | `name` unique (30), `slug` unique (40) |
 | `post_tags` | "this post has this tag" | primary key = (`post_id`, `tag_id`); both cascade |
+| `comments` | a comment **or** a reply | `post_id` → `posts` (cascade); `parent_id` → `comments` (self-relation, cascade; empty = top-level); `status` enum `comment_status` (`PENDING`/`APPROVED`/`REJECTED`, default PENDING); `author_name varchar(50)`, `body varchar(2000)`; `is_author`; `visitor_id`; `approved_at`, `deleted_at` |
+| `reactions` | one 👍/❤️/💡 from one browser on one post | `type` enum `reaction_type`; `visitor_id`; **unique (`post_id`, `visitor_id`, `type`)**; `post_id` → `posts` (cascade) |
 
 ```mermaid
 erDiagram
@@ -542,8 +581,11 @@ erDiagram
     users ||--o{ posts : "writes"
     posts ||--o{ post_tags : "has"
     tags ||--o{ post_tags : "labels"
+    posts ||--o{ comments : "has"
+    comments ||--o{ comments : "replies"
+    posts ||--o{ reactions : "has"
 ```
-`projects`, `experiences` and `messages` stand alone. Structure history: 7 migrations in `api/prisma/migrations/` (`0_init` … `post_soft_delete`).
+`projects`, `experiences` and `messages` stand alone. Structure history: 8 migrations in `api/prisma/migrations/` (`0_init` … `comments_and_reactions`).
 
 ### 6.2 Which API touches which table
 | Endpoint | Reads | Writes |
@@ -561,6 +603,10 @@ erDiagram
 | `PATCH /api/admin/posts/:id` | `posts` | `posts`; tags sent → `post_tags` (replace), `tags` (new only) |
 | `…/publish`, `…/unpublish`, `DELETE …` | `posts` | `posts` (status, published_at / deleted_at, slug) |
 | `GET /api/posts…`, `GET /api/tags` | `posts` + `post_tags` + `tags` (visible only) | — |
+| `…/reactions` (GET, PUT, DELETE) | `posts` (visible), `reactions` (count) | `reactions` (INSERT … ON CONFLICT DO NOTHING / DELETE) |
+| `GET …/comments` | `posts` (visible), `comments` (approved) | — |
+| `POST …/comments` | `posts`, `comments` (parent check, counts for the rate limits) | `comments` (INSERT, PENDING) |
+| `/api/admin/comments…` | `comments` + `posts` | `comments` (status, approved_at, deleted_at; my reply INSERT) |
 
 Also: `npm run seed` refills `projects`, `experiences`, `skill_groups`, `skills` (never messages or blog tables); `npm run create-admin` writes `users` (and clears `refresh_tokens` on a reset).
 
@@ -588,6 +634,9 @@ Found while reviewing the code for this handbook. None blocks the blog; listed s
 | 9 | The posts list has no reading time | only `GET /api/posts/:slug` computes it | add it to cards if the design needs it |
 | 10 | ✅ Fixed: database scripts needed `JWT_SECRET` | `create-admin` against Neon failed with "Missing JWT_SECRET": `db/prisma.ts` imported `config/env.ts`, which checks every server setting | `config/database.ts` reads only `DATABASE_URL`; `prisma.ts` uses it, `env.ts` re-uses it. Scripts need only the database address; the server still checks everything at start-up (least privilege) |
 | 11 | No "neighbouring posts" endpoint | articles have no "read next" | add `prev`/`next` to `GET /api/posts/:slug` if wanted |
+| 12 | "One reaction per browser" can be bypassed by clearing cookies | a person can add one more of each type | accepted for reactions (no accounts); the Vercel firewall limits floods per IP |
+| 13 | No notification for new comments | I only see them when I open the admin (badge) | an email via Resend, like the contact form, if wanted |
+| 14 | Comments are listed up to 200 per post, no paging | — | paging if a post ever gets that many |
 
 ---
 
@@ -655,6 +704,12 @@ PATCH changes only the fields sent; PUT replaces the whole resource. The editor 
 
 **Q15. A maintenance script against production failed with "Missing JWT_SECRET". What did you change?**
 The Prisma client imported the app's whole config, which requires every server secret. I moved the database address into its own small config file, so database-only scripts need just the connection string. The server still validates all settings at start-up. That's least privilege: production signing keys never need to be on a laptop.
+
+**Q17. How do you stop spam and abuse on anonymous comments?**
+Layers: a hidden honeypot field (bots fill it; I answer 202 but save nothing), Zod limits, rate limits counted in the database (per browser via an anonymous httpOnly cookie, and per post), `checkOrigin`, and every comment starts PENDING until I approve it. Comments are plain text, escaped by Angular, so they can't inject scripts.
+
+**Q18. Why PUT and DELETE for reactions instead of a toggle?**
+They're idempotent: "make sure my like exists" / "make sure it's gone" give the same result however often they're sent, so a double click or a retry can't flip the state by accident. A unique constraint plus `INSERT … ON CONFLICT DO NOTHING` keeps it at one row even under concurrent clicks.
 
 **Q16. How would you scale or improve this?**
 Cursor-based paging for very large lists, a test database for DB-level tests, Helmet security headers, correct 4xx from the error handler, caching public blog responses, and a separate role for co-authors using the existing RBAC check.

@@ -63,6 +63,20 @@ Browser (Angular) ──/api──▶ Express API ──Prisma──▶ PostgreS
 
 ---
 
+## 3b. Reactions and comments (2 minutes)
+**Show (private window):** under your post, click 👍 → the number changes **instantly** → reload: it stays. Write a comment → "Thanks! Your comment will appear after review."
+
+**Say:**
+> "Visitors have no accounts, so the API gives each browser an anonymous **httpOnly cookie**: a random id, not a login. A **unique rule in the database** keeps it to one reaction per browser, even with double clicks. The button uses an **optimistic update**: the screen changes first, and the server's answer confirms or undoes it."
+> "Comments are **moderated**: every new one is pending. They pass a hidden **honeypot**, Zod rules and **rate limits** first. They're shown as **plain text**, so nobody can inject scripts. Replies are one level deep, like YouTube."
+
+**Then, in the admin (normal window):** the **Comments** badge shows **1** → open it → **Reply** ("Approve + publish reply") → back on the article: the comment and your reply with the **Author** badge.
+> "The badge and the page share the count through a **signal in a service**: the page updates it, and the top bar follows."
+
+📖 `docs/18` · `docs/14` §3.6 · `docs/15` §7c · `docs/16` entries 37–41
+
+---
+
 ## 4. Admin: login and security (3 minutes)
 **Show:** in the **private window**, open `/admin` → you're sent to the login page.
 

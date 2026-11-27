@@ -1,0 +1,109 @@
+<!--
+  ABOUT THIS FILE: comments-page.html
+  Tabs (links: the tab is in the URL) → states (loading / error / empty)
+  → one card per comment with its buttons and, if open, the reply box.
+  Comment text is shown with {{ }} (plain text, escaped), never [innerHTML].
+-->
+<div class="head">
+  <h1>Comments</h1>
+</div>
+
+<nav class="tabs" aria-label="Comment status">
+  @for (tab of tabs; track tab.status) {
+    <a
+      class="tab"
+      routerLink="/admin/comments"
+      [queryParams]="{ status: tab.status === 'pending' ? null : tab.status }"
+      [class.tab--active]="current() === tab.status"
+      [attr.aria-current]="current() === tab.status ? 'page' : null"
+    >
+      {{ tab.label }}
+      @if (counts(); as c) {
+        <span class="tab__count">{{ c[tab.status] }}</span>
+      }
+    </a>
+  }
+</nav>
+
+@if (notice(); as n) {
+  <p [class]="n.kind === 'error' ? 'form-error' : 'notice-ok'" [attr.role]="n.kind === 'error' ? 'alert' : 'status'">
+    {{ n.text }}
+  </p>
+}
+
+@if (comments.isLoading() && !comments.hasValue()) {
+  <p class="state" role="status">Loading comments…</p>
+} @else if (comments.error()) {
+  <p class="form-error" role="alert">The comments couldn't be loaded. Is the API running?</p>
+} @else if (rows().length === 0) {
+  <p class="state">
+    {{ current() === 'pending' ? 'Nothing to review. 🎉' : current() === 'approved' ? 'No approved comments yet.' : 'No rejected comments.' }}
+  </p>
+} @else {
+  <ol class="list">
+    @for (comment of rows(); track comment.id) {
+      <li class="card" [class.is-busy]="busyId() === comment.id">
+        <p class="card__post">
+          on <a [routerLink]="['/blog', comment.post.slug]" target="_blank" rel="noopener">{{ comment.post.title }}</a>
+        </p>
+
+        <div class="card__head">
+          <span class="card__name">{{ comment.authorName }}</span>
+          @if (comment.isAuthor) {
+            <span class="badge">Author</span>
+          }
+          <time class="card__date" [attr.datetime]="comment.createdAt">{{ comment.createdAt | date: 'd MMM y, HH:mm' }}</time>
+        </div>
+
+        @if (comment.parent; as parent) {
+          <blockquote class="card__parent">
+            In reply to <strong>{{ parent.authorName }}</strong>: {{ parent.body }}
+          </blockquote>
+        }
+
+        <p class="card__body">{{ comment.body }}</p>
+
+        <div class="card__actions">
+          @if (comment.status !== 'APPROVED') {
+            <button class="btn btn--navy small" type="button" [disabled]="busyId() === comment.id" (click)="approve(comment)">
+              Approve
+            </button>
+          }
+          @if (comment.status !== 'REJECTED' && !comment.isAuthor) {
+            <button class="btn btn--outline small" type="button" [disabled]="busyId() === comment.id" (click)="reject(comment)">
+              Reject
+            </button>
+          }
+          @if (comment.status !== 'REJECTED' && replyingTo() !== comment.id) {
+            <button class="btn btn--outline small" type="button" [disabled]="busyId() === comment.id" (click)="openReply(comment)">
+              Reply
+            </button>
+          }
+          <button class="btn btn--outline small danger" type="button" [disabled]="busyId() === comment.id" (click)="remove(comment)">
+            Delete
+          </button>
+        </div>
+
+        @if (replyingTo() === comment.id) {
+          <div class="reply">
+            <label class="field">
+              <span class="field__label">Your reply as the author</span>
+              <textarea rows="3" [formControl]="replyText" [attr.aria-invalid]="replyText.touched && replyText.invalid"></textarea>
+              <span class="field__error">
+                @if (replyText.touched && replyText.invalid) {
+                  Please write 2–2000 characters.
+                }
+              </span>
+            </label>
+            <div class="reply__actions">
+              <button class="btn btn--navy small" type="button" [disabled]="busyId() === comment.id" (click)="sendReply(comment)">
+                {{ comment.status === 'PENDING' ? 'Approve + publish reply' : 'Publish reply' }}
+              </button>
+              <button class="btn btn--outline small" type="button" (click)="cancelReply()">Cancel</button>
+            </div>
+          </div>
+        }
+      </li>
+    }
+  </ol>
+}

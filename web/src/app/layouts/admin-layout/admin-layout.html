@@ -6,6 +6,12 @@
   <span class="bar__brand mono-label">// admin</span>
   <nav class="bar__nav" aria-label="Admin">
     <a routerLink="/admin/posts" routerLinkActive="is-active">Posts</a>
+    <a routerLink="/admin/comments" routerLinkActive="is-active">
+      Comments
+      @if (pendingCount(); as count) {
+        <span class="badge-count" [attr.aria-label]="count + ' waiting for review'">{{ count }}</span>
+      }
+    </a>
     <a routerLink="/">View site</a>
   </nav>
   <span class="bar__user">{{ auth.currentUser()?.email }}</span>

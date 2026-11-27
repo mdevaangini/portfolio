@@ -1017,7 +1017,20 @@ replies indented, Author badge, Reply → replyingTo {threadId, name}, reply
 to a reply → same thread, main form at the bottom, plain text {{ }} with
 pre-line). Placed in blog-post-page after the reaction bar. Playbook 39
 (input/output reusable form), 40 (HttpTestingController).
-NEXT: she tests C6 → commit → C7 admin Comments page + pending badge.
+C6 committed cc78912.
+C7 WRITTEN [ngc app+spec OK, sass OK; UNCONFIRMED]: features/admin/
+comment.model.ts (AdminComment, AdminCommentList, CommentStatus(Filter));
+admin-comments.service.ts (pendingCount signal shared, loadComments(status
+signal) httpResource, refreshPendingCount, approve/reject/reply/delete) +
+spec (1) → web npm test 13; comments-page (status from URL ?status via
+input, tabs with counts, cards: post link, name, Author badge, date, "In
+reply to", body pre-line; Approve/Reject/Reply/Delete with busyId, notice,
+run(); Delete via dialog; inline reply FormControl, "Approve + publish
+reply" for pending; effect → pendingCount); route 'comments'; admin-layout
+"Comments" link + badge (refreshPendingCount in constructor). Playbook 41.
+NEXT: she tests C7 → commit → C8 go-live (push; migration runs on Vercel)
++ docs (handbooks 14/15, PROJECT_MAP, demo script) → then the next
+feature (admin content editor).
 
 NEXT FEATURE, after comments C5-C8 are live (agreed 2026-11-20): ADMIN CONTENT
 EDITOR (a small CMS). Her idea: edit portfolio sections from the admin

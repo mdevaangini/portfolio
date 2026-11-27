@@ -72,6 +72,7 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 37. [`linkedSignal`: follows the server, but I can change it](#37-linkedsignal-follows-the-server-but-i-can-change-it)
 38. [Optimistic update (with a per-item undo)](#38-optimistic-update-with-a-per-item-undo)
 39. [One reusable form component: `input()` in, `output()` out](#39-one-reusable-form-component-input-in-output-out)
+41. [Shared state between two components: a signal in a root service](#41-shared-state-between-two-components-a-signal-in-a-root-service)
 
 29. [Our own dialog on the native `<dialog>` element](#29-our-own-dialog-on-the-native-dialog-element)
 30. [A pure pipe + the sanitizer for Markdown](#30-a-pure-pipe--the-sanitizer-for-markdown)
@@ -616,6 +617,23 @@ How the whole app fits together is in [15 — Frontend handbook](15-frontend-han
 - **Why:** one place for the rules, the honeypot and the error handling. `output()` is the signal-era replacement for `@Output() closed = new EventEmitter<void>()`: the child **tells** the parent something happened, and the parent decides what to do (here: close the reply form).
 - **Watch out:** a component used twice on one page needs **unique ids** (for `aria-describedby`), hence the `uid` counter.
 - **Interview line:** *"A reusable child with signal inputs for configuration and an output() for events; the parent owns the state (which reply form is open)."*
+
+### 41. Shared state between two components: a signal in a root service
+*Where:* the pending-comments badge (admin top bar) + the comments page (Comments C7)
+- **Problem:** the top bar (in `admin-layout`) and the comments page are **different components**, neither is the other's parent, but both need "how many comments are pending". When I approve one on the page, the badge must change too.
+- **Options:** pass it through inputs/outputs (impossible here: the page sits in a `<router-outlet>`, not inside the bar) · a store (NgRx: too much for one number) · **a signal in a service both inject** ✅.
+- **What we do:**
+  ```ts
+  // admin-comments.service.ts (providedIn: 'root' = ONE instance for the whole app)
+  readonly pendingCount = signal<number | null>(null);
+  // admin-layout: reads it for the badge, and asks once when the admin opens
+  protected readonly pendingCount = inject(AdminCommentsService).pendingCount;
+  // comments-page: every fresh list writes the new count
+  effect(() => { const c = this.counts(); if (c) this.commentsService.pendingCount.set(c.pending); });
+  ```
+- **Why:** the simplest shared state: one signal, one owner (the service), any component can read it, and the badge redraws by itself. The same idea as `currentUser` in `AuthService`.
+- **Watch out:** keep **writes** in few places (here: the page's effect and `refreshPendingCount`); many writers make state hard to follow (that's when a store helps).
+- **Interview line:** *"For small cross-component state I use a signal in a root service: one owner, many readers, no store needed."*
 
 ## 9. Testing
 

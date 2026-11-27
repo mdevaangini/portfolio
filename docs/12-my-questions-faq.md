@@ -249,6 +249,17 @@ PUT = replace everything; PATCH = change just these parts. **Save never publishe
 
 **Interview line:** *"One editor serves create and edit; the route tells it which. No id → POST the full form; an id → PATCH only the dirty fields. The API validates create with the full schema and update with its `.partial()`."*
 
+### Admin badge: how do the top bar and the comments page share the pending count? (the easy version)
+**Problem:** the top bar ("Comments 3", in admin-layout) and the comments page are **neighbours**, not parent and child (the page sits in the `<router-outlet>`), so `input()`/`output()` can't connect them (those only work for a child placed inside its parent, like the comment form in C6). Approve on the page must still change 3 → 2 in the bar.
+**Solution: a shared whiteboard.** The **service** (`AdminCommentsService`, one for the whole app) holds a **signal**: `pendingCount`.
+```
+service:   pendingCount = signal(3)        ← the whiteboard
+top bar:   Comments {{ pendingCount() }}   ← reads it → "Comments 3"
+page:      after approve → pendingCount.set(2)   ← writes it
+top bar:   updates by itself → "Comments 2"
+```
+The same idea as `AuthService.currentUser` (login writes it, the top bar shows my email). Playbook entry 41.
+
 ### Comments section: why two "Reply" buttons, and what do they send?
 ```
 Asha (comment, id 5)    "Great post!"   [Reply] ← button 1: startReply(comment.id, comment.authorName) → (5, "Asha")

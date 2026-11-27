@@ -8,6 +8,7 @@
 //       /admin/posts/new  → PostEditorPage (new post)
 //       /admin/posts/5    → PostEditorPage (edit post 5)
 //       both editor routes ask before leaving with unsaved changes
+//       /admin/comments   → CommentsPage (the review queue; ?status=approved|rejected)
 // ──────────────────────────────────────────────────────────────────────
 
 import { Routes } from '@angular/router';
@@ -30,6 +31,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'posts',
         title: 'Posts · Admin',
         loadComponent: () => import('./posts-page/posts-page').then((m) => m.PostsPage),
+      },
+      {
+        path: 'comments',
+        title: 'Comments · Admin',
+        loadComponent: () => import('./comments-page/comments-page').then((m) => m.CommentsPage),
       },
       {
         // "new" is listed before ":id", so it isn't read as an id.
